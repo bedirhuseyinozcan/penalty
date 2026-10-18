@@ -25,11 +25,14 @@ import { Typography } from '../theme/typography';
 
 interface ICareerPathScreenProps {
   isDaily?: boolean;
+  initialLevel?: number;
+  isReplay?: boolean;
   onBack: () => void;
+  onOpenMap?: () => void;
 }
 
 export const CareerPathScreen: React.FC<ICareerPathScreenProps> = React.memo(
-  ({ isDaily = false, onBack }) => {
+  ({ isDaily = false, initialLevel, isReplay = false, onBack, onOpenMap }) => {
     const selectedLeagueMode = useSettingsStore((s) => s.selectedLeagueMode);
     const getUnlockedLevel = useGameStore((s) => s.getUnlockedLevel);
     const isDailyCompleted = useGameStore((s) => s.isDailyCompleted);
@@ -45,7 +48,21 @@ export const CareerPathScreen: React.FC<ICareerPathScreenProps> = React.memo(
 
     const [hintUnlocked, setHintUnlocked] = useState(false);
 
-    const currentLevel = getUnlockedLevel('careerPath', selectedLeagueMode);
+    const [currentLevel, setCurrentLevel] = useState(() =>
+      initialLevel ?? getUnlockedLevel('careerPath', selectedLeagueMode)
+    );
+    const [isCurrentReplay, setIsCurrentReplay] = useState(isReplay);
+
+    useEffect(() => {
+      if (initialLevel != null) {
+        setCurrentLevel(initialLevel);
+        setIsCurrentReplay(isReplay);
+      } else {
+        setCurrentLevel(getUnlockedLevel('careerPath', selectedLeagueMode));
+        setIsCurrentReplay(false);
+      }
+    }, [initialLevel, isReplay, selectedLeagueMode, getUnlockedLevel]);
+
     const todayDate = new Date().toISOString().split('T')[0];
     const dailyKey = `${todayDate}_careerPath_${selectedLeagueMode}`;
     const alreadyCompleted = isDaily && isDailyCompleted(dailyKey);
@@ -132,7 +149,9 @@ export const CareerPathScreen: React.FC<ICareerPathScreenProps> = React.memo(
       resetGame,
     } = useCareerPathGame({
       targetPlayerId,
+      targetPlayerName: challengeData?.playerName,
       isDaily,
+      isReplay: isCurrentReplay,
       dailyKey,
       leagueModeKey: selectedLeagueMode,
     });
@@ -152,13 +171,29 @@ export const CareerPathScreen: React.FC<ICareerPathScreenProps> = React.memo(
           <TouchableOpacity onPress={onBack} style={styles.backBtn}>
             <Text style={styles.backBtnText}>‹ Geri</Text>
           </TouchableOpacity>
-          <Text style={styles.navTitle}>
-            {isDaily ? 'Günün Rotası' : `Seviye ${currentLevel}`}
-          </Text>
-          <View style={styles.attemptsBadge}>
-            <Text style={styles.attemptsText}>
-              Kalan Hak: {attemptsLeft}/{maxAttempts}
+
+          <View style={styles.navTitleContainer}>
+            <Text style={styles.navTitle}>
+              {isDaily ? 'Günün Rotası' : `Seviye ${currentLevel}`}
             </Text>
+            {isCurrentReplay && !isDaily ? (
+              <View style={styles.replayBadge}>
+                <Text style={styles.replayBadgeText}>🔁 Tekrar</Text>
+              </View>
+            ) : null}
+          </View>
+
+          <View style={styles.navRightRow}>
+            {!isDaily && onOpenMap ? (
+              <TouchableOpacity onPress={onOpenMap} style={styles.mapHeaderBtn}>
+                <Text style={styles.mapHeaderBtnText}>🗺️ Harita</Text>
+              </TouchableOpacity>
+            ) : null}
+            <View style={styles.attemptsBadge}>
+              <Text style={styles.attemptsText}>
+                {attemptsLeft}/{maxAttempts}
+              </Text>
+            </View>
           </View>
         </View>
 
@@ -225,18 +260,27 @@ export const CareerPathScreen: React.FC<ICareerPathScreenProps> = React.memo(
           status={gameStatus === 'won' ? 'won' : 'lost'}
           playerName={challengeData?.playerName || 'Yıldız Futbolcu'}
           playerClub={challengeData?.playerClub || 'Süper Lig'}
-          rewardCoins={35}
+          rewardCoins={isCurrentReplay ? 0 : 35}
           attemptsUsed={guesses.length}
           maxAttempts={maxAttempts}
           onClose={() => {
             resetGame();
             onBack();
           }}
+          onOpenMap={
+            !isDaily && onOpenMap
+              ? () => {
+                  resetGame();
+                  onOpenMap();
+                }
+              : undefined
+          }
           onNextLevel={
             !isDaily
               ? () => {
                   resetGame();
-                  onBack();
+                  setIsCurrentReplay(false);
+                  setCurrentLevel((prev) => prev + 1);
                 }
               : undefined
           }
@@ -282,9 +326,45 @@ const styles = StyleSheet.create({
     color: Colors.primary,
     fontSize: 16,
   },
+  navTitleContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   navTitle: {
     ...Typography.h3,
     color: Colors.textPrimary,
+  },
+  replayBadge: {
+    backgroundColor: 'rgba(245, 158, 11, 0.2)',
+    paddingHorizontal: Spacing.xs,
+    paddingVertical: 1,
+    borderRadius: BorderRadius.xs,
+    marginTop: 2,
+    borderWidth: 1,
+    borderColor: 'rgba(245, 158, 11, 0.4)',
+  },
+  replayBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: Colors.accent,
+  },
+  navRightRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+  },
+  mapHeaderBtn: {
+    backgroundColor: Colors.surface,
+    paddingHorizontal: Spacing.xs + 2,
+    paddingVertical: 4,
+    borderRadius: BorderRadius.sm,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  mapHeaderBtnText: {
+    ...Typography.caption,
+    color: Colors.accent,
+    fontWeight: '700',
   },
   attemptsBadge: {
     backgroundColor: Colors.surface,

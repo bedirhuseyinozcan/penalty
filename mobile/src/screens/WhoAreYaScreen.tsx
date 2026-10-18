@@ -24,11 +24,14 @@ import { Typography } from '../theme/typography';
 
 interface IWhoAreYaScreenProps {
   isDaily?: boolean;
+  initialLevel?: number;
+  isReplay?: boolean;
   onBack: () => void;
+  onOpenMap?: () => void;
 }
 
 export const WhoAreYaScreen: React.FC<IWhoAreYaScreenProps> = React.memo(
-  ({ isDaily = false, onBack }) => {
+  ({ isDaily = false, initialLevel, isReplay = false, onBack, onOpenMap }) => {
     const selectedLeagueMode = useSettingsStore((s) => s.selectedLeagueMode);
     const getUnlockedLevel = useGameStore((s) => s.getUnlockedLevel);
     const isDailyCompleted = useGameStore((s) => s.isDailyCompleted);
@@ -45,7 +48,21 @@ export const WhoAreYaScreen: React.FC<IWhoAreYaScreenProps> = React.memo(
 
     const [hintUnlocked, setHintUnlocked] = useState(false);
 
-    const currentLevel = getUnlockedLevel('whoAreYa', selectedLeagueMode);
+    const [currentLevel, setCurrentLevel] = useState(() =>
+      initialLevel ?? getUnlockedLevel('whoAreYa', selectedLeagueMode)
+    );
+    const [isCurrentReplay, setIsCurrentReplay] = useState(isReplay);
+
+    useEffect(() => {
+      if (initialLevel != null) {
+        setCurrentLevel(initialLevel);
+        setIsCurrentReplay(isReplay);
+      } else {
+        setCurrentLevel(getUnlockedLevel('whoAreYa', selectedLeagueMode));
+        setIsCurrentReplay(false);
+      }
+    }, [initialLevel, isReplay, selectedLeagueMode, getUnlockedLevel]);
+
     const todayDate = new Date().toISOString().split('T')[0];
     const dailyKey = `${todayDate}_whoAreYa_${selectedLeagueMode}`;
     const alreadyCompleted = isDaily && isDailyCompleted(dailyKey);
@@ -122,8 +139,10 @@ export const WhoAreYaScreen: React.FC<IWhoAreYaScreenProps> = React.memo(
       resetGame,
     } = useWhoAreYaGame({
       targetPlayerId,
+      targetPlayerName: challengeData?.playerName,
       blurImages,
       isDaily,
+      isReplay: isCurrentReplay,
       dailyKey,
       leagueModeKey: selectedLeagueMode,
     });
@@ -144,13 +163,29 @@ export const WhoAreYaScreen: React.FC<IWhoAreYaScreenProps> = React.memo(
           <TouchableOpacity onPress={onBack} style={styles.backBtn}>
             <Text style={styles.backBtnText}>‹ Geri</Text>
           </TouchableOpacity>
-          <Text style={styles.navTitle}>
-            {isDaily ? 'Günün Sorusu' : `Seviye ${currentLevel}`}
-          </Text>
-          <View style={styles.attemptsBadge}>
-            <Text style={styles.attemptsText}>
-              Kalan Hak: {attemptsLeft}/{maxAttempts}
+
+          <View style={styles.navTitleContainer}>
+            <Text style={styles.navTitle}>
+              {isDaily ? 'Günün Sorusu' : `Seviye ${currentLevel}`}
             </Text>
+            {isCurrentReplay && !isDaily ? (
+              <View style={styles.replayBadge}>
+                <Text style={styles.replayBadgeText}>🔁 Tekrar</Text>
+              </View>
+            ) : null}
+          </View>
+
+          <View style={styles.navRightRow}>
+            {!isDaily && onOpenMap ? (
+              <TouchableOpacity onPress={onOpenMap} style={styles.mapHeaderBtn}>
+                <Text style={styles.mapHeaderBtnText}>🗺️ Harita</Text>
+              </TouchableOpacity>
+            ) : null}
+            <View style={styles.attemptsBadge}>
+              <Text style={styles.attemptsText}>
+                {attemptsLeft}/{maxAttempts}
+              </Text>
+            </View>
           </View>
         </View>
 
@@ -162,7 +197,6 @@ export const WhoAreYaScreen: React.FC<IWhoAreYaScreenProps> = React.memo(
           />
         )}
 
-        
         <BlurredImageHero
           imageUrl={challengeData?.imageUrl || currentBlurImageUrl}
           currentAttempt={guesses.length}
@@ -206,17 +240,27 @@ export const WhoAreYaScreen: React.FC<IWhoAreYaScreenProps> = React.memo(
           playerName={challengeData?.playerName || 'Yıldız Futbolcu'}
           playerClub={challengeData?.playerClub || 'Süper Lig'}
           finalImageUrl={challengeData?.imageUrl || blurImages[blurImages.length - 1]}
+          rewardCoins={isCurrentReplay ? 0 : 30}
           attemptsUsed={guesses.length}
           maxAttempts={maxAttempts}
           onClose={() => {
             resetGame();
             onBack();
           }}
+          onOpenMap={
+            !isDaily && onOpenMap
+              ? () => {
+                  resetGame();
+                  onOpenMap();
+                }
+              : undefined
+          }
           onNextLevel={
             !isDaily
               ? () => {
                   resetGame();
-                  onBack();
+                  setIsCurrentReplay(false);
+                  setCurrentLevel((prev) => prev + 1);
                 }
               : undefined
           }
@@ -262,9 +306,45 @@ const styles = StyleSheet.create({
     color: Colors.primary,
     fontSize: 16,
   },
+  navTitleContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   navTitle: {
     ...Typography.h3,
     color: Colors.textPrimary,
+  },
+  replayBadge: {
+    backgroundColor: 'rgba(245, 158, 11, 0.2)',
+    paddingHorizontal: Spacing.xs,
+    paddingVertical: 1,
+    borderRadius: BorderRadius.xs,
+    marginTop: 2,
+    borderWidth: 1,
+    borderColor: 'rgba(245, 158, 11, 0.4)',
+  },
+  replayBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: Colors.accent,
+  },
+  navRightRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+  },
+  mapHeaderBtn: {
+    backgroundColor: Colors.surface,
+    paddingHorizontal: Spacing.xs + 2,
+    paddingVertical: 4,
+    borderRadius: BorderRadius.sm,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  mapHeaderBtnText: {
+    ...Typography.caption,
+    color: Colors.accent,
+    fontWeight: '700',
   },
   attemptsBadge: {
     backgroundColor: Colors.surface,

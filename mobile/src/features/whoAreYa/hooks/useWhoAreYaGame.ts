@@ -1,10 +1,11 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { IWhoAreYaGuess, GameStatus, IGuessAttributeComparison } from '../types';
 import { ILightPlayer, searchEngine } from '../../../services/searchEngine';
 import { useGameStore } from '../../../stores/useGameStore';
 
 interface IUseWhoAreYaGameProps {
   targetPlayerId: string;
+  targetPlayerName?: string;
   targetPlayerDetails?: {
     name: string;
     club: string;
@@ -19,18 +20,21 @@ interface IUseWhoAreYaGameProps {
   gameModeKey?: string;
   leagueModeKey?: string;
   isDaily?: boolean;
+  isReplay?: boolean;
   dailyKey?: string;
   onWin?: () => void;
 }
 
 export const useWhoAreYaGame = ({
   targetPlayerId,
+  targetPlayerName,
   targetPlayerDetails,
   blurImages = [],
   maxAttempts = 8,
   gameModeKey = 'whoAreYa',
   leagueModeKey = 'super_lig',
   isDaily = false,
+  isReplay = false,
   dailyKey,
   onWin,
 }: IUseWhoAreYaGameProps) => {
@@ -42,6 +46,11 @@ export const useWhoAreYaGame = ({
   const unlockNextLevel = useGameStore((s) => s.unlockNextLevel);
   const markDailyCompleted = useGameStore((s) => s.markDailyCompleted);
 
+  useEffect(() => {
+    setGuesses([]);
+    setGameStatus('playing');
+  }, [targetPlayerId]);
+
   const currentBlurImageUrl = useMemo(() => {
     if (blurImages.length === 0) return undefined;
     const index = Math.min(guesses.length, blurImages.length - 1);
@@ -50,15 +59,20 @@ export const useWhoAreYaGame = ({
 
   const evaluateGuess = useCallback(
     (guessedPlayer: ILightPlayer): IWhoAreYaGuess => {
-      const isTarget = guessedPlayer.id === targetPlayerId;
-
       const target = targetPlayerDetails ?? searchEngine.getPlayerById(targetPlayerId);
+
+      const isNameMatch =
+        (targetPlayerName &&
+          guessedPlayer.name.toLowerCase().trim() === targetPlayerName.toLowerCase().trim()) ||
+        (target && target.name.toLowerCase().trim() === guessedPlayer.name.toLowerCase().trim());
+
+      const isIdMatch = guessedPlayer.id === targetPlayerId;
 
       const comparison: IGuessAttributeComparison = {
         club: target?.club === guessedPlayer.club ? 'correct' : 'wrong',
         league: target?.league === guessedPlayer.league ? 'correct' : 'wrong',
         nationality:
-          target?.nationality.toLowerCase() === guessedPlayer.nationality.toLowerCase()
+          target?.nationality?.toLowerCase() === guessedPlayer.nationality?.toLowerCase()
             ? 'correct'
             : 'wrong',
         position: target?.position === guessedPlayer.position ? 'correct' : 'wrong',
@@ -71,13 +85,30 @@ export const useWhoAreYaGame = ({
         else if (target.age < guessAge) comparison.age = 'lower';
       }
 
+      const allAttributesMatch =
+        comparison.club === 'correct' &&
+        comparison.league === 'correct' &&
+        comparison.nationality === 'correct' &&
+        comparison.position === 'correct' &&
+        comparison.age === 'correct';
+
+      const isTarget = isIdMatch || isNameMatch || allAttributesMatch;
+
+      if (isTarget) {
+        comparison.club = 'correct';
+        comparison.league = 'correct';
+        comparison.nationality = 'correct';
+        comparison.position = 'correct';
+        comparison.age = 'correct';
+      }
+
       return {
         player: guessedPlayer,
         comparison,
         isTarget,
       };
     },
-    [targetPlayerId, targetPlayerDetails]
+    [targetPlayerId, targetPlayerDetails, targetPlayerName]
   );
 
   const submitGuess = useCallback(
@@ -94,12 +125,15 @@ export const useWhoAreYaGame = ({
 
       if (evaluated.isTarget) {
         setGameStatus('won');
-        addCoins(30);
 
-        if (isDaily && dailyKey) {
-          markDailyCompleted(dailyKey);
-        } else {
-          unlockNextLevel(gameModeKey, leagueModeKey);
+        if (!isReplay) {
+          addCoins(30);
+
+          if (isDaily && dailyKey) {
+            markDailyCompleted(dailyKey);
+          } else {
+            unlockNextLevel(gameModeKey, leagueModeKey);
+          }
         }
 
         onWin?.();
@@ -114,6 +148,7 @@ export const useWhoAreYaGame = ({
       maxAttempts,
       addCoins,
       isDaily,
+      isReplay,
       dailyKey,
       markDailyCompleted,
       unlockNextLevel,
@@ -124,9 +159,7 @@ export const useWhoAreYaGame = ({
   );
 
   const openSearch = useCallback(() => {
-    if (gameStatus === 'playing') {
-      setIsSearchModalVisible(true);
-    }
+    if (gameStatus === 'playing') setIsSearchModalVisible(true);
   }, [gameStatus]);
 
   const closeSearch = useCallback(() => {

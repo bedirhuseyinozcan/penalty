@@ -14,6 +14,7 @@ interface IWhoAreYaWinModalProps {
   attemptsUsed: number;
   maxAttempts: number;
   onNextLevel?: () => void;
+  onOpenMap?: () => void;
   onClose: () => void;
 }
 
@@ -28,6 +29,7 @@ export const WhoAreYaWinModal: React.FC<IWhoAreYaWinModalProps> = React.memo(
     attemptsUsed,
     maxAttempts,
     onNextLevel,
+    onOpenMap,
     onClose,
   }) => {
     const isWon = status === 'won';
@@ -52,7 +54,9 @@ export const WhoAreYaWinModal: React.FC<IWhoAreYaWinModalProps> = React.memo(
                   : `Tüm haklarınızı (${maxAttempts}/${maxAttempts}) kullandınız.`}
               </Text>
               {isWon && (
-                <Text style={styles.rewardText}>+{rewardCoins} Altın Kazandınız 🪙</Text>
+                <Text style={styles.rewardText}>
+                  {rewardCoins > 0 ? `+${rewardCoins} Altın Kazandınız 🪙` : '⭐ Seviye Tekrarı (Ödül Yok)'}
+                </Text>
               )}
             </View>
 
@@ -60,6 +64,12 @@ export const WhoAreYaWinModal: React.FC<IWhoAreYaWinModalProps> = React.memo(
               {onNextLevel && isWon ? (
                 <TouchableOpacity style={styles.primaryBtn} onPress={onNextLevel} activeOpacity={0.8}>
                   <Text style={styles.primaryBtnText}>Sonraki Seviye ⏩</Text>
+                </TouchableOpacity>
+              ) : null}
+
+              {onOpenMap ? (
+                <TouchableOpacity style={styles.mapBtn} onPress={onOpenMap} activeOpacity={0.8}>
+                  <Text style={styles.mapBtnText}>🗺️ Harita</Text>
                 </TouchableOpacity>
               ) : null}
 
@@ -150,6 +160,18 @@ const styles = StyleSheet.create({
   primaryBtnText: {
     ...Typography.bodyBold,
     color: '#FFFFFF',
+  },
+  mapBtn: {
+    backgroundColor: Colors.surfaceLight,
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.md,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  mapBtnText: {
+    ...Typography.bodyBold,
+    color: Colors.accent,
   },
   secondaryBtn: {
     backgroundColor: Colors.surfaceLight,

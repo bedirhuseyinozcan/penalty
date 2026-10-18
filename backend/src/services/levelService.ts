@@ -2,6 +2,7 @@ import { LevelModel, ILevel } from '../models/Level';
 import { PlayerModel } from '../models/Player';
 import { GameMode, LeagueMode } from '../config/constants';
 import { AppError } from '../middlewares/errorHandler';
+import { fixAndOrderCareerPath } from '../utils/careerPathUtils';
 
 export interface ILevelClientResponse {
   levelNumber: number;
@@ -33,25 +34,39 @@ export class LevelService {
     leagueMode: LeagueMode
   ): Promise<ILevelClientResponse> {
     const level = await LevelModel.findOne({ levelNumber, gameMode, leagueMode }).lean();
-    if (!level) {
+    let player: any = null;
+
+    if (level) {
+      player = await PlayerModel.findOne({ playerId: level.playerId }).lean();
+    }
+
+    if (!player) {
+      const leagueFilter =
+        leagueMode === 'super_lig'
+          ? { 'currentClub.league': 'super_lig' }
+          : { 'currentClub.league': { $ne: 'super_lig' } };
+
+      const count = await PlayerModel.countDocuments({ isActive: true, ...leagueFilter });
+      if (count > 0) {
+        const skipIndex = Math.max(0, (levelNumber - 1) % count);
+        player = await PlayerModel.findOne({ isActive: true, ...leagueFilter }).skip(skipIndex).lean();
+      }
+    }
+
+    if (!player) {
       throw new AppError(`Level ${levelNumber} not found`, 404);
     }
 
-    const player = await PlayerModel.findOne({ playerId: level.playerId }).lean();
-    if (!player) {
-      throw new AppError('Player associated with this level not found', 404);
-    }
-
     const response: ILevelClientResponse = {
-      levelNumber: level.levelNumber,
-      gameMode: level.gameMode,
-      leagueMode: level.leagueMode,
-      targetPlayerId: level.playerId,
+      levelNumber: level ? level.levelNumber : levelNumber,
+      gameMode,
+      leagueMode,
+      targetPlayerId: player.playerId,
       playerName: player.name,
       playerClub: player.currentClub.name,
-      rewardCoins: level.rewardCoins,
-      rewardXp: level.rewardXp,
-      hints: level.hints,
+      rewardCoins: level ? level.rewardCoins : (gameMode === 'careerPath' ? 35 : 30),
+      rewardXp: level ? level.rewardXp : (gameMode === 'careerPath' ? 60 : 50),
+      hints: level ? level.hints : [`${player.nationality} - ${player.position}`],
     };
 
     if (gameMode === 'whoAreYa') {
@@ -59,7 +74,11 @@ export class LevelService {
       response.initialBlurImageUrl = player.blurImages?.[0] || player.originalImageUrl;
       response.imageUrl = player.originalImageUrl;
     } else if (gameMode === 'careerPath') {
-      response.careerPath = player.careerPath;
+      response.careerPath = fixAndOrderCareerPath(
+        player.careerPath,
+        player.currentClub?.name,
+        player.age
+      );
     }
 
     return response;
@@ -71,16 +90,14 @@ export class LevelService {
     leagueMode: LeagueMode,
     guessedPlayerId: string
   ): Promise<{ isCorrect: boolean; rewardCoins: number; rewardXp: number; targetPlayerId?: string }> {
-    const level = await LevelModel.findOne({ levelNumber, gameMode, leagueMode }).lean();
-    if (!level) throw new AppError('Level not found', 404);
-
-    const isCorrect = level.playerId === guessedPlayerId;
+    const levelData = await this.getLevel(levelNumber, gameMode, leagueMode);
+    const isCorrect = levelData.targetPlayerId === guessedPlayerId;
 
     return {
       isCorrect,
-      rewardCoins: isCorrect ? level.rewardCoins : 0,
-      rewardXp: isCorrect ? level.rewardXp : 0,
-      targetPlayerId: isCorrect ? level.playerId : undefined,
+      rewardCoins: isCorrect ? levelData.rewardCoins : 0,
+      rewardXp: isCorrect ? levelData.rewardXp : 0,
+      targetPlayerId: isCorrect ? levelData.targetPlayerId : undefined,
     };
   }
 
@@ -117,7 +134,10 @@ export class LevelService {
         blurImages: l.gameMode === 'whoAreYa' ? p?.blurImages : undefined,
         imageUrl: l.gameMode === 'whoAreYa' ? p?.originalImageUrl : undefined,
         initialBlurImageUrl: l.gameMode === 'whoAreYa' ? p?.blurImages?.[0] || p?.originalImageUrl : undefined,
-        careerPath: l.gameMode === 'careerPath' ? p?.careerPath : undefined,
+        careerPath:
+          l.gameMode === 'careerPath'
+            ? fixAndOrderCareerPath(p?.careerPath, p?.currentClub?.name, p?.age)
+            : undefined,
       };
     });
   }

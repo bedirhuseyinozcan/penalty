@@ -13,7 +13,14 @@ interface ICareerStepBadgeProps {
 
 export const CareerStepBadge = React.memo<ICareerStepBadgeProps>(
   ({ step, isLast, stepIndex }) => {
-    const yearRange = step.endYear ? `${step.startYear} - ${step.endYear}` : `${step.startYear} - Günümüz`;
+    let yearRange = '';
+    if (step.startYear && step.endYear) {
+      yearRange = `${step.startYear} - ${step.endYear}`;
+    } else if (isLast) {
+      yearRange = step.startYear ? `${step.startYear} - Günümüz` : 'Günümüz';
+    } else if (step.startYear) {
+      yearRange = `${step.startYear}`;
+    }
 
     return (
       <View style={styles.stepContainer}>
@@ -28,7 +35,7 @@ export const CareerStepBadge = React.memo<ICareerStepBadgeProps>(
         {/* Club Details Box */}
         <View style={styles.contentBox}>
           <Text style={styles.clubName}>{step.clubName}</Text>
-          <Text style={styles.yearText}>{yearRange}</Text>
+          {yearRange ? <Text style={styles.yearText}>{yearRange}</Text> : null}
           {step.apps != null && step.apps > 0 ? (
             <Text style={styles.statsText}>
               {step.apps} maç • {step.goals ?? 0} gol

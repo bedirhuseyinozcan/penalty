@@ -7,7 +7,7 @@ import { SUPPORTED_LEAGUES } from '../config/constants';
 
 const DEMO_PLAYERS = [
   {
-    playerId: 'tmid_12345',
+    playerId: 'tmid_68863',
     name: 'Mauro Icardi',
     knownName: 'Icardi',
     leagues: [SUPPORTED_LEAGUES.SUPER_LIG, SUPPORTED_LEAGUES.SERIE_A, SUPPORTED_LEAGUES.LIGUE_1],
@@ -35,7 +35,7 @@ const DEMO_PLAYERS = [
     isActive: true,
   },
   {
-    playerId: 'tmid_12346',
+    playerId: 'tmid_418560',
     name: 'Erling Haaland',
     knownName: 'Haaland',
     leagues: [SUPPORTED_LEAGUES.PREMIER_LEAGUE, SUPPORTED_LEAGUES.BUNDESLIGA],
@@ -63,7 +63,7 @@ const DEMO_PLAYERS = [
     isActive: true,
   },
   {
-    playerId: 'tmid_12347',
+    playerId: 'tmid_401923',
     name: 'Victor Osimhen',
     knownName: 'Osimhen',
     leagues: [SUPPORTED_LEAGUES.SUPER_LIG, SUPPORTED_LEAGUES.SERIE_A, SUPPORTED_LEAGUES.BUNDESLIGA, SUPPORTED_LEAGUES.LIGUE_1],
@@ -91,7 +91,7 @@ const DEMO_PLAYERS = [
     isActive: true,
   },
   {
-    playerId: 'tmid_12348',
+    playerId: 'tmid_28396',
     name: 'Edin Džeko',
     knownName: 'Dzeko',
     leagues: [SUPPORTED_LEAGUES.SUPER_LIG, SUPPORTED_LEAGUES.SERIE_A, SUPPORTED_LEAGUES.PREMIER_LEAGUE, SUPPORTED_LEAGUES.BUNDESLIGA],
@@ -121,7 +121,7 @@ const DEMO_PLAYERS = [
     isActive: true,
   },
   {
-    playerId: 'tmid_12349',
+    playerId: 'tmid_581678',
     name: 'Jude Bellingham',
     knownName: 'Bellingham',
     leagues: [SUPPORTED_LEAGUES.LA_LIGA, SUPPORTED_LEAGUES.BUNDESLIGA],
@@ -147,7 +147,7 @@ const DEMO_PLAYERS = [
     isActive: true,
   },
   {
-    playerId: 'tmid_12350',
+    playerId: 'tmid_342229',
     name: 'Kylian Mbappé',
     knownName: 'Mbappe',
     leagues: [SUPPORTED_LEAGUES.LA_LIGA, SUPPORTED_LEAGUES.LIGUE_1],
@@ -190,10 +190,10 @@ export async function seedDemoData(): Promise<void> {
   }
   console.log(`✅ Upserted ${playerDocs.length} demo star players.`);
 
-  const icardi = playerDocs.find((p) => p.playerId === 'tmid_12345')!;
-  const haaland = playerDocs.find((p) => p.playerId === 'tmid_12346')!;
-  const dzeko = playerDocs.find((p) => p.playerId === 'tmid_12348')!;
-  const bellingham = playerDocs.find((p) => p.playerId === 'tmid_12349')!;
+  const icardi = playerDocs.find((p) => p.playerId === 'tmid_68863')!;
+  const haaland = playerDocs.find((p) => p.playerId === 'tmid_418560')!;
+  const dzeko = playerDocs.find((p) => p.playerId === 'tmid_28396')!;
+  const bellingham = playerDocs.find((p) => p.playerId === 'tmid_581678')!;
 
   // 2. Seed Daily Challenges for today (UTC)
   const todayUtc = new Date().toISOString().split('T')[0];

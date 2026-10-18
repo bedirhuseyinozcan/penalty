@@ -4,10 +4,11 @@ import { registerRootComponent } from 'expo';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { WhoAreYaScreen } from './src/screens/WhoAreYaScreen';
 import { CareerPathScreen } from './src/screens/CareerPathScreen';
+import { LevelMapScreen } from './src/screens/LevelMapScreen';
 import { searchEngine } from './src/services/searchEngine';
 import { Colors } from './src/theme/colors';
 
-type ScreenType = 'home' | 'whoAreYa' | 'careerPath';
+type ScreenType = 'home' | 'levelMap' | 'whoAreYa' | 'careerPath';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -56,6 +57,9 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
 function App() {
   const [currentScreen, setCurrentScreen] = useState<ScreenType>('home');
   const [isDailySelected, setIsDailySelected] = useState<boolean>(false);
+  const [activeGameMode, setActiveGameMode] = useState<'whoAreYa' | 'careerPath'>('whoAreYa');
+  const [selectedLevel, setSelectedLevel] = useState<number | undefined>(undefined);
+  const [isReplayMode, setIsReplayMode] = useState<boolean>(false);
 
   useEffect(() => {
     try {
@@ -65,9 +69,39 @@ function App() {
     }
   }, []);
 
-  const handleNavigate = (screen: ScreenType, isDaily = false) => {
+  const handleNavigate = (
+    screen: ScreenType,
+    isDaily = false,
+    gameMode?: 'whoAreYa' | 'careerPath'
+  ) => {
     setIsDailySelected(isDaily);
+    if (gameMode) {
+      setActiveGameMode(gameMode);
+    }
+    if (screen === 'whoAreYa' || screen === 'careerPath') {
+      setSelectedLevel(undefined);
+      setIsReplayMode(false);
+    }
     setCurrentScreen(screen);
+  };
+
+  const handleSelectLevelFromMap = (levelNumber: number, isReplay: boolean) => {
+    setSelectedLevel(levelNumber);
+    setIsReplayMode(isReplay);
+    setIsDailySelected(false);
+    setCurrentScreen(activeGameMode);
+  };
+
+  const handleOpenMapFromGame = () => {
+    setCurrentScreen('levelMap');
+  };
+
+  const handleBackFromGame = () => {
+    if (isDailySelected) {
+      setCurrentScreen('home');
+    } else {
+      setCurrentScreen('levelMap');
+    }
   };
 
   const handleBackToHome = () => {
@@ -80,11 +114,30 @@ function App() {
         <View style={styles.container}>
           <StatusBar barStyle="light-content" backgroundColor={Colors.background} />
           {currentScreen === 'home' && <HomeScreen onNavigate={handleNavigate} />}
+          {currentScreen === 'levelMap' && (
+            <LevelMapScreen
+              gameMode={activeGameMode}
+              onSelectLevel={handleSelectLevelFromMap}
+              onBack={handleBackToHome}
+            />
+          )}
           {currentScreen === 'whoAreYa' && (
-            <WhoAreYaScreen isDaily={isDailySelected} onBack={handleBackToHome} />
+            <WhoAreYaScreen
+              isDaily={isDailySelected}
+              initialLevel={selectedLevel}
+              isReplay={isReplayMode}
+              onBack={handleBackFromGame}
+              onOpenMap={handleOpenMapFromGame}
+            />
           )}
           {currentScreen === 'careerPath' && (
-            <CareerPathScreen isDaily={isDailySelected} onBack={handleBackToHome} />
+            <CareerPathScreen
+              isDaily={isDailySelected}
+              initialLevel={selectedLevel}
+              isReplay={isReplayMode}
+              onBack={handleBackFromGame}
+              onOpenMap={handleOpenMapFromGame}
+            />
           )}
         </View>
       </View>

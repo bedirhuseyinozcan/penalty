@@ -1,24 +1,28 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { ICareerPathGuess } from '../types';
 import { ILightPlayer } from '../../../services/searchEngine';
 import { useGameStore } from '../../../stores/useGameStore';
 
 interface IUseCareerPathGameProps {
   targetPlayerId: string;
+  targetPlayerName?: string;
   maxAttempts?: number;
   gameModeKey?: string;
   leagueModeKey?: string;
   isDaily?: boolean;
+  isReplay?: boolean;
   dailyKey?: string;
   onWin?: () => void;
 }
 
 export const useCareerPathGame = ({
   targetPlayerId,
+  targetPlayerName,
   maxAttempts = 6,
   gameModeKey = 'careerPath',
   leagueModeKey = 'super_lig',
   isDaily = false,
+  isReplay = false,
   dailyKey,
   onWin,
 }: IUseCareerPathGameProps) => {
@@ -30,6 +34,11 @@ export const useCareerPathGame = ({
   const unlockNextLevel = useGameStore((s) => s.unlockNextLevel);
   const markDailyCompleted = useGameStore((s) => s.markDailyCompleted);
 
+  useEffect(() => {
+    setGuesses([]);
+    setGameStatus('playing');
+  }, [targetPlayerId]);
+
   const submitGuess = useCallback(
     (player: ILightPlayer) => {
       if (gameStatus !== 'playing') return;
@@ -38,7 +47,13 @@ export const useCareerPathGame = ({
         return; // Prevent duplicate
       }
 
-      const isCorrect = player.id === targetPlayerId;
+      const isCorrect =
+        player.id === targetPlayerId ||
+        Boolean(
+          targetPlayerName &&
+            player.name.toLowerCase().trim() === targetPlayerName.toLowerCase().trim()
+        );
+
       const newGuess: ICareerPathGuess = {
         playerId: player.id,
         playerName: player.name,
@@ -51,12 +66,15 @@ export const useCareerPathGame = ({
 
       if (isCorrect) {
         setGameStatus('won');
-        addCoins(35);
 
-        if (isDaily && dailyKey) {
-          markDailyCompleted(dailyKey);
-        } else {
-          unlockNextLevel(gameModeKey, leagueModeKey);
+        if (!isReplay) {
+          addCoins(35);
+
+          if (isDaily && dailyKey) {
+            markDailyCompleted(dailyKey);
+          } else {
+            unlockNextLevel(gameModeKey, leagueModeKey);
+          }
         }
 
         onWin?.();
@@ -68,9 +86,11 @@ export const useCareerPathGame = ({
       gameStatus,
       guesses,
       targetPlayerId,
+      targetPlayerName,
       maxAttempts,
       addCoins,
       isDaily,
+      isReplay,
       dailyKey,
       markDailyCompleted,
       unlockNextLevel,

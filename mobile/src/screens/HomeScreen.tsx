@@ -15,7 +15,11 @@ import { Spacing, BorderRadius } from '../theme/spacing';
 import { Typography } from '../theme/typography';
 
 interface IHomeScreenProps {
-  onNavigate: (screen: 'home' | 'whoAreYa' | 'careerPath', isDaily?: boolean) => void;
+  onNavigate: (
+    screen: 'home' | 'whoAreYa' | 'careerPath' | 'levelMap',
+    isDaily?: boolean,
+    gameMode?: 'whoAreYa' | 'careerPath'
+  ) => void;
 }
 
 export const HomeScreen: React.FC<IHomeScreenProps> = React.memo(({ onNavigate }) => {
@@ -100,9 +104,9 @@ export const HomeScreen: React.FC<IHomeScreenProps> = React.memo(({ onNavigate }
             <TouchableOpacity
               style={[styles.gameActionBtn, styles.careerBtn]}
               activeOpacity={0.8}
-              onPress={() => onNavigate('whoAreYa', false)}
+              onPress={() => onNavigate('levelMap', false, 'whoAreYa')}
             >
-              <Text style={styles.careerBtnText}>🚀 Kariyer Modu</Text>
+              <Text style={styles.careerBtnText}>🗺️ Seviyeler & Kariyer</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -130,9 +134,9 @@ export const HomeScreen: React.FC<IHomeScreenProps> = React.memo(({ onNavigate }
             <TouchableOpacity
               style={[styles.gameActionBtn, styles.careerBtn]}
               activeOpacity={0.8}
-              onPress={() => onNavigate('careerPath', false)}
+              onPress={() => onNavigate('levelMap', false, 'careerPath')}
             >
-              <Text style={styles.careerBtnText}>🚀 Kariyer Modu</Text>
+              <Text style={styles.careerBtnText}>🗺️ Seviyeler & Kariyer</Text>
             </TouchableOpacity>
           </View>
         </View>

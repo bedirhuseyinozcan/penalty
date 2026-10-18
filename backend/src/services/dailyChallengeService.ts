@@ -2,6 +2,7 @@ import { DailyChallengeModel, IDailyChallenge } from '../models/DailyChallenge';
 import { PlayerModel } from '../models/Player';
 import { GameMode, LeagueMode } from '../config/constants';
 import { AppError } from '../middlewares/errorHandler';
+import { fixAndOrderCareerPath } from '../utils/careerPathUtils';
 
 export interface IDailyChallengeClientResponse {
   id: string;
@@ -72,7 +73,11 @@ export class DailyChallengeService {
       response.initialBlurImageUrl = player.blurImages?.[0] || player.originalImageUrl;
       response.imageUrl = player.originalImageUrl;
     } else if (gameMode === 'careerPath') {
-      response.careerPath = player.careerPath;
+      response.careerPath = fixAndOrderCareerPath(
+        player.careerPath,
+        player.currentClub?.name,
+        player.age
+      );
     }
 
     return response;

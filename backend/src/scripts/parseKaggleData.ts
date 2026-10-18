@@ -4,6 +4,7 @@ import csv from 'csv-parser';
 import mongoose from 'mongoose';
 import { PlayerModel, ICareerStep } from '../models/Player';
 import { connectDatabase } from '../config/db';
+import { fixAndOrderCareerPath } from '../utils/careerPathUtils';
 import { SUPPORTED_LEAGUES } from '../config/constants';
 
 const COMPETITION_LEAGUE_MAP: Record<string, string> = {
@@ -137,15 +138,16 @@ export async function runKaggleImportPipeline(csvDirectoryPath: string): Promise
     const imageUrl = row.image_url || '';
 
     const playerCareer = careerPaths.get(tmid);
-    const careerPath: ICareerStep[] =
+    const rawCareer: ICareerStep[] =
       playerCareer && playerCareer.length > 0
         ? playerCareer
         : [
             {
               clubName: brief.teamName,
-              startYear: 2023,
+              startYear: 2024,
             },
           ];
+    const careerPath = fixAndOrderCareerPath(rawCareer, brief.teamName, age);
 
     const playerDoc = {
       playerId: `tmid_${tmid}`,
