@@ -7,6 +7,10 @@ export interface ILevelData {
   rewardCoins: number;
   rewardXp: number;
   hints: string[];
+  targetPlayerId: string;
+  playerName?: string;
+  playerClub?: string;
+  imageUrl?: string;
   initialBlurImageUrl?: string;
   blurImages?: string[];
   careerPath?: Array<{

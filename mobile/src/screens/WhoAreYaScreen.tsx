@@ -37,6 +37,7 @@ export const WhoAreYaScreen: React.FC<IWhoAreYaScreenProps> = React.memo(
     const [challengeData, setChallengeData] = useState<{
       targetPlayerId: string;
       blurImages: string[];
+      imageUrl?: string;
       playerName?: string;
       playerClub?: string;
       dailyKey?: string;
@@ -59,7 +60,10 @@ export const WhoAreYaScreen: React.FC<IWhoAreYaScreenProps> = React.memo(
             const data = await dailyApi.getTodayChallenge('whoAreYa', selectedLeagueMode);
             if (isMounted) {
               setChallengeData({
-                targetPlayerId: data.id,
+                targetPlayerId: data.targetPlayerId || data.id,
+                playerName: data.playerName,
+                playerClub: data.playerClub,
+                imageUrl: data.imageUrl || data.initialBlurImageUrl,
                 blurImages: data.blurImages || [],
                 dailyKey,
               });
@@ -68,26 +72,23 @@ export const WhoAreYaScreen: React.FC<IWhoAreYaScreenProps> = React.memo(
             const data = await levelApi.getLevel(currentLevel, 'whoAreYa', selectedLeagueMode);
             if (isMounted) {
               setChallengeData({
-                targetPlayerId: `level_${currentLevel}`,
+                targetPlayerId: data.targetPlayerId || `level_${currentLevel}`,
+                playerName: data.playerName,
+                playerClub: data.playerClub,
+                imageUrl: data.imageUrl || data.initialBlurImageUrl,
                 blurImages: data.blurImages || [],
               });
             }
           }
         } catch {
-          
           if (isMounted) {
             setChallengeData({
               targetPlayerId: selectedLeagueMode === 'super_lig' ? 'tmid_12345' : 'tmid_12346',
-              blurImages: [
-                'https://assets.penaltyhub.com/blurred/demo/level_1.webp',
-                'https://assets.penaltyhub.com/blurred/demo/level_2.webp',
-                'https://assets.penaltyhub.com/blurred/demo/level_3.webp',
-                'https://assets.penaltyhub.com/blurred/demo/level_4.webp',
-                'https://assets.penaltyhub.com/blurred/demo/level_5.webp',
-                'https://assets.penaltyhub.com/blurred/demo/level_6.webp',
-                'https://assets.penaltyhub.com/blurred/demo/level_7.webp',
-                'https://assets.penaltyhub.com/blurred/demo/level_8.webp',
-              ],
+              imageUrl:
+                selectedLeagueMode === 'super_lig'
+                  ? 'https://img.a.transfermarkt.technology/portrait/big/68863-1671105169.png'
+                  : 'https://img.a.transfermarkt.technology/portrait/big/418560-1709108116.png',
+              blurImages: [],
               playerName: selectedLeagueMode === 'super_lig' ? 'Mauro Icardi' : 'Erling Haaland',
               playerClub: selectedLeagueMode === 'super_lig' ? 'Galatasaray' : 'Manchester City',
               dailyKey,
@@ -163,12 +164,11 @@ export const WhoAreYaScreen: React.FC<IWhoAreYaScreenProps> = React.memo(
 
         
         <BlurredImageHero
-          imageUrl={currentBlurImageUrl}
+          imageUrl={challengeData?.imageUrl || currentBlurImageUrl}
           currentAttempt={guesses.length}
           maxAttempts={maxAttempts}
         />
 
-        
         <View style={styles.hintContainer}>
           <HintWithAdButton
             hintTitle="Mevki ve Yaş İpucu"
@@ -178,12 +178,10 @@ export const WhoAreYaScreen: React.FC<IWhoAreYaScreenProps> = React.memo(
           />
         </View>
 
-        
         <View style={styles.historyContainer}>
           <GuessHistoryList guesses={guesses} />
         </View>
 
-        
         {gameStatus === 'playing' ? (
           <View style={styles.bottomBar}>
             <TouchableOpacity
@@ -207,7 +205,7 @@ export const WhoAreYaScreen: React.FC<IWhoAreYaScreenProps> = React.memo(
           status={gameStatus === 'won' ? 'won' : 'lost'}
           playerName={challengeData?.playerName || 'Yıldız Futbolcu'}
           playerClub={challengeData?.playerClub || 'Süper Lig'}
-          finalImageUrl={blurImages[blurImages.length - 1]}
+          finalImageUrl={challengeData?.imageUrl || blurImages[blurImages.length - 1]}
           attemptsUsed={guesses.length}
           maxAttempts={maxAttempts}
           onClose={() => {

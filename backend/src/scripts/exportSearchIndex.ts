@@ -10,7 +10,7 @@ export async function exportSearchIndex(): Promise<void> {
   console.log('📦 Generating lightweight search index (~350KB)...');
 
   const players = await PlayerModel.find({ isActive: true })
-    .select('playerId name nationality position currentClub leagues')
+    .select('playerId name nationality position currentClub leagues age shirtNumber')
     .lean();
 
   const lightList = players.map((p) => ({
@@ -20,6 +20,8 @@ export async function exportSearchIndex(): Promise<void> {
     position: p.position,
     club: p.currentClub.name,
     league: p.currentClub.league,
+    age: p.age,
+    shirtNumber: p.shirtNumber,
   }));
 
   const jsonContent = JSON.stringify(lightList);

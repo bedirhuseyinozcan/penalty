@@ -60,7 +60,9 @@ export const CareerPathScreen: React.FC<ICareerPathScreenProps> = React.memo(
             const data = await dailyApi.getTodayChallenge('careerPath', selectedLeagueMode);
             if (isMounted) {
               setChallengeData({
-                targetPlayerId: data.id,
+                targetPlayerId: data.targetPlayerId || data.id,
+                playerName: data.playerName,
+                playerClub: data.playerClub,
                 careerPath: data.careerPath || [],
                 dailyKey,
               });
@@ -69,7 +71,9 @@ export const CareerPathScreen: React.FC<ICareerPathScreenProps> = React.memo(
             const data = await levelApi.getLevel(currentLevel, 'careerPath', selectedLeagueMode);
             if (isMounted) {
               setChallengeData({
-                targetPlayerId: `level_${currentLevel}`,
+                targetPlayerId: data.targetPlayerId || `level_${currentLevel}`,
+                playerName: data.playerName,
+                playerClub: data.playerClub,
                 careerPath: data.careerPath || [],
               });
             }

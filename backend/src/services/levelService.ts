@@ -10,8 +10,12 @@ export interface ILevelClientResponse {
   rewardCoins: number;
   rewardXp: number;
   hints: string[];
+  imageUrl?: string;
   initialBlurImageUrl?: string;
   blurImages?: string[];
+  targetPlayerId: string;
+  playerName: string;
+  playerClub: string;
   careerPath?: Array<{
     clubName: string;
     clubLogoUrl?: string;
@@ -42,6 +46,9 @@ export class LevelService {
       levelNumber: level.levelNumber,
       gameMode: level.gameMode,
       leagueMode: level.leagueMode,
+      targetPlayerId: level.playerId,
+      playerName: player.name,
+      playerClub: player.currentClub.name,
       rewardCoins: level.rewardCoins,
       rewardXp: level.rewardXp,
       hints: level.hints,
@@ -50,6 +57,7 @@ export class LevelService {
     if (gameMode === 'whoAreYa') {
       response.blurImages = player.blurImages;
       response.initialBlurImageUrl = player.blurImages?.[0] || player.originalImageUrl;
+      response.imageUrl = player.originalImageUrl;
     } else if (gameMode === 'careerPath') {
       response.careerPath = player.careerPath;
     }
@@ -100,11 +108,15 @@ export class LevelService {
         levelNumber: l.levelNumber,
         gameMode: l.gameMode,
         leagueMode: l.leagueMode,
+        targetPlayerId: l.playerId,
+        playerName: p?.name || '',
+        playerClub: p?.currentClub?.name || '',
         rewardCoins: l.rewardCoins,
         rewardXp: l.rewardXp,
         hints: l.hints,
         blurImages: l.gameMode === 'whoAreYa' ? p?.blurImages : undefined,
-        initialBlurImageUrl: l.gameMode === 'whoAreYa' ? p?.blurImages?.[0] : undefined,
+        imageUrl: l.gameMode === 'whoAreYa' ? p?.originalImageUrl : undefined,
+        initialBlurImageUrl: l.gameMode === 'whoAreYa' ? p?.blurImages?.[0] || p?.originalImageUrl : undefined,
         careerPath: l.gameMode === 'careerPath' ? p?.careerPath : undefined,
       };
     });

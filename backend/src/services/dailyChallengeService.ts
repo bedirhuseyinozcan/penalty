@@ -9,6 +9,10 @@ export interface IDailyChallengeClientResponse {
   gameMode: GameMode;
   leagueMode: LeagueMode;
   difficulty: string;
+  targetPlayerId: string;
+  playerName: string;
+  playerClub: string;
+  imageUrl?: string;
   initialBlurImageUrl?: string;
   blurImages?: string[]; 
   careerPath?: Array<{
@@ -56,6 +60,9 @@ export class DailyChallengeService {
       date: challenge.date,
       gameMode: challenge.gameMode,
       leagueMode: challenge.leagueMode,
+      targetPlayerId: challenge.playerId,
+      playerName: player.name,
+      playerClub: player.currentClub.name,
       difficulty: challenge.difficulty,
       serverUtcTime: new Date().toISOString(),
     };
@@ -63,6 +70,7 @@ export class DailyChallengeService {
     if (gameMode === 'whoAreYa') {
       response.blurImages = player.blurImages;
       response.initialBlurImageUrl = player.blurImages?.[0] || player.originalImageUrl;
+      response.imageUrl = player.originalImageUrl;
     } else if (gameMode === 'careerPath') {
       response.careerPath = player.careerPath;
     }

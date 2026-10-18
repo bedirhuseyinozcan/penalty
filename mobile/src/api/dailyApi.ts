@@ -6,6 +6,10 @@ export interface IDailyChallengeData {
   gameMode: 'whoAreYa' | 'careerPath';
   leagueMode: 'global' | 'super_lig';
   difficulty: string;
+  targetPlayerId: string;
+  playerName?: string;
+  playerClub?: string;
+  imageUrl?: string;
   initialBlurImageUrl?: string;
   blurImages?: string[];
   careerPath?: Array<{
