@@ -1,0 +1,39 @@
+{
+  "name": "penalty-backend",
+  "version": "1.0.0",
+  "description": "Penalty Mobile Game Hub - High Performance Scalable Backend API & Pipeline",
+  "main": "dist/server.js",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "pipeline:parse": "tsx src/scripts/parseKaggleData.ts",
+    "pipeline:export-search": "tsx src/scripts/exportSearchIndex.ts",
+    "pipeline:blur": "tsx src/scripts/generateBlurLevels.ts",
+    "pipeline:seed-demo": "tsx src/scripts/seedDemoData.ts"
+  },
+  "dependencies": {
+    "compression": "^1.7.4",
+    "cors": "^2.8.5",
+    "csv-parser": "^3.0.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "helmet": "^7.1.0",
+    "mongoose": "^8.5.1",
+    "morgan": "^1.10.0",
+    "sharp": "^0.33.4",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/compression": "^1.7.5",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/morgan": "^1.9.9",
+    "@types/node": "^20.14.11",
+    "tsx": "^4.16.2",
+    "typescript": "^5.5.3"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

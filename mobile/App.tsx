@@ -1,0 +1,150 @@
+import React, { useState, useEffect, Component, ErrorInfo, ReactNode } from 'react';
+import { View, StyleSheet, StatusBar, Text, TouchableOpacity } from 'react-native';
+import { registerRootComponent } from 'expo';
+import { HomeScreen } from './src/screens/HomeScreen';
+import { WhoAreYaScreen } from './src/screens/WhoAreYaScreen';
+import { CareerPathScreen } from './src/screens/CareerPathScreen';
+import { searchEngine } from './src/services/searchEngine';
+import { Colors } from './src/theme/colors';
+
+type ScreenType = 'home' | 'whoAreYa' | 'careerPath';
+
+interface ErrorBoundaryProps {
+  children: ReactNode;
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  errorMessage: string;
+}
+
+class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false, errorMessage: '' };
+  }
+
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, errorMessage: error.message };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('App ErrorBoundary caught:', error, errorInfo);
+  }
+
+  handleReset = () => {
+    this.setState({ hasError: false, errorMessage: '' });
+  };
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorEmoji}>⚠️</Text>
+          <Text style={styles.errorTitle}>Beklenmeyen Bir Hata Oluştu</Text>
+          <Text style={styles.errorDetails}>{this.state.errorMessage}</Text>
+          <TouchableOpacity style={styles.resetBtn} onPress={this.handleReset}>
+            <Text style={styles.resetBtnText}>Yeniden Dene</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+function App() {
+  const [currentScreen, setCurrentScreen] = useState<ScreenType>('home');
+  const [isDailySelected, setIsDailySelected] = useState<boolean>(false);
+
+  useEffect(() => {
+    try {
+      searchEngine.initialize();
+    } catch (e) {
+      console.warn('Search engine init warning:', e);
+    }
+  }, []);
+
+  const handleNavigate = (screen: ScreenType, isDaily = false) => {
+    setIsDailySelected(isDaily);
+    setCurrentScreen(screen);
+  };
+
+  const handleBackToHome = () => {
+    setCurrentScreen('home');
+  };
+
+  return (
+    <ErrorBoundary>
+      <View style={styles.outerWrapper}>
+        <View style={styles.container}>
+          <StatusBar barStyle="light-content" backgroundColor={Colors.background} />
+          {currentScreen === 'home' && <HomeScreen onNavigate={handleNavigate} />}
+          {currentScreen === 'whoAreYa' && (
+            <WhoAreYaScreen isDaily={isDailySelected} onBack={handleBackToHome} />
+          )}
+          {currentScreen === 'careerPath' && (
+            <CareerPathScreen isDaily={isDailySelected} onBack={handleBackToHome} />
+          )}
+        </View>
+      </View>
+    </ErrorBoundary>
+  );
+}
+
+const styles = StyleSheet.create({
+  outerWrapper: {
+    flex: 1,
+    backgroundColor: '#05070A', 
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    height: '100%',
+  },
+  container: {
+    flex: 1,
+    width: '100%',
+    maxWidth: 480, 
+    backgroundColor: Colors.background,
+    height: '100%',
+  },
+  errorContainer: {
+    flex: 1,
+    backgroundColor: Colors.background,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+    height: '100%',
+  },
+  errorEmoji: {
+    fontSize: 56,
+    marginBottom: 16,
+  },
+  errorTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: Colors.textPrimary,
+    marginBottom: 8,
+  },
+  errorDetails: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  resetBtn: {
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  resetBtnText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    fontSize: 16,
+  },
+});
+
+registerRootComponent(App);
+
+export default App;

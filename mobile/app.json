@@ -1,0 +1,27 @@
+{
+  "expo": {
+    "name": "Penalty",
+    "slug": "penalty-hub",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./src/assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#0D1117"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.penalty.hub"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0D1117"
+      },
+      "package": "com.penalty.hub"
+    },
+    "web": {
+      "favicon": "./src/assets/favicon.png"
+    }
+  }
+}
