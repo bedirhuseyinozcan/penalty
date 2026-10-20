@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useGameStore } from '../stores/useGameStore';
 import { useSettingsStore, LeagueMode } from '../stores/useSettingsStore';
+import { HomeGameCard } from '../features/home/components/HomeGameCard';
 import { Colors } from '../theme/colors';
 import { Spacing, BorderRadius } from '../theme/spacing';
 import { Typography } from '../theme/typography';
@@ -81,65 +82,21 @@ export const HomeScreen: React.FC<IHomeScreenProps> = React.memo(({ onNavigate }
           </View>
         </View>
 
-        <View style={styles.gameCard}>
-          <View style={styles.cardHeader}>
-            <Text style={styles.cardEmoji}>🕵️‍♂️</Text>
-            <View style={styles.cardTitleCol}>
-              <Text style={styles.cardTitle}>Kim Bu Yıldız?</Text>
-              <Text style={styles.cardSubtitle}>
-                Bulanık fotoğraftan ve ipuçlarından futbolcuyu tahmin et
-              </Text>
-            </View>
-          </View>
+        <HomeGameCard
+          emoji="🕵️‍♂️"
+          title="Kim Bu Yıldız?"
+          subtitle="Bulanık fotoğraftan ve ipuçlarından futbolcuyu tahmin et"
+          onPressDaily={() => onNavigate('whoAreYa', true)}
+          onPressCareer={() => onNavigate('levelMap', false, 'whoAreYa')}
+        />
 
-          <View style={styles.btnRow}>
-            <TouchableOpacity
-              style={[styles.gameActionBtn, styles.dailyBtn]}
-              activeOpacity={0.8}
-              onPress={() => onNavigate('whoAreYa', true)}
-            >
-              <Text style={styles.dailyBtnText}>📅 Günün Sorusu</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.gameActionBtn, styles.careerBtn]}
-              activeOpacity={0.8}
-              onPress={() => onNavigate('levelMap', false, 'whoAreYa')}
-            >
-              <Text style={styles.careerBtnText}>🗺️ Seviyeler & Kariyer</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        <View style={styles.gameCard}>
-          <View style={styles.cardHeader}>
-            <Text style={styles.cardEmoji}>🧭</Text>
-            <View style={styles.cardTitleCol}>
-              <Text style={styles.cardTitle}>Transfer Rotası</Text>
-              <Text style={styles.cardSubtitle}>
-                Kariyerinde oynadığı kulüpleri takip ederek yıldızı bul
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.btnRow}>
-            <TouchableOpacity
-              style={[styles.gameActionBtn, styles.dailyBtn]}
-              activeOpacity={0.8}
-              onPress={() => onNavigate('careerPath', true)}
-            >
-              <Text style={styles.dailyBtnText}>📅 Günün Sorusu</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.gameActionBtn, styles.careerBtn]}
-              activeOpacity={0.8}
-              onPress={() => onNavigate('levelMap', false, 'careerPath')}
-            >
-              <Text style={styles.careerBtnText}>🗺️ Seviyeler & Kariyer</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+        <HomeGameCard
+          emoji="🧭"
+          title="Transfer Rotası"
+          subtitle="Kariyerinde oynadığı kulüpleri takip ederek yıldızı bul"
+          onPressDaily={() => onNavigate('careerPath', true)}
+          onPressCareer={() => onNavigate('levelMap', false, 'careerPath')}
+        />
       </ScrollView>
     </SafeAreaView>
   );
@@ -158,8 +115,8 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: Spacing.lg,
   },
   brandTitle: {
@@ -234,63 +191,5 @@ const styles = StyleSheet.create({
   activeTabText: {
     color: Colors.textPrimary,
     fontWeight: '700',
-  },
-  gameCard: {
-    backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.md,
-    marginBottom: Spacing.md,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: Spacing.md,
-  },
-  cardEmoji: {
-    fontSize: 34,
-    marginRight: Spacing.md,
-  },
-  cardTitleCol: {
-    flex: 1,
-  },
-  cardTitle: {
-    ...Typography.h2,
-    color: Colors.textPrimary,
-  },
-  cardSubtitle: {
-    ...Typography.caption,
-    color: Colors.textSecondary,
-    marginTop: 2,
-  },
-  btnRow: {
-    flexDirection: 'row',
-    gap: Spacing.sm,
-  },
-  gameActionBtn: {
-    flex: 1,
-    paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  dailyBtn: {
-    backgroundColor: Colors.surfaceLight,
-    borderWidth: 1,
-    borderColor: Colors.accent,
-  },
-  dailyBtnText: {
-    ...Typography.bodyBold,
-    color: Colors.accent,
-    fontSize: 13,
-  },
-  careerBtn: {
-    backgroundColor: Colors.primary,
-  },
-  careerBtnText: {
-    ...Typography.bodyBold,
-    color: '#FFFFFF',
-    fontSize: 13,
   },
 });
