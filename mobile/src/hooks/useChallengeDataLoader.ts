@@ -132,7 +132,7 @@ export const useChallengeDataLoader = ({
       } else {
        
         setChallengeData({
-          targetPlayerId: selectedLeagueMode === 'super_lig' ? 'tmid_12345' : 'tmid_12346',
+          targetPlayerId: selectedLeagueMode === 'super_lig' ? 'tmid_68863' : 'tmid_418560',
           playerName: selectedLeagueMode === 'super_lig' ? 'Mauro Icardi' : 'Erling Haaland',
           playerClub: selectedLeagueMode === 'super_lig' ? 'Galatasaray' : 'Manchester City',
           dailyKey,

@@ -19,20 +19,32 @@ class SearchEngineService {
   private isInitialized = false;
 
   public initialize(customData?: ILightPlayer[]): void {
+    let rawList: ILightPlayer[];
     if (customData && customData.length > 0) {
-      this.players = customData;
+      rawList = customData;
     } else {
       const cached = appStorage.getString(StorageKeys.SEARCH_INDEX_CACHE);
       if (cached) {
         try {
-          this.players = JSON.parse(cached);
+          rawList = JSON.parse(cached);
         } catch {
-          this.players = defaultPlayersData as ILightPlayer[];
+          rawList = defaultPlayersData as ILightPlayer[];
         }
       } else {
-        this.players = defaultPlayersData as ILightPlayer[];
+        rawList = defaultPlayersData as ILightPlayer[];
       }
     }
+
+    const seen = new Set<string>();
+    const uniquePlayers: ILightPlayer[] = [];
+    for (const p of rawList) {
+      const key = `${p.name.toLowerCase().trim()}_${(p.club || '').toLowerCase().trim()}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        uniquePlayers.push(p);
+      }
+    }
+    this.players = uniquePlayers;
 
     this.fuse = new Fuse(this.players, {
       keys: [
@@ -64,15 +76,26 @@ class SearchEngineService {
     const trimmed = query.trim();
     if (!trimmed || trimmed.length < 2) return [];
 
-    const results = this.fuse!.search(trimmed, { limit: 15 }).map((res) => res.item);
+    const rawResults = this.fuse!.search(trimmed, { limit: 25 }).map((res) => res.item);
 
-    if (!leagueMode) return results;
+    const filtered = leagueMode
+      ? leagueMode === 'super_lig'
+        ? rawResults.filter((p) => p.league === 'super_lig')
+        : rawResults.filter((p) => p.league !== 'super_lig')
+      : rawResults;
 
-    if (leagueMode === 'super_lig') {
-      return results.filter((p) => p.league === 'super_lig');
+    const seenInResults = new Set<string>();
+    const deduplicated: ILightPlayer[] = [];
+    for (const p of filtered) {
+      const key = `${p.name.toLowerCase().trim()}_${(p.club || '').toLowerCase().trim()}`;
+      if (!seenInResults.has(key)) {
+        seenInResults.add(key);
+        deduplicated.push(p);
+      }
+      if (deduplicated.length >= 15) break;
     }
 
-    return results.filter((p) => p.league !== 'super_lig');
+    return deduplicated;
   }
 
   public getPlayerById(id: string): ILightPlayer | undefined {

@@ -131,7 +131,7 @@ export const StorageKeys = {
   USER_COINS: 'penalty_user_coins',
   USER_XP: 'penalty_user_xp',
   UNLOCKED_LEVELS: 'penalty_unlocked_levels',
-  SEARCH_INDEX_CACHE: 'penalty_search_index_cache',
+  SEARCH_INDEX_CACHE: 'penalty_search_index_cache_v2',
   SEARCH_INDEX_TIMESTAMP: 'penalty_search_index_timestamp',
   SELECTED_LEAGUE_MODE: 'penalty_selected_league_mode',
   SOUND_ENABLED: 'penalty_sound_enabled',
