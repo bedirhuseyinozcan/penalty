@@ -2,6 +2,7 @@ import { useState, useCallback, useMemo, useEffect } from 'react';
 import { IWhoAreYaGuess, GameStatus, IGuessAttributeComparison } from '../types';
 import { ILightPlayer, searchEngine } from '../../../services/searchEngine';
 import { hapticsService } from '../../../services/hapticsService';
+import { dailyStorage } from '../../daily/utils/dailyStorage';
 import { useGameStore } from '../../../stores/useGameStore';
 
 interface IUseWhoAreYaGameProps {
@@ -46,11 +47,20 @@ export const useWhoAreYaGame = ({
   const addCoins = useGameStore((s) => s.addCoins);
   const unlockNextLevel = useGameStore((s) => s.unlockNextLevel);
   const markDailyCompleted = useGameStore((s) => s.markDailyCompleted);
+  const recordGameResult = useGameStore((s) => s.recordGameResult);
 
   useEffect(() => {
+    if (isDaily && dailyKey) {
+      const saved = dailyStorage.getSession<IWhoAreYaGuess>(dailyKey);
+      if (saved) {
+        setGuesses(saved.guesses);
+        setGameStatus(saved.status);
+        return;
+      }
+    }
     setGuesses([]);
     setGameStatus('playing');
-  }, [targetPlayerId]);
+  }, [targetPlayerId, isDaily, dailyKey]);
 
   const currentBlurImageUrl = useMemo(() => {
     if (blurImages.length === 0) return undefined;
@@ -115,6 +125,7 @@ export const useWhoAreYaGame = ({
   const submitGuess = useCallback(
     (guessedPlayer: ILightPlayer) => {
       if (gameStatus !== 'playing') return;
+      if (isDaily && dailyKey && dailyStorage.hasCompletedSession(dailyKey)) return;
 
       if (guesses.some((g) => g.player.id === guessedPlayer.id)) {
         return;
@@ -127,11 +138,19 @@ export const useWhoAreYaGame = ({
       if (evaluated.isTarget) {
         hapticsService.success();
         setGameStatus('won');
+        recordGameResult(true, nextGuesses.length);
 
         if (!isReplay) {
           addCoins(30);
 
           if (isDaily && dailyKey) {
+            dailyStorage.saveSession(dailyKey, {
+              dailyKey,
+              status: 'won',
+              guesses: nextGuesses,
+              attemptsUsed: nextGuesses.length,
+              completedAt: new Date().toISOString(),
+            });
             markDailyCompleted(dailyKey);
           } else {
             unlockNextLevel(gameModeKey, leagueModeKey);
@@ -142,6 +161,18 @@ export const useWhoAreYaGame = ({
       } else if (nextGuesses.length >= maxAttempts) {
         hapticsService.error();
         setGameStatus('lost');
+        recordGameResult(false, maxAttempts);
+
+        if (isDaily && dailyKey) {
+          dailyStorage.saveSession(dailyKey, {
+            dailyKey,
+            status: 'lost',
+            guesses: nextGuesses,
+            attemptsUsed: nextGuesses.length,
+            completedAt: new Date().toISOString(),
+          });
+          markDailyCompleted(dailyKey);
+        }
       } else {
         hapticsService.warning();
       }

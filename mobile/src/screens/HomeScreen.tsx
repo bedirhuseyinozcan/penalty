@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import {
 import { useGameStore } from '../stores/useGameStore';
 import { useSettingsStore, LeagueMode } from '../stores/useSettingsStore';
 import { HomeGameCard } from '../features/home/components/HomeGameCard';
+import { PlayerStatsModal } from '../features/stats/components/PlayerStatsModal';
 import { Colors } from '../theme/colors';
 import { Spacing, BorderRadius } from '../theme/spacing';
 import { Typography } from '../theme/typography';
@@ -26,10 +27,18 @@ interface IHomeScreenProps {
 export const HomeScreen: React.FC<IHomeScreenProps> = React.memo(({ onNavigate }) => {
   const coins = useGameStore((s) => s.coins);
   const xp = useGameStore((s) => s.xp);
+  const currentStreak = useGameStore((s) => s.currentStreak);
+  const isDailyCompleted = useGameStore((s) => s.isDailyCompleted);
   const selectedLeagueMode = useSettingsStore((s) => s.selectedLeagueMode);
   const setLeagueMode = useSettingsStore((s) => s.setLeagueMode);
 
+  const [isStatsModalVisible, setIsStatsModalVisible] = useState(false);
+
   const isSuperLig = selectedLeagueMode === 'super_lig';
+
+  const todayDate = useMemo(() => new Date().toISOString().split('T')[0], []);
+  const isWhoAreYaDailyCompleted = isDailyCompleted(`${todayDate}_whoAreYa_${selectedLeagueMode}`);
+  const isCareerDailyCompleted = isDailyCompleted(`${todayDate}_careerPath_${selectedLeagueMode}`);
 
   const handleSelectMode = useCallback(
     (mode: LeagueMode) => {
@@ -48,12 +57,30 @@ export const HomeScreen: React.FC<IHomeScreenProps> = React.memo(({ onNavigate }
             <Text style={styles.brandSubtitle}>Futbol Oyun Portalı</Text>
           </View>
           <View style={styles.currencyRow}>
+            {/* Streak / Stats Button */}
+            <TouchableOpacity
+              style={[styles.currencyBadge, styles.streakBadge]}
+              activeOpacity={0.8}
+              onPress={() => setIsStatsModalVisible(true)}
+            >
+              <Text style={styles.streakText}>🔥 {currentStreak}</Text>
+            </TouchableOpacity>
+
             <View style={styles.currencyBadge}>
               <Text style={styles.currencyText}>🪙 {coins}</Text>
             </View>
+
             <View style={[styles.currencyBadge, styles.xpBadge]}>
               <Text style={styles.xpText}>⚡ {xp} XP</Text>
             </View>
+
+            <TouchableOpacity
+              style={[styles.currencyBadge, styles.statsBtn]}
+              activeOpacity={0.8}
+              onPress={() => setIsStatsModalVisible(true)}
+            >
+              <Text style={styles.statsIconText}>📊</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -86,6 +113,7 @@ export const HomeScreen: React.FC<IHomeScreenProps> = React.memo(({ onNavigate }
           emoji="🕵️‍♂️"
           title="Kim Bu Yıldız?"
           subtitle="Bulanık fotoğraftan ve ipuçlarından futbolcuyu tahmin et"
+          dailyBtnText={isWhoAreYaDailyCompleted ? '✅ Günün Sorusu (Çözüldü)' : '📅 Günün Sorusu'}
           onPressDaily={() => onNavigate('whoAreYa', true)}
           onPressCareer={() => onNavigate('levelMap', false, 'whoAreYa')}
         />
@@ -94,10 +122,16 @@ export const HomeScreen: React.FC<IHomeScreenProps> = React.memo(({ onNavigate }
           emoji="🧭"
           title="Transfer Rotası"
           subtitle="Kariyerinde oynadığı kulüpleri takip ederek yıldızı bul"
+          dailyBtnText={isCareerDailyCompleted ? '✅ Günün Sorusu (Çözüldü)' : '📅 Günün Sorusu'}
           onPressDaily={() => onNavigate('careerPath', true)}
           onPressCareer={() => onNavigate('levelMap', false, 'careerPath')}
         />
       </ScrollView>
+
+      <PlayerStatsModal
+        visible={isStatsModalVisible}
+        onClose={() => setIsStatsModalVisible(false)}
+      />
     </SafeAreaView>
   );
 });
@@ -131,6 +165,7 @@ const styles = StyleSheet.create({
   },
   currencyRow: {
     flexDirection: 'row',
+    alignItems: 'center',
     gap: Spacing.xs,
   },
   currencyBadge: {
@@ -140,6 +175,22 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.md,
     borderWidth: 1,
     borderColor: Colors.border,
+  },
+  streakBadge: {
+    borderColor: 'rgba(245, 158, 11, 0.4)',
+    backgroundColor: 'rgba(245, 158, 11, 0.12)',
+  },
+  streakText: {
+    ...Typography.caption,
+    color: Colors.accent,
+    fontWeight: '800',
+  },
+  statsBtn: {
+    paddingHorizontal: 8,
+    backgroundColor: Colors.surfaceLight,
+  },
+  statsIconText: {
+    fontSize: 13,
   },
   currencyText: {
     ...Typography.caption,

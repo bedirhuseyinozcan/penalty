@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   SafeAreaView,
   View,
@@ -14,6 +14,7 @@ import { OfflinePlayerSearchModal } from '../features/search/components/OfflineP
 import { WhoAreYaWinModal } from '../features/whoAreYa/components/WhoAreYaWinModal';
 import { HintWithAdButton } from '../features/monetization/components/HintWithAdButton';
 import { DailyHeaderCard } from '../features/daily/components/DailyHeaderCard';
+import { DailyCompletedBanner } from '../features/daily/components/DailyCompletedBanner';
 import { GameNavbar } from '../components/common/GameNavbar';
 import { useChallengeDataLoader } from '../hooks/useChallengeDataLoader';
 import { Colors } from '../theme/colors';
@@ -47,6 +48,7 @@ export const WhoAreYaScreen: React.FC<IWhoAreYaScreenProps> = React.memo(
     });
 
     const [hintUnlocked, setHintUnlocked] = useState(false);
+    const [isResultModalVisible, setIsResultModalVisible] = useState(false);
 
     const targetPlayerId = challengeData?.targetPlayerId ?? 'tmid_12345';
     const blurImages = challengeData?.blurImages ?? [];
@@ -71,6 +73,12 @@ export const WhoAreYaScreen: React.FC<IWhoAreYaScreenProps> = React.memo(
       dailyKey,
       leagueModeKey: selectedLeagueMode,
     });
+
+    useEffect(() => {
+      if (gameStatus !== 'playing') {
+        setIsResultModalVisible(true);
+      }
+    }, [gameStatus]);
 
     if (isLoading) {
       return (
@@ -128,6 +136,13 @@ export const WhoAreYaScreen: React.FC<IWhoAreYaScreenProps> = React.memo(
               <Text style={styles.guessBtnText}>🔍 Futbolcu Tahmin Et</Text>
             </TouchableOpacity>
           </View>
+        ) : isDaily ? (
+          <DailyCompletedBanner
+            status={gameStatus}
+            attemptsUsed={guesses.length}
+            maxAttempts={maxAttempts}
+            onOpenResultModal={() => setIsResultModalVisible(true)}
+          />
         ) : null}
 
         <OfflinePlayerSearchModal
@@ -137,7 +152,7 @@ export const WhoAreYaScreen: React.FC<IWhoAreYaScreenProps> = React.memo(
         />
 
         <WhoAreYaWinModal
-          visible={gameStatus !== 'playing'}
+          visible={isResultModalVisible}
           status={gameStatus === 'won' ? 'won' : 'lost'}
           playerName={challengeData?.playerName || 'Yıldız Futbolcu'}
           playerClub={challengeData?.playerClub || 'Süper Lig'}
@@ -146,12 +161,16 @@ export const WhoAreYaScreen: React.FC<IWhoAreYaScreenProps> = React.memo(
           attemptsUsed={guesses.length}
           maxAttempts={maxAttempts}
           onClose={() => {
-            resetGame();
-            onBack();
+            setIsResultModalVisible(false);
+            if (!isDaily) {
+              resetGame();
+              onBack();
+            }
           }}
           onOpenMap={
             !isDaily && onOpenMap
               ? () => {
+                  setIsResultModalVisible(false);
                   resetGame();
                   onOpenMap();
                 }
@@ -160,6 +179,7 @@ export const WhoAreYaScreen: React.FC<IWhoAreYaScreenProps> = React.memo(
           onNextLevel={
             !isDaily
               ? () => {
+                  setIsResultModalVisible(false);
                   resetGame();
                   goToNextLevel();
                 }

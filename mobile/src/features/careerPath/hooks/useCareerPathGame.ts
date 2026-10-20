@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { ICareerPathGuess } from '../types';
 import { ILightPlayer } from '../../../services/searchEngine';
 import { hapticsService } from '../../../services/hapticsService';
+import { dailyStorage } from '../../daily/utils/dailyStorage';
 import { useGameStore } from '../../../stores/useGameStore';
 
 interface IUseCareerPathGameProps {
@@ -34,15 +35,25 @@ export const useCareerPathGame = ({
   const addCoins = useGameStore((s) => s.addCoins);
   const unlockNextLevel = useGameStore((s) => s.unlockNextLevel);
   const markDailyCompleted = useGameStore((s) => s.markDailyCompleted);
+  const recordGameResult = useGameStore((s) => s.recordGameResult);
 
   useEffect(() => {
+    if (isDaily && dailyKey) {
+      const saved = dailyStorage.getSession<ICareerPathGuess>(dailyKey);
+      if (saved) {
+        setGuesses(saved.guesses);
+        setGameStatus(saved.status);
+        return;
+      }
+    }
     setGuesses([]);
     setGameStatus('playing');
-  }, [targetPlayerId]);
+  }, [targetPlayerId, isDaily, dailyKey]);
 
   const submitGuess = useCallback(
     (player: ILightPlayer) => {
       if (gameStatus !== 'playing') return;
+      if (isDaily && dailyKey && dailyStorage.hasCompletedSession(dailyKey)) return;
 
       if (guesses.some((g) => g.playerId === player.id)) {
         return; // Prevent duplicate
@@ -68,11 +79,19 @@ export const useCareerPathGame = ({
       if (isCorrect) {
         hapticsService.success();
         setGameStatus('won');
+        recordGameResult(true, updated.length);
 
         if (!isReplay) {
           addCoins(35);
 
           if (isDaily && dailyKey) {
+            dailyStorage.saveSession(dailyKey, {
+              dailyKey,
+              status: 'won',
+              guesses: updated,
+              attemptsUsed: updated.length,
+              completedAt: new Date().toISOString(),
+            });
             markDailyCompleted(dailyKey);
           } else {
             unlockNextLevel(gameModeKey, leagueModeKey);
@@ -83,6 +102,18 @@ export const useCareerPathGame = ({
       } else if (updated.length >= maxAttempts) {
         hapticsService.error();
         setGameStatus('lost');
+        recordGameResult(false, maxAttempts);
+
+        if (isDaily && dailyKey) {
+          dailyStorage.saveSession(dailyKey, {
+            dailyKey,
+            status: 'lost',
+            guesses: updated,
+            attemptsUsed: updated.length,
+            completedAt: new Date().toISOString(),
+          });
+          markDailyCompleted(dailyKey);
+        }
       } else {
         hapticsService.warning();
       }

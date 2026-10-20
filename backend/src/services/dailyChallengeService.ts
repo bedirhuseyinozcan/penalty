@@ -44,27 +44,54 @@ export class DailyChallengeService {
       leagueMode,
     }).populate('playerRef');
 
-    if (!challenge) {
+    let player: any = null;
+    let challengeId = `auto_${today}_${gameMode}_${leagueMode}`;
+    let difficulty = 'medium';
+
+    if (challenge) {
+      player = await PlayerModel.findOne({ playerId: challenge.playerId }).lean();
+      challengeId = (challenge._id as unknown as string).toString();
+      difficulty = challenge.difficulty;
+    }
+
+    if (!player) {
+      const leagueFilter =
+        leagueMode === 'super_lig'
+          ? { 'currentClub.league': 'super_lig' }
+          : { 'currentClub.league': { $ne: 'super_lig' } };
+
+      const activePlayers = await PlayerModel.find({ isActive: true, ...leagueFilter })
+        .select('playerId name currentClub nationality position age careerPath blurImages originalImageUrl')
+        .lean();
+
+      if (activePlayers.length > 0) {
+        let hash = 0;
+        const seedStr = `${today}_${gameMode}_${leagueMode}`;
+        for (let i = 0; i < seedStr.length; i++) {
+          hash = (hash << 5) - hash + seedStr.charCodeAt(i);
+          hash |= 0;
+        }
+        const index = Math.abs(hash) % activePlayers.length;
+        player = activePlayers[index];
+      }
+    }
+
+    if (!player) {
       throw new AppError(
-        `Daily challenge not scheduled for date ${today} (${gameMode}/${leagueMode})`,
+        `Daily challenge not available for date ${today} (${gameMode}/${leagueMode})`,
         404
       );
     }
 
-    const player = await PlayerModel.findOne({ playerId: challenge.playerId }).lean();
-    if (!player) {
-      throw new AppError('Underlying challenge player not found', 404);
-    }
-
     const response: IDailyChallengeClientResponse = {
-      id: (challenge._id as unknown as string).toString(),
-      date: challenge.date,
-      gameMode: challenge.gameMode,
-      leagueMode: challenge.leagueMode,
-      targetPlayerId: challenge.playerId,
+      id: challengeId,
+      date: today,
+      gameMode,
+      leagueMode,
+      targetPlayerId: player.playerId,
       playerName: player.name,
-      playerClub: player.currentClub.name,
-      difficulty: challenge.difficulty,
+      playerClub: player.currentClub?.name || '',
+      difficulty,
       serverUtcTime: new Date().toISOString(),
     };
 

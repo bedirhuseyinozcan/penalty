@@ -137,5 +137,10 @@ export const StorageKeys = {
   SOUND_ENABLED: 'penalty_sound_enabled',
   HAPTICS_ENABLED: 'penalty_haptics_enabled',
   DAILY_COMPLETED_PREFIX: 'penalty_daily_completed_',
+  DAILY_SESSION_PREFIX: 'penalty_daily_session_',
   LEVEL_CACHE_PREFIX: 'penalty_level_cache_',
+  CURRENT_STREAK: 'penalty_current_streak',
+  MAX_STREAK: 'penalty_max_streak',
+  LAST_COMPLETED_DATE: 'penalty_last_completed_date',
+  GAME_STATS: 'penalty_game_stats',
 } as const;
