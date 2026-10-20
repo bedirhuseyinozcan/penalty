@@ -49,6 +49,21 @@ export function fixAndOrderCareerPath(
       },
     ];
   }
+  const validYears = rawPath
+    .map((s) => s.startYear)
+    .filter((y) => typeof y === 'number' && y > 1980);
+  const distinctYears = new Set(validYears);
+  const isLegacyKaggleDefault =
+    rawPath.length > 1 && distinctYears.size === 1 && distinctYears.has(2020);
+
+  if (validYears.length > 0 && !isLegacyKaggleDefault) {
+    const cleaned = rawPath.map((s) => ({ ...s }));
+    const last = cleaned[cleaned.length - 1];
+    if (last) {
+      delete last.endYear;
+    }
+    return cleaned;
+  }
 
   const uniqueSteps: ICareerStep[] = [];
   const seen = new Set<string>();
@@ -94,7 +109,7 @@ export function fixAndOrderCareerPath(
 
   const safeAge = Math.min(42, Math.max(18, age || 25));
   const currentYear = 2026;
-  const careerStartYear = Math.max(2000, currentYear - safeAge + 17); // Debut ~17-18
+  const careerStartYear = Math.max(2000, currentYear - safeAge + 17);
   const totalClubs = orderedClubs.length;
 
   if (totalClubs === 1) {
@@ -114,7 +129,7 @@ export function fixAndOrderCareerPath(
 
     if (isLast) {
       club.startYear = Math.min(currentYear, Math.max(trackerYear, currentYear - 2));
-      delete club.endYear; // Current club: "startYear - Günümüz"
+      delete club.endYear;
     } else {
       const weight = Math.max(10, club.apps || 0) / totalApps;
       const span = Math.max(1, Math.round(weight * (totalCareerSpan - 1)));

@@ -31,6 +31,8 @@ Thumbs.db
 # Local cache & temporary files
 data/kaggle/
 data/blurred/
+data/tm_live_cache/
+backend/data/tm_live_cache/
 *.tsbuildinfo
 tum_kodlar.txt
 
