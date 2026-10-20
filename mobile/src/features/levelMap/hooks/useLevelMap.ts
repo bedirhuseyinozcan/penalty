@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useGameStore } from '../../../stores/useGameStore';
 import { useSettingsStore } from '../../../stores/useSettingsStore';
+import { hapticsService } from '../../../services/hapticsService';
 import { ILevelItem, LevelStatus } from '../types';
 
 export const TOTAL_LEVELS = 50;
@@ -51,10 +52,13 @@ export const useLevelMap = ({ gameMode, onSelectLevel }: IUseLevelMapProps) => {
   const handleLevelPress = useCallback(
     (lvl: number) => {
       if (lvl > unlockedLevel) {
+        hapticsService.error();
         setLockedAlertLevel(lvl);
       } else if (lvl < unlockedLevel) {
+        hapticsService.light();
         setReplayConfirmLevel(lvl);
       } else {
+        hapticsService.medium();
         onSelectLevel(lvl, false);
       }
     },

@@ -14,6 +14,7 @@ import {
 import { useOfflinePlayerSearch } from '../hooks/useOfflinePlayerSearch';
 import { PlayerSearchItem } from './PlayerSearchItem';
 import { ILightPlayer } from '../../../services/searchEngine';
+import { hapticsService } from '../../../services/hapticsService';
 import { Colors } from '../../../theme/colors';
 import { Spacing, BorderRadius } from '../../../theme/spacing';
 import { Typography } from '../../../theme/typography';
@@ -30,6 +31,7 @@ export const OfflinePlayerSearchModal: React.FC<IOfflinePlayerSearchModalProps> 
 
     const handleSelect = useCallback(
       (player: ILightPlayer) => {
+        hapticsService.selection();
         clearSearch();
         onSelectPlayer(player);
         onClose();

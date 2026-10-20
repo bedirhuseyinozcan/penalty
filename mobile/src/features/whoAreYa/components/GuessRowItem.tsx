@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { IWhoAreYaGuess } from '../types';
+import { AnimatedAttributeTile } from './AnimatedAttributeTile';
 import { Colors } from '../../../theme/colors';
 import { Spacing, BorderRadius } from '../../../theme/spacing';
 import { Typography } from '../../../theme/typography';
@@ -13,16 +14,13 @@ interface IGuessRowItemProps {
 export const GuessRowItem = React.memo<IGuessRowItemProps>(({ guess, index }) => {
   const { player, comparison } = guess;
 
-  const getBgColor = (status: 'correct' | 'wrong' | 'higher' | 'lower') => {
-    if (status === 'correct') return Colors.matchCorrect;
-    return Colors.matchWrong;
-  };
-
   const getAgeIndicator = (status: 'correct' | 'higher' | 'lower') => {
     if (status === 'correct') return '';
-    if (status === 'higher') return ' ⬆️'; 
+    if (status === 'higher') return ' ⬆️';
     return ' ⬇️';
   };
+
+  const ageText = player.age ? `${player.age}${getAgeIndicator(comparison.age)}` : '-';
 
   return (
     <View style={styles.container}>
@@ -34,34 +32,36 @@ export const GuessRowItem = React.memo<IGuessRowItemProps>(({ guess, index }) =>
       </View>
 
       <View style={styles.tilesGrid}>
-        <View style={[styles.tile, { backgroundColor: getBgColor(comparison.club) }]}>
-          <Text style={styles.tileLabel}>Kulüp</Text>
-          <Text style={styles.tileValue} numberOfLines={1}>
-            {player.club}
-          </Text>
-        </View>
-        <View style={[styles.tile, { backgroundColor: getBgColor(comparison.league) }]}>
-          <Text style={styles.tileLabel}>Lig</Text>
-          <Text style={styles.tileValue} numberOfLines={1}>
-            {player.league}
-          </Text>
-        </View>
-        <View style={[styles.tile, { backgroundColor: getBgColor(comparison.nationality) }]}>
-          <Text style={styles.tileLabel}>Uyruk</Text>
-          <Text style={styles.tileValue} numberOfLines={1}>
-            {player.nationality}
-          </Text>
-        </View>
-        <View style={[styles.tile, { backgroundColor: getBgColor(comparison.position) }]}>
-          <Text style={styles.tileLabel}>Mevki</Text>
-          <Text style={styles.tileValue}>{player.position}</Text>
-        </View>
-        <View style={[styles.tile, { backgroundColor: getBgColor(comparison.age) }]}>
-          <Text style={styles.tileLabel}>Yaş</Text>
-          <Text style={styles.tileValue}>
-            {player.age ? `${player.age}${getAgeIndicator(comparison.age)}` : '-'}
-          </Text>
-        </View>
+        <AnimatedAttributeTile
+          label="Kulüp"
+          value={player.club}
+          status={comparison.club}
+          delay={0}
+        />
+        <AnimatedAttributeTile
+          label="Lig"
+          value={player.league}
+          status={comparison.league}
+          delay={80}
+        />
+        <AnimatedAttributeTile
+          label="Uyruk"
+          value={player.nationality}
+          status={comparison.nationality}
+          delay={160}
+        />
+        <AnimatedAttributeTile
+          label="Mevki"
+          value={player.position}
+          status={comparison.position}
+          delay={240}
+        />
+        <AnimatedAttributeTile
+          label="Yaş"
+          value={ageText}
+          status={comparison.age}
+          delay={320}
+        />
       </View>
     </View>
   );
@@ -98,28 +98,5 @@ const styles = StyleSheet.create({
   tilesGrid: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: 4,
-  },
-  tile: {
-    flex: 1,
-    paddingVertical: Spacing.xs,
-    paddingHorizontal: 2,
-    borderRadius: BorderRadius.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 46,
-  },
-  tileLabel: {
-    fontSize: 9,
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontWeight: '600',
-    textTransform: 'uppercase',
-  },
-  tileValue: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    marginTop: 2,
-    textAlign: 'center',
   },
 });

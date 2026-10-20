@@ -1,9 +1,51 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, Animated } from 'react-native';
 import { ICareerPathGuess } from '../types';
 import { Colors } from '../../../theme/colors';
 import { Spacing, BorderRadius } from '../../../theme/spacing';
 import { Typography } from '../../../theme/typography';
+
+interface ICareerGuessRowProps {
+  guess: ICareerPathGuess;
+}
+
+const CareerGuessRow: React.FC<ICareerGuessRowProps> = React.memo(({ guess }) => {
+  const anim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.spring(anim, {
+      toValue: 1,
+      tension: 60,
+      friction: 8,
+      useNativeDriver: true,
+    }).start();
+  }, [anim]);
+
+  const translateY = anim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [12, 0],
+  });
+
+  return (
+    <Animated.View
+      style={[
+        styles.guessRow,
+        guess.isCorrect ? styles.correctRow : styles.wrongRow,
+        {
+          opacity: anim,
+          transform: [{ translateY }],
+        },
+      ]}
+    >
+      <Text style={styles.guessName}>
+        {guess.isCorrect ? '✅ ' : '❌ '}
+        {guess.playerName} ({guess.club})
+      </Text>
+    </Animated.View>
+  );
+});
+
+CareerGuessRow.displayName = 'CareerGuessRow';
 
 interface ICareerGuessHistoryProps {
   guesses: ICareerPathGuess[];
@@ -16,15 +58,7 @@ export const CareerGuessHistory: React.FC<ICareerGuessHistoryProps> = React.memo
     <View style={styles.guessHistory}>
       <Text style={styles.historyTitle}>Yapılan Tahminler:</Text>
       {guesses.map((g, idx) => (
-        <View
-          key={`${g.playerId}_${idx}`}
-          style={[styles.guessRow, g.isCorrect ? styles.correctRow : styles.wrongRow]}
-        >
-          <Text style={styles.guessName}>
-            {g.isCorrect ? '✅ ' : '❌ '}
-            {g.playerName} ({g.club})
-          </Text>
-        </View>
+        <CareerGuessRow key={`${g.playerId}_${idx}`} guess={g} />
       ))}
     </View>
   );

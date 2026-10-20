@@ -1,6 +1,7 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { IWhoAreYaGuess, GameStatus, IGuessAttributeComparison } from '../types';
 import { ILightPlayer, searchEngine } from '../../../services/searchEngine';
+import { hapticsService } from '../../../services/hapticsService';
 import { useGameStore } from '../../../stores/useGameStore';
 
 interface IUseWhoAreYaGameProps {
@@ -124,6 +125,7 @@ export const useWhoAreYaGame = ({
       setGuesses(nextGuesses);
 
       if (evaluated.isTarget) {
+        hapticsService.success();
         setGameStatus('won');
 
         if (!isReplay) {
@@ -138,7 +140,10 @@ export const useWhoAreYaGame = ({
 
         onWin?.();
       } else if (nextGuesses.length >= maxAttempts) {
+        hapticsService.error();
         setGameStatus('lost');
+      } else {
+        hapticsService.warning();
       }
     },
     [

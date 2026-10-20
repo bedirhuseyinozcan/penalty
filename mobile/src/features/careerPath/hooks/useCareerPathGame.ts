@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { ICareerPathGuess } from '../types';
 import { ILightPlayer } from '../../../services/searchEngine';
+import { hapticsService } from '../../../services/hapticsService';
 import { useGameStore } from '../../../stores/useGameStore';
 
 interface IUseCareerPathGameProps {
@@ -65,6 +66,7 @@ export const useCareerPathGame = ({
       setGuesses(updated);
 
       if (isCorrect) {
+        hapticsService.success();
         setGameStatus('won');
 
         if (!isReplay) {
@@ -79,7 +81,10 @@ export const useCareerPathGame = ({
 
         onWin?.();
       } else if (updated.length >= maxAttempts) {
+        hapticsService.error();
         setGameStatus('lost');
+      } else {
+        hapticsService.warning();
       }
     },
     [

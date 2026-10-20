@@ -1,5 +1,5 @@
-import React from 'react';
-import { Modal, View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { Modal, View, Text, StyleSheet, TouchableOpacity, Image, Animated } from 'react-native';
 import { Colors } from '../../../theme/colors';
 import { Spacing, BorderRadius } from '../../../theme/spacing';
 import { Typography } from '../../../theme/typography';
@@ -33,11 +33,41 @@ export const WhoAreYaWinModal: React.FC<IWhoAreYaWinModalProps> = React.memo(
     onClose,
   }) => {
     const isWon = status === 'won';
+    const scaleAnim = useRef(new Animated.Value(0.85)).current;
+    const opacityAnim = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+      if (visible) {
+        scaleAnim.setValue(0.85);
+        opacityAnim.setValue(0);
+        Animated.parallel([
+          Animated.spring(scaleAnim, {
+            toValue: 1,
+            friction: 7,
+            tension: 55,
+            useNativeDriver: true,
+          }),
+          Animated.timing(opacityAnim, {
+            toValue: 1,
+            duration: 220,
+            useNativeDriver: true,
+          }),
+        ]).start();
+      }
+    }, [visible, scaleAnim, opacityAnim]);
 
     return (
       <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
         <View style={styles.overlay}>
-          <View style={styles.card}>
+          <Animated.View
+            style={[
+              styles.card,
+              {
+                opacity: opacityAnim,
+                transform: [{ scale: scaleAnim }],
+              },
+            ]}
+          >
             <Text style={styles.titleIcon}>{isWon ? '🏆' : '💔'}</Text>
             <Text style={styles.title}>{isWon ? 'TEBRİKLER!' : 'MAALESEF BİLEMEDİNİZ'}</Text>
             {finalImageUrl ? (
@@ -77,7 +107,7 @@ export const WhoAreYaWinModal: React.FC<IWhoAreYaWinModalProps> = React.memo(
                 <Text style={styles.secondaryBtnText}>Kapat</Text>
               </TouchableOpacity>
             </View>
-          </View>
+          </Animated.View>
         </View>
       </Modal>
     );
@@ -111,41 +141,49 @@ const styles = StyleSheet.create({
   title: {
     ...Typography.h2,
     color: Colors.textPrimary,
+    textAlign: 'center',
     marginBottom: Spacing.md,
   },
   image: {
-    width: 120,
-    height: 120,
-    borderRadius: BorderRadius.full,
+    width: 110,
+    height: 110,
+    borderRadius: 55,
     borderWidth: 3,
     borderColor: Colors.primary,
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.md,
+    backgroundColor: Colors.surfaceLight,
   },
   playerName: {
-    ...Typography.h2,
+    ...Typography.h3,
     color: Colors.textPrimary,
+    textAlign: 'center',
   },
   clubName: {
-    ...Typography.body,
+    ...Typography.caption,
     color: Colors.textSecondary,
     marginBottom: Spacing.md,
+    textAlign: 'center',
   },
   statsBox: {
-    width: '100%',
     backgroundColor: Colors.surfaceLight,
     padding: Spacing.md,
     borderRadius: BorderRadius.md,
+    width: '100%',
     alignItems: 'center',
     marginBottom: Spacing.lg,
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
   statsText: {
-    ...Typography.bodyBold,
+    ...Typography.body,
     color: Colors.textPrimary,
+    textAlign: 'center',
+    marginBottom: 4,
   },
   rewardText: {
     ...Typography.bodyBold,
     color: Colors.accent,
-    marginTop: Spacing.xs,
+    textAlign: 'center',
   },
   buttonRow: {
     width: '100%',
@@ -156,31 +194,35 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
     borderRadius: BorderRadius.md,
     alignItems: 'center',
+    width: '100%',
   },
   primaryBtnText: {
     ...Typography.bodyBold,
     color: '#FFFFFF',
+    fontSize: 16,
   },
   mapBtn: {
     backgroundColor: Colors.surfaceLight,
-    paddingVertical: Spacing.md,
+    paddingVertical: Spacing.sm,
     borderRadius: BorderRadius.md,
     alignItems: 'center',
+    width: '100%',
     borderWidth: 1,
     borderColor: Colors.border,
   },
   mapBtnText: {
     ...Typography.bodyBold,
-    color: Colors.accent,
+    color: Colors.textPrimary,
   },
   secondaryBtn: {
-    backgroundColor: Colors.surfaceLight,
-    paddingVertical: Spacing.sm,
+    backgroundColor: 'transparent',
+    paddingVertical: Spacing.xs,
     borderRadius: BorderRadius.md,
     alignItems: 'center',
+    width: '100%',
   },
   secondaryBtnText: {
-    ...Typography.body,
-    color: Colors.textSecondary,
+    ...Typography.caption,
+    color: Colors.textMuted,
   },
 });
