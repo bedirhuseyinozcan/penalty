@@ -17,7 +17,8 @@ include_names = (
 exclude_dirs = {
     'node_modules', '.expo', '.git', '.github', 
     'dist', 'build', '.vscode', '.idea', 'kaggle', 
-    'blurred', 'web-build'
+    'blurred', 'web-build', 'tm_live_cache', 'transfermarkt_raw',
+    'data', 'assets'
 }
 
 # İçeriği DEVASA veri setleri veya anlamsız olan, kod okumasında atlanacak dosyalar
@@ -27,7 +28,10 @@ exclude_files = {
     'package-lock.json',
     'tsconfig.tsbuildinfo',
     'search-index.json',  # 250 KB'lık devasa arama indeksi txt'yi şişirmemesi için atlanır
-    '.env'  # Güvenlik için gerçek gizli anahtarlar atlanır
+    'clubs_meta_26_27.json',
+    'transfer_histories_26_27.json',
+    '.env',  # Güvenlik için gerçek gizli anahtarlar atlanır
+    '.env.local'
 }
 
 def generate_file_tree(startpath):
