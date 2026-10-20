@@ -2,12 +2,20 @@ import { useState, useMemo, useCallback } from 'react';
 import { useGameStore } from '../../../stores/useGameStore';
 import { useSettingsStore } from '../../../stores/useSettingsStore';
 import { hapticsService } from '../../../services/hapticsService';
+import { GameModeType } from '../../../api/dailyApi';
 import { ILevelItem, LevelStatus } from '../types';
 
 export const TOTAL_LEVELS = 50;
 
+const GAME_META: Record<GameModeType, { title: string; emoji: string }> = {
+  whoAreYa: { title: 'Kim Bu Yıldız?', emoji: '🕵️‍♂️' },
+  careerPath: { title: 'Transfer Rotası', emoji: '🧭' },
+  clubLogo: { title: 'Arma Avcısı', emoji: '🛡️' },
+  contextinho: { title: 'Sıcak Temas', emoji: '🔥' },
+};
+
 interface IUseLevelMapProps {
-  gameMode: 'whoAreYa' | 'careerPath';
+  gameMode: GameModeType;
   onSelectLevel: (levelNumber: number, isReplay: boolean) => void;
 }
 
@@ -25,10 +33,10 @@ export const useLevelMap = ({ gameMode, onSelectLevel }: IUseLevelMapProps) => {
   }, [gameMode, selectedLeagueMode, getUnlockedLevel]);
 
   const isSuperLig = selectedLeagueMode === 'super_lig';
-  const isWhoAreYa = gameMode === 'whoAreYa';
+  const meta = GAME_META[gameMode] || GAME_META.whoAreYa;
 
-  const gameTitle = isWhoAreYa ? 'Kim Bu Yıldız?' : 'Transfer Rotası';
-  const gameEmoji = isWhoAreYa ? '🕵️‍♂️' : '🧭';
+  const gameTitle = meta.title;
+  const gameEmoji = meta.emoji;
   const leagueLabel = isSuperLig ? '🇹🇷 Süper Lig' : '🌍 5 Büyük Lig (Global)';
 
   const completedCount = Math.max(0, unlockedLevel - 1);

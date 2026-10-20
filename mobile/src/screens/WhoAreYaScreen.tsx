@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   SafeAreaView,
   View,
@@ -17,6 +17,7 @@ import { DailyHeaderCard } from '../features/daily/components/DailyHeaderCard';
 import { DailyCompletedBanner } from '../features/daily/components/DailyCompletedBanner';
 import { GameNavbar } from '../components/common/GameNavbar';
 import { useChallengeDataLoader } from '../hooks/useChallengeDataLoader';
+import { searchEngine } from '../services/searchEngine';
 import { Colors } from '../theme/colors';
 import { Spacing } from '../theme/spacing';
 import { Typography } from '../theme/typography';
@@ -50,8 +51,23 @@ export const WhoAreYaScreen: React.FC<IWhoAreYaScreenProps> = React.memo(
     const [hintUnlocked, setHintUnlocked] = useState(false);
     const [isResultModalVisible, setIsResultModalVisible] = useState(false);
 
-    const targetPlayerId = challengeData?.targetPlayerId ?? 'tmid_12345';
+    const targetPlayerId = challengeData?.targetPlayerId ?? 'tmid_382528';
     const blurImages = challengeData?.blurImages ?? [];
+
+    const targetPlayerInfo = useMemo(
+      () => searchEngine.getPlayerById(targetPlayerId),
+      [targetPlayerId]
+    );
+
+    const dynamicHintText = useMemo(() => {
+      if (targetPlayerInfo) {
+        return `İpucu Açıldı: Mevki ${targetPlayerInfo.position} • Yaş ${targetPlayerInfo.age ?? '?'} • ${targetPlayerInfo.nationality}`;
+      }
+      if (challengeData?.hints && challengeData.hints.length > 0) {
+        return `İpucu Açıldı: ${challengeData.hints[0]}`;
+      }
+      return `İpucu Açıldı: Kulüp — ${challengeData?.playerClub || 'Bilinmiyor'}`;
+    }, [targetPlayerInfo, challengeData]);
 
     const {
       guesses,
@@ -121,7 +137,7 @@ export const WhoAreYaScreen: React.FC<IWhoAreYaScreenProps> = React.memo(
           <HintWithAdButton
             hintTitle="Mevki ve Yaş İpucu"
             isUnlocked={hintUnlocked}
-            unlockedText="İpucu Açıldı: Santrafor (CF), 30+ Yaşında"
+            unlockedText={dynamicHintText}
             onHintUnlocked={() => setHintUnlocked(true)}
           />
         </View>
@@ -154,37 +170,24 @@ export const WhoAreYaScreen: React.FC<IWhoAreYaScreenProps> = React.memo(
         <WhoAreYaWinModal
           visible={isResultModalVisible}
           status={gameStatus === 'won' ? 'won' : 'lost'}
-          playerName={challengeData?.playerName || 'Yıldız Futbolcu'}
-          playerClub={challengeData?.playerClub || 'Süper Lig'}
+          playerName={challengeData?.playerName || targetPlayerInfo?.name || 'Yıldız Futbolcu'}
+          playerClub={challengeData?.playerClub || targetPlayerInfo?.club || 'Süper Lig'}
           finalImageUrl={challengeData?.imageUrl || blurImages[blurImages.length - 1]}
           rewardCoins={isCurrentReplay ? 0 : 30}
           attemptsUsed={guesses.length}
           maxAttempts={maxAttempts}
-          onClose={() => {
+          onOpenMap={!isDaily ? onOpenMap : undefined}
+          onNextLevel={() => {
             setIsResultModalVisible(false);
-            if (!isDaily) {
-              resetGame();
+            setHintUnlocked(false);
+            resetGame();
+            if (isDaily) {
               onBack();
+            } else {
+              goToNextLevel();
             }
           }}
-          onOpenMap={
-            !isDaily && onOpenMap
-              ? () => {
-                  setIsResultModalVisible(false);
-                  resetGame();
-                  onOpenMap();
-                }
-              : undefined
-          }
-          onNextLevel={
-            !isDaily
-              ? () => {
-                  setIsResultModalVisible(false);
-                  resetGame();
-                  goToNextLevel();
-                }
-              : undefined
-          }
+          onClose={() => setIsResultModalVisible(false)}
         />
       </SafeAreaView>
     );
@@ -201,21 +204,21 @@ const styles = StyleSheet.create({
   centerContainer: {
     flex: 1,
     backgroundColor: Colors.background,
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
   },
   loadingText: {
     ...Typography.body,
     color: Colors.textSecondary,
-    marginTop: Spacing.sm,
+    marginTop: Spacing.md,
   },
   hintContainer: {
     paddingHorizontal: Spacing.md,
-    marginTop: Spacing.sm,
   },
   historyContainer: {
     flex: 1,
-    marginTop: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    paddingTop: Spacing.xs,
   },
   bottomBar: {
     padding: Spacing.md,
@@ -226,12 +229,12 @@ const styles = StyleSheet.create({
   guessBtn: {
     backgroundColor: Colors.primary,
     paddingVertical: Spacing.md,
-    borderRadius: 8,
+    borderRadius: 12,
     alignItems: 'center',
   },
   guessBtnText: {
     ...Typography.bodyBold,
-    color: '#FFFFFF',
+    color: Colors.background,
     fontSize: 16,
   },
 });

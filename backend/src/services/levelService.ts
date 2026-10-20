@@ -1,4 +1,4 @@
-import { LevelModel, ILevel } from '../models/Level';
+import { LevelModel } from '../models/Level';
 import { PlayerModel } from '../models/Player';
 import { GameMode, LeagueMode } from '../config/constants';
 import { AppError } from '../middlewares/errorHandler';
@@ -36,20 +36,48 @@ export class LevelService {
     const level = await LevelModel.findOne({ levelNumber, gameMode, leagueMode }).lean();
     let player: any = null;
 
-    if (level) {
+    if (level && gameMode !== 'clubLogo') {
       player = await PlayerModel.findOne({ playerId: level.playerId }).lean();
     }
 
-    if (!player) {
-      const leagueFilter =
-        leagueMode === 'super_lig'
-          ? { 'currentClub.league': 'super_lig' }
-          : { 'currentClub.league': { $ne: 'super_lig' } };
+    const leagueFilter =
+      leagueMode === 'super_lig'
+        ? { 'currentClub.league': 'super_lig' }
+        : { 'currentClub.league': { $ne: 'super_lig' } };
 
-      const count = await PlayerModel.countDocuments({ isActive: true, ...leagueFilter });
-      if (count > 0) {
-        const skipIndex = Math.max(0, (levelNumber - 1) % count);
-        player = await PlayerModel.findOne({ isActive: true, ...leagueFilter }).skip(skipIndex).lean();
+    if (!player) {
+      if (gameMode === 'clubLogo') {
+        const stars = await PlayerModel.find({ isActive: true, ...leagueFilter })
+          .sort({ marketValueEur: -1 })
+          .select('playerId name currentClub nationality position age originalImageUrl')
+          .lean();
+
+        const uniqueClubRepresentatives: any[] = [];
+        const seenClubs = new Set<string>();
+        for (const p of stars) {
+          const cid = p.currentClub?.id || p.currentClub?.name;
+          if (cid && !seenClubs.has(cid)) {
+            seenClubs.add(cid);
+            uniqueClubRepresentatives.push(p);
+          }
+        }
+
+        if (uniqueClubRepresentatives.length > 0) {
+          const idx = Math.max(0, (levelNumber - 1) % uniqueClubRepresentatives.length);
+          player = uniqueClubRepresentatives[idx];
+        }
+      } else {
+        const topPoolSize = 250;
+        const stars = await PlayerModel.find({ isActive: true, ...leagueFilter })
+          .sort({ marketValueEur: -1 })
+          .limit(topPoolSize)
+          .lean();
+
+        if (stars.length > 0) {
+          const offset = gameMode === 'contextinho' ? 17 : gameMode === 'careerPath' ? 7 : 0;
+          const skipIndex = Math.max(0, (levelNumber - 1 + offset) % stars.length);
+          player = stars[skipIndex];
+        }
       }
     }
 
@@ -64,15 +92,22 @@ export class LevelService {
       targetPlayerId: player.playerId,
       playerName: player.name,
       playerClub: player.currentClub.name,
-      rewardCoins: level ? level.rewardCoins : (gameMode === 'careerPath' ? 35 : 30),
-      rewardXp: level ? level.rewardXp : (gameMode === 'careerPath' ? 60 : 50),
+      rewardCoins: level ? level.rewardCoins : gameMode === 'careerPath' || gameMode === 'contextinho' ? 35 : 30,
+      rewardXp: level ? level.rewardXp : gameMode === 'careerPath' || gameMode === 'contextinho' ? 60 : 50,
       hints: level ? level.hints : [`${player.nationality} - ${player.position}`],
     };
 
-    if (gameMode === 'whoAreYa') {
+    if (gameMode === 'whoAreYa' || gameMode === 'contextinho') {
       response.blurImages = player.blurImages;
       response.initialBlurImageUrl = player.blurImages?.[0] || player.originalImageUrl;
       response.imageUrl = player.originalImageUrl;
+    } else if (gameMode === 'clubLogo') {
+      const logoUrl =
+        player.currentClub?.logoUrl ||
+        `https://tmssl.akamaized.net/images/wappen/head/${player.currentClub?.id || '36'}.png`;
+      response.imageUrl = logoUrl;
+      response.initialBlurImageUrl = logoUrl;
+      response.hints = [`Kadrodaki Yıldız: ${player.name} (${player.position})`];
     } else if (gameMode === 'careerPath') {
       response.careerPath = fixAndOrderCareerPath(
         player.careerPath,
@@ -91,7 +126,10 @@ export class LevelService {
     guessedPlayerId: string
   ): Promise<{ isCorrect: boolean; rewardCoins: number; rewardXp: number; targetPlayerId?: string }> {
     const levelData = await this.getLevel(levelNumber, gameMode, leagueMode);
-    const isCorrect = levelData.targetPlayerId === guessedPlayerId;
+    const isCorrect =
+      levelData.targetPlayerId === guessedPlayerId ||
+      (gameMode === 'clubLogo' &&
+        levelData.playerClub.toLowerCase() === guessedPlayerId.toLowerCase());
 
     return {
       isCorrect,
@@ -124,6 +162,8 @@ export class LevelService {
         : { 'currentClub.league': { $ne: 'super_lig' } };
 
     const activePlayers = await PlayerModel.find({ isActive: true, ...leagueFilter })
+      .sort({ marketValueEur: -1 })
+      .limit(300)
       .select('playerId name currentClub nationality position age careerPath blurImages originalImageUrl')
       .lean();
 
@@ -135,20 +175,34 @@ export class LevelService {
     activePlayers.forEach((p) => playerMap.set(p.playerId, p));
     explicitPlayers.forEach((p) => playerMap.set(p.playerId, p));
 
+    let pool = activePlayers;
+    if (gameMode === 'clubLogo') {
+      const seenClubs = new Set<string>();
+      pool = [];
+      for (const p of activePlayers) {
+        const cid = p.currentClub?.id || p.currentClub?.name;
+        if (cid && !seenClubs.has(cid)) {
+          seenClubs.add(cid);
+          pool.push(p);
+        }
+      }
+    }
+
     const result: ILevelClientResponse[] = [];
-    const playerCount = activePlayers.length;
+    const poolCount = pool.length;
 
     for (let lvl = fromLevel; lvl <= toLevel; lvl++) {
       const explicitLevel = explicitLevelMap.get(lvl);
       let player: any = null;
 
-      if (explicitLevel) {
+      if (explicitLevel && gameMode !== 'clubLogo') {
         player = playerMap.get(explicitLevel.playerId);
       }
 
-      if (!player && playerCount > 0) {
-        const skipIndex = Math.max(0, (lvl - 1) % playerCount);
-        player = activePlayers[skipIndex];
+      if (!player && poolCount > 0) {
+        const offset = gameMode === 'contextinho' ? 17 : gameMode === 'careerPath' ? 7 : 0;
+        const skipIndex = Math.max(0, (lvl - 1 + offset) % poolCount);
+        player = pool[skipIndex];
       }
 
       if (!player) continue;
@@ -160,15 +214,22 @@ export class LevelService {
         targetPlayerId: player.playerId,
         playerName: player.name,
         playerClub: player.currentClub?.name || '',
-        rewardCoins: explicitLevel ? explicitLevel.rewardCoins : (gameMode === 'careerPath' ? 35 : 30),
-        rewardXp: explicitLevel ? explicitLevel.rewardXp : (gameMode === 'careerPath' ? 60 : 50),
+        rewardCoins: explicitLevel ? explicitLevel.rewardCoins : gameMode === 'careerPath' || gameMode === 'contextinho' ? 35 : 30,
+        rewardXp: explicitLevel ? explicitLevel.rewardXp : gameMode === 'careerPath' || gameMode === 'contextinho' ? 60 : 50,
         hints: explicitLevel ? explicitLevel.hints : [`${player.nationality} - ${player.position}`],
       };
 
-      if (gameMode === 'whoAreYa') {
+      if (gameMode === 'whoAreYa' || gameMode === 'contextinho') {
         item.blurImages = player.blurImages || [];
         item.initialBlurImageUrl = player.blurImages?.[0] || player.originalImageUrl;
         item.imageUrl = player.originalImageUrl;
+      } else if (gameMode === 'clubLogo') {
+        const logoUrl =
+          player.currentClub?.logoUrl ||
+          `https://tmssl.akamaized.net/images/wappen/head/${player.currentClub?.id || '36'}.png`;
+        item.imageUrl = logoUrl;
+        item.initialBlurImageUrl = logoUrl;
+        item.hints = [`Kadrodaki Yıldız: ${player.name} (${player.position})`];
       } else if (gameMode === 'careerPath') {
         item.careerPath = fixAndOrderCareerPath(
           player.careerPath,

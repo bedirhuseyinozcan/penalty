@@ -7,9 +7,10 @@ import { connectDatabase } from '../config/db';
 export async function exportSearchIndex(): Promise<void> {
   await connectDatabase();
 
-  console.log('📦 Generating lightweight search index (~350KB)...');
+  console.log('📦 Generating lightweight search index...');
 
   const players = await PlayerModel.find({ isActive: true })
+    .sort({ marketValueEur: -1 })
     .select('playerId name nationality position currentClub leagues age shirtNumber')
     .lean();
 
@@ -19,6 +20,7 @@ export async function exportSearchIndex(): Promise<void> {
     nationality: p.nationality,
     position: p.position,
     club: p.currentClub.name,
+    clubId: p.currentClub.id,
     league: p.currentClub.league,
     age: p.age,
     shirtNumber: p.shirtNumber,

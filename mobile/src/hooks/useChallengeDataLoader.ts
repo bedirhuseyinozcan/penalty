@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { dailyApi } from '../api/dailyApi';
+import { dailyApi, GameModeType } from '../api/dailyApi';
 import { levelApi } from '../api/levelApi';
 import { levelCacheService } from '../services/levelCacheService';
 import { useSettingsStore } from '../stores/useSettingsStore';
@@ -11,6 +11,7 @@ export interface IUnifiedChallengeData {
   playerClub?: string;
   imageUrl?: string;
   blurImages?: string[];
+  hints?: string[];
   careerPath?: Array<{
     clubName: string;
     clubLogoUrl?: string;
@@ -23,7 +24,7 @@ export interface IUnifiedChallengeData {
 }
 
 interface IUseChallengeDataLoaderProps {
-  gameMode: 'whoAreYa' | 'careerPath';
+  gameMode: GameModeType;
   isDaily?: boolean;
   initialLevel?: number;
   isReplay?: boolean;
@@ -71,6 +72,7 @@ export const useChallengeDataLoader = ({
           playerClub: cached.playerClub,
           imageUrl: cached.imageUrl || cached.initialBlurImageUrl,
           blurImages: cached.blurImages || [],
+          hints: cached.hints || [],
           careerPath: cached.careerPath || [],
         });
         setIsLoading(false);
@@ -101,6 +103,7 @@ export const useChallengeDataLoader = ({
           playerClub: data.playerClub,
           imageUrl: data.imageUrl || data.initialBlurImageUrl,
           blurImages: data.blurImages || [],
+          hints: data.hints || [],
           careerPath: data.careerPath || [],
         });
 
@@ -116,26 +119,21 @@ export const useChallengeDataLoader = ({
         }
       }
     } catch {
-    
-      if (!isDaily) {
-        const fallback = levelCacheService.getLevel(currentLevel, gameMode, selectedLeagueMode);
-        if (fallback) {
-          setChallengeData({
-            targetPlayerId: fallback.targetPlayerId || `level_${currentLevel}`,
-            playerName: fallback.playerName,
-            playerClub: fallback.playerClub,
-            imageUrl: fallback.imageUrl || fallback.initialBlurImageUrl,
-            blurImages: fallback.blurImages || [],
-            careerPath: fallback.careerPath || [],
-          });
-        }
-      } else {
-       
+      const fallback = levelCacheService.getLevel(
+        isDaily ? 1 : currentLevel,
+        gameMode,
+        selectedLeagueMode
+      );
+      if (fallback) {
         setChallengeData({
-          targetPlayerId: selectedLeagueMode === 'super_lig' ? 'tmid_68863' : 'tmid_418560',
-          playerName: selectedLeagueMode === 'super_lig' ? 'Mauro Icardi' : 'Erling Haaland',
-          playerClub: selectedLeagueMode === 'super_lig' ? 'Galatasaray' : 'Manchester City',
-          dailyKey,
+          targetPlayerId: fallback.targetPlayerId || `level_${currentLevel}`,
+          playerName: fallback.playerName,
+          playerClub: fallback.playerClub,
+          imageUrl: fallback.imageUrl || fallback.initialBlurImageUrl,
+          blurImages: fallback.blurImages || [],
+          hints: fallback.hints || [],
+          careerPath: fallback.careerPath || [],
+          dailyKey: isDaily ? dailyKey : undefined,
         });
       }
     } finally {
@@ -148,8 +146,8 @@ export const useChallengeDataLoader = ({
   }, [loadData]);
 
   const goToNextLevel = useCallback(() => {
-    setIsCurrentReplay(false);
     setCurrentLevel((prev) => prev + 1);
+    setIsCurrentReplay(false);
   }, []);
 
   return {
@@ -160,7 +158,6 @@ export const useChallengeDataLoader = ({
     dailyKey,
     alreadyCompleted,
     selectedLeagueMode,
-    reload: loadData,
     goToNextLevel,
   };
 };

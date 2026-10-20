@@ -7,7 +7,7 @@ const router = Router();
 
 const verifyLevelSchema = z.object({
   body: z.object({
-    gameMode: z.enum(['whoAreYa', 'careerPath']),
+    gameMode: z.enum(['whoAreYa', 'careerPath', 'clubLogo', 'contextinho']),
     leagueMode: z.enum(['global', 'super_lig']),
     guessedPlayerId: z.string().min(1, 'guessedPlayerId is required'),
   }),

@@ -15,7 +15,12 @@ export interface ILevel extends Document {
 const LevelSchema = new Schema<ILevel>(
   {
     levelNumber: { type: Number, required: true, index: true },
-    gameMode: { type: String, required: true, enum: ['whoAreYa', 'careerPath'], index: true },
+    gameMode: {
+      type: String,
+      required: true,
+      enum: ['whoAreYa', 'careerPath', 'clubLogo', 'contextinho'],
+      index: true,
+    },
     leagueMode: { type: String, required: true, enum: ['global', 'super_lig'], index: true },
     playerId: { type: String, required: true },
     playerRef: { type: Schema.Types.ObjectId, ref: 'Player', required: true },

@@ -1,14 +1,15 @@
 import React, { useState, useEffect, Component, ErrorInfo, ReactNode } from 'react';
 import { View, StyleSheet, StatusBar, Text, TouchableOpacity } from 'react-native';
 import { registerRootComponent } from 'expo';
-import { HomeScreen } from './src/screens/HomeScreen';
+import { HomeScreen, AppScreenType } from './src/screens/HomeScreen';
 import { WhoAreYaScreen } from './src/screens/WhoAreYaScreen';
 import { CareerPathScreen } from './src/screens/CareerPathScreen';
+import { ClubLogoScreen } from './src/screens/ClubLogoScreen';
+import { ContextinhoScreen } from './src/screens/ContextinhoScreen';
 import { LevelMapScreen } from './src/screens/LevelMapScreen';
+import { GameModeType } from './src/api/dailyApi';
 import { searchEngine } from './src/services/searchEngine';
 import { Colors } from './src/theme/colors';
-
-type ScreenType = 'home' | 'levelMap' | 'whoAreYa' | 'careerPath';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -55,9 +56,9 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
 }
 
 function App() {
-  const [currentScreen, setCurrentScreen] = useState<ScreenType>('home');
+  const [currentScreen, setCurrentScreen] = useState<AppScreenType>('home');
   const [isDailySelected, setIsDailySelected] = useState<boolean>(false);
-  const [activeGameMode, setActiveGameMode] = useState<'whoAreYa' | 'careerPath'>('whoAreYa');
+  const [activeGameMode, setActiveGameMode] = useState<GameModeType>('whoAreYa');
   const [selectedLevel, setSelectedLevel] = useState<number | undefined>(undefined);
   const [isReplayMode, setIsReplayMode] = useState<boolean>(false);
 
@@ -70,15 +71,20 @@ function App() {
   }, []);
 
   const handleNavigate = (
-    screen: ScreenType,
+    screen: AppScreenType,
     isDaily = false,
-    gameMode?: 'whoAreYa' | 'careerPath'
+    gameMode?: GameModeType
   ) => {
     setIsDailySelected(isDaily);
     if (gameMode) {
       setActiveGameMode(gameMode);
     }
-    if (screen === 'whoAreYa' || screen === 'careerPath') {
+    if (
+      screen === 'whoAreYa' ||
+      screen === 'careerPath' ||
+      screen === 'clubLogo' ||
+      screen === 'contextinho'
+    ) {
       setSelectedLevel(undefined);
       setIsReplayMode(false);
     }
@@ -139,6 +145,24 @@ function App() {
               onOpenMap={handleOpenMapFromGame}
             />
           )}
+          {currentScreen === 'clubLogo' && (
+            <ClubLogoScreen
+              isDaily={isDailySelected}
+              initialLevel={selectedLevel}
+              isReplay={isReplayMode}
+              onBack={handleBackFromGame}
+              onOpenMap={handleOpenMapFromGame}
+            />
+          )}
+          {currentScreen === 'contextinho' && (
+            <ContextinhoScreen
+              isDaily={isDailySelected}
+              initialLevel={selectedLevel}
+              isReplay={isReplayMode}
+              onBack={handleBackFromGame}
+              onOpenMap={handleOpenMapFromGame}
+            />
+          )}
         </View>
       </View>
     </ErrorBoundary>
@@ -148,18 +172,14 @@ function App() {
 const styles = StyleSheet.create({
   outerWrapper: {
     flex: 1,
-    backgroundColor: '#05070A', 
+    backgroundColor: '#050811',
     alignItems: 'center',
-    justifyContent: 'center',
-    width: '100%',
-    height: '100%',
   },
   container: {
     flex: 1,
     width: '100%',
-    maxWidth: 480, 
+    maxWidth: 480,
     backgroundColor: Colors.background,
-    height: '100%',
   },
   errorContainer: {
     flex: 1,
@@ -167,10 +187,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 24,
-    height: '100%',
   },
   errorEmoji: {
-    fontSize: 56,
+    fontSize: 48,
     marginBottom: 16,
   },
   errorTitle: {
@@ -180,7 +199,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   errorDetails: {
-    fontSize: 14,
+    fontSize: 13,
     color: Colors.textSecondary,
     textAlign: 'center',
     marginBottom: 24,
@@ -189,15 +208,14 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary,
     paddingHorizontal: 24,
     paddingVertical: 12,
-    borderRadius: 8,
+    borderRadius: 12,
   },
   resetBtnText: {
-    color: '#FFFFFF',
+    color: '#0F172A',
     fontWeight: '700',
-    fontSize: 16,
+    fontSize: 15,
   },
 });
 
-registerRootComponent(App);
-
 export default App;
+registerRootComponent(App);

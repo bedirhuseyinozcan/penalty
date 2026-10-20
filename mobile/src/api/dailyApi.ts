@@ -1,9 +1,11 @@
 import { apiClient } from './client';
 
+export type GameModeType = 'whoAreYa' | 'careerPath' | 'clubLogo' | 'contextinho';
+
 export interface IDailyChallengeData {
   id: string;
   date: string;
-  gameMode: 'whoAreYa' | 'careerPath';
+  gameMode: GameModeType;
   leagueMode: 'global' | 'super_lig';
   difficulty: string;
   targetPlayerId: string;
@@ -25,7 +27,7 @@ export interface IDailyChallengeData {
 
 export const dailyApi = {
   getTodayChallenge: async (
-    gameMode: 'whoAreYa' | 'careerPath',
+    gameMode: GameModeType,
     leagueMode: 'global' | 'super_lig'
   ): Promise<IDailyChallengeData> => {
     const res = await apiClient.get('/daily/today', {

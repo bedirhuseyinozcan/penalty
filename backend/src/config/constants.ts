@@ -25,6 +25,8 @@ export const ALL_LEAGUES: SupportedLeague[] = [
 export const GAME_MODES = {
   WHO_ARE_YA: 'whoAreYa',
   CAREER_PATH: 'careerPath',
+  CLUB_LOGO: 'clubLogo',
+  CONTEXTINHO: 'contextinho',
 } as const;
 
 export type GameMode = (typeof GAME_MODES)[keyof typeof GAME_MODES];

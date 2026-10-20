@@ -1,4 +1,4 @@
-import { DailyChallengeModel, IDailyChallenge } from '../models/DailyChallenge';
+import { DailyChallengeModel } from '../models/DailyChallenge';
 import { PlayerModel } from '../models/Player';
 import { GameMode, LeagueMode } from '../config/constants';
 import { AppError } from '../middlewares/errorHandler';
@@ -15,7 +15,7 @@ export interface IDailyChallengeClientResponse {
   playerClub: string;
   imageUrl?: string;
   initialBlurImageUrl?: string;
-  blurImages?: string[]; 
+  blurImages?: string[];
   careerPath?: Array<{
     clubName: string;
     clubLogoUrl?: string;
@@ -32,6 +32,7 @@ export class DailyChallengeService {
     const now = new Date();
     return now.toISOString().split('T')[0];
   }
+
   public async getTodayChallenge(
     gameMode: GameMode,
     leagueMode: LeagueMode
@@ -48,7 +49,7 @@ export class DailyChallengeService {
     let challengeId = `auto_${today}_${gameMode}_${leagueMode}`;
     let difficulty = 'medium';
 
-    if (challenge) {
+    if (challenge && gameMode !== 'clubLogo') {
       player = await PlayerModel.findOne({ playerId: challenge.playerId }).lean();
       challengeId = (challenge._id as unknown as string).toString();
       difficulty = challenge.difficulty;
@@ -61,18 +62,33 @@ export class DailyChallengeService {
           : { 'currentClub.league': { $ne: 'super_lig' } };
 
       const activePlayers = await PlayerModel.find({ isActive: true, ...leagueFilter })
+        .sort({ marketValueEur: -1 })
+        .limit(180)
         .select('playerId name currentClub nationality position age careerPath blurImages originalImageUrl')
         .lean();
 
-      if (activePlayers.length > 0) {
+      let pool = activePlayers;
+      if (gameMode === 'clubLogo') {
+        const seenClubs = new Set<string>();
+        pool = [];
+        for (const p of activePlayers) {
+          const cid = p.currentClub?.id || p.currentClub?.name;
+          if (cid && !seenClubs.has(cid)) {
+            seenClubs.add(cid);
+            pool.push(p);
+          }
+        }
+      }
+
+      if (pool.length > 0) {
         let hash = 0;
         const seedStr = `${today}_${gameMode}_${leagueMode}`;
         for (let i = 0; i < seedStr.length; i++) {
           hash = (hash << 5) - hash + seedStr.charCodeAt(i);
           hash |= 0;
         }
-        const index = Math.abs(hash) % activePlayers.length;
-        player = activePlayers[index];
+        const index = Math.abs(hash) % pool.length;
+        player = pool[index];
       }
     }
 
@@ -95,10 +111,16 @@ export class DailyChallengeService {
       serverUtcTime: new Date().toISOString(),
     };
 
-    if (gameMode === 'whoAreYa') {
+    if (gameMode === 'whoAreYa' || gameMode === 'contextinho') {
       response.blurImages = player.blurImages;
       response.initialBlurImageUrl = player.blurImages?.[0] || player.originalImageUrl;
       response.imageUrl = player.originalImageUrl;
+    } else if (gameMode === 'clubLogo') {
+      const logoUrl =
+        player.currentClub?.logoUrl ||
+        `https://tmssl.akamaized.net/images/wappen/head/${player.currentClub?.id || '36'}.png`;
+      response.imageUrl = logoUrl;
+      response.initialBlurImageUrl = logoUrl;
     } else if (gameMode === 'careerPath') {
       response.careerPath = fixAndOrderCareerPath(
         player.careerPath,

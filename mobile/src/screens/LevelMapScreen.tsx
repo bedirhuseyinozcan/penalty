@@ -6,11 +6,12 @@ import { LevelMapHeader } from '../features/levelMap/components/LevelMapHeader';
 import { LevelGridCard } from '../features/levelMap/components/LevelGridCard';
 import { LevelReplayModal } from '../features/levelMap/components/LevelReplayModal';
 import { LevelLockedModal } from '../features/levelMap/components/LevelLockedModal';
+import { GameModeType } from '../api/dailyApi';
 import { Colors } from '../theme/colors';
 import { Spacing } from '../theme/spacing';
 
 interface ILevelMapScreenProps {
-  gameMode: 'whoAreYa' | 'careerPath';
+  gameMode: GameModeType;
   onSelectLevel: (levelNumber: number, isReplay: boolean) => void;
   onBack: () => void;
 }

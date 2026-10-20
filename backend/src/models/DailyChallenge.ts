@@ -6,7 +6,7 @@ export interface IDailyChallenge extends Document {
   gameMode: GameMode;
   leagueMode: LeagueMode;
   playerId: string;
-  playerRef: Types.ObjectId; 
+  playerRef: Types.ObjectId;
   hints: string[];
   difficulty: 'easy' | 'medium' | 'hard';
   createdAt: Date;
@@ -24,7 +24,7 @@ const DailyChallengeSchema = new Schema<IDailyChallenge>(
     gameMode: {
       type: String,
       required: true,
-      enum: ['whoAreYa', 'careerPath'],
+      enum: ['whoAreYa', 'careerPath', 'clubLogo', 'contextinho'],
       index: true,
     },
     leagueMode: {

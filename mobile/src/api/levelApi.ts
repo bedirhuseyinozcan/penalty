@@ -1,8 +1,9 @@
 import { apiClient } from './client';
+import { GameModeType } from './dailyApi';
 
 export interface ILevelData {
   levelNumber: number;
-  gameMode: 'whoAreYa' | 'careerPath';
+  gameMode: GameModeType;
   leagueMode: 'global' | 'super_lig';
   rewardCoins: number;
   rewardXp: number;
@@ -26,7 +27,7 @@ export interface ILevelData {
 export const levelApi = {
   getLevel: async (
     levelNumber: number,
-    gameMode: 'whoAreYa' | 'careerPath',
+    gameMode: GameModeType,
     leagueMode: 'global' | 'super_lig'
   ): Promise<ILevelData> => {
     const res = await apiClient.get(`/levels/${levelNumber}`, {
@@ -37,7 +38,7 @@ export const levelApi = {
 
   verifyLevel: async (
     levelNumber: number,
-    gameMode: 'whoAreYa' | 'careerPath',
+    gameMode: GameModeType,
     leagueMode: 'global' | 'super_lig',
     guessedPlayerId: string
   ): Promise<{ isCorrect: boolean; rewardCoins: number; rewardXp: number; targetPlayerId?: string }> => {
@@ -50,7 +51,7 @@ export const levelApi = {
   },
 
   getLevelPack: async (
-    gameMode: 'whoAreYa' | 'careerPath',
+    gameMode: GameModeType,
     leagueMode: 'global' | 'super_lig',
     from = 1,
     to = 50
