@@ -115,31 +115,72 @@ export class LevelService {
       .sort({ levelNumber: 1 })
       .lean();
 
-    const playerIds = levels.map((l) => l.playerId);
-    const players = await PlayerModel.find({ playerId: { $in: playerIds } }).lean();
-    const playerMap = new Map(players.map((p) => [p.playerId, p]));
+    const explicitLevelMap = new Map(levels.map((l) => [l.levelNumber, l]));
+    const explicitPlayerIds = levels.map((l) => l.playerId);
 
-    return levels.map((l) => {
-      const p = playerMap.get(l.playerId);
-      return {
-        levelNumber: l.levelNumber,
-        gameMode: l.gameMode,
-        leagueMode: l.leagueMode,
-        targetPlayerId: l.playerId,
-        playerName: p?.name || '',
-        playerClub: p?.currentClub?.name || '',
-        rewardCoins: l.rewardCoins,
-        rewardXp: l.rewardXp,
-        hints: l.hints,
-        blurImages: l.gameMode === 'whoAreYa' ? p?.blurImages : undefined,
-        imageUrl: l.gameMode === 'whoAreYa' ? p?.originalImageUrl : undefined,
-        initialBlurImageUrl: l.gameMode === 'whoAreYa' ? p?.blurImages?.[0] || p?.originalImageUrl : undefined,
-        careerPath:
-          l.gameMode === 'careerPath'
-            ? fixAndOrderCareerPath(p?.careerPath, p?.currentClub?.name, p?.age)
-            : undefined,
+    const leagueFilter =
+      leagueMode === 'super_lig'
+        ? { 'currentClub.league': 'super_lig' }
+        : { 'currentClub.league': { $ne: 'super_lig' } };
+
+    const activePlayers = await PlayerModel.find({ isActive: true, ...leagueFilter })
+      .select('playerId name currentClub nationality position age careerPath blurImages originalImageUrl')
+      .lean();
+
+    const explicitPlayers = await PlayerModel.find({ playerId: { $in: explicitPlayerIds } })
+      .select('playerId name currentClub nationality position age careerPath blurImages originalImageUrl')
+      .lean();
+
+    const playerMap = new Map<string, any>();
+    activePlayers.forEach((p) => playerMap.set(p.playerId, p));
+    explicitPlayers.forEach((p) => playerMap.set(p.playerId, p));
+
+    const result: ILevelClientResponse[] = [];
+    const playerCount = activePlayers.length;
+
+    for (let lvl = fromLevel; lvl <= toLevel; lvl++) {
+      const explicitLevel = explicitLevelMap.get(lvl);
+      let player: any = null;
+
+      if (explicitLevel) {
+        player = playerMap.get(explicitLevel.playerId);
+      }
+
+      if (!player && playerCount > 0) {
+        const skipIndex = Math.max(0, (lvl - 1) % playerCount);
+        player = activePlayers[skipIndex];
+      }
+
+      if (!player) continue;
+
+      const item: ILevelClientResponse = {
+        levelNumber: lvl,
+        gameMode,
+        leagueMode,
+        targetPlayerId: player.playerId,
+        playerName: player.name,
+        playerClub: player.currentClub?.name || '',
+        rewardCoins: explicitLevel ? explicitLevel.rewardCoins : (gameMode === 'careerPath' ? 35 : 30),
+        rewardXp: explicitLevel ? explicitLevel.rewardXp : (gameMode === 'careerPath' ? 60 : 50),
+        hints: explicitLevel ? explicitLevel.hints : [`${player.nationality} - ${player.position}`],
       };
-    });
+
+      if (gameMode === 'whoAreYa') {
+        item.blurImages = player.blurImages || [];
+        item.initialBlurImageUrl = player.blurImages?.[0] || player.originalImageUrl;
+        item.imageUrl = player.originalImageUrl;
+      } else if (gameMode === 'careerPath') {
+        item.careerPath = fixAndOrderCareerPath(
+          player.careerPath,
+          player.currentClub?.name,
+          player.age
+        );
+      }
+
+      result.push(item);
+    }
+
+    return result;
   }
 }
 

@@ -137,4 +137,5 @@ export const StorageKeys = {
   SOUND_ENABLED: 'penalty_sound_enabled',
   HAPTICS_ENABLED: 'penalty_haptics_enabled',
   DAILY_COMPLETED_PREFIX: 'penalty_daily_completed_',
+  LEVEL_CACHE_PREFIX: 'penalty_level_cache_',
 } as const;
