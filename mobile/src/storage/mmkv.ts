@@ -22,11 +22,16 @@ class UniversalStorage implements IAppStorage {
       return;
     }
 
+    const globalAny = globalThis as any;
     const isExpoGo =
+      Boolean(globalAny?.expo?.modules?.ExpoGo) ||
       Boolean(NativeModules?.NativeUnimoduleProxy?.modulesConstants?.ExponentConstants?.appOwnership === 'expo') ||
       Boolean(NativeModules?.ExponentConstants?.appOwnership === 'expo');
 
-    if (isExpoGo) {
+    const hasNativeMMKV =
+      Boolean(NativeModules?.MMKVNative) || typeof globalAny?.mmkvCreateNewInstance === 'function';
+
+    if (isExpoGo || !hasNativeMMKV) {
       return;
     }
 

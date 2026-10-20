@@ -1,10 +1,23 @@
 import axios from 'axios';
-import { Platform } from 'react-native';
+import { Platform, NativeModules } from 'react-native';
 
-const DEFAULT_BASE_URL =
-  Platform.OS === 'android'
-    ? 'http://10.0.2.2:5000/api/v1'
-    : 'http://localhost:5000/api/v1';
+function resolveBaseUrl(): string {
+  if (Platform.OS === 'web') {
+    return 'http://localhost:5000/api/v1';
+  }
+
+  const scriptURL: string | undefined = NativeModules?.SourceCode?.scriptURL;
+  if (scriptURL) {
+    const match = scriptURL.match(/^https?:\/\/(\d+\.\d+\.\d+\.\d+):\d+/);
+    if (match?.[1] && match[1] !== '127.0.0.1') {
+      return `http://${match[1]}:5000/api/v1`;
+    }
+  }
+
+  return 'http://192.168.1.3:5000/api/v1';
+}
+
+const DEFAULT_BASE_URL = resolveBaseUrl();
 
 export const apiClient = axios.create({
   baseURL: DEFAULT_BASE_URL,
