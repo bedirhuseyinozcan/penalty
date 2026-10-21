@@ -264,9 +264,11 @@ export const ContextinhoScreen: React.FC<IContextinhoScreenProps> = React.memo(
           playerName={challengeData?.playerName || targetPlayerInfo?.name || 'Gizli Yıldız'}
           playerClub={challengeData?.playerClub || targetPlayerInfo?.club || ''}
           finalImageUrl={challengeData?.imageUrl}
-          rewardCoins={isCurrentReplay ? 0 : 35}
+          rewardCoins={isCurrentReplay ? 0 : isDaily ? 35 : 25}
           attemptsUsed={guesses.length}
           maxAttempts={maxAttempts}
+          leagueLabel={selectedLeagueMode === 'super_lig' ? 'Süper Lig' : 'Global 5 Lig'}
+          isDaily={isDaily}
           onOpenMap={!isDaily ? onOpenMap : undefined}
           onNextLevel={() => {
             setIsResultModalVisible(false);

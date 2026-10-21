@@ -93,18 +93,29 @@ export const WhoAreYaWinModal: React.FC<IWhoAreYaWinModalProps> = React.memo(
 
     const handleShare = useCallback(async () => {
       hapticsService.selection();
-      const success = await shareService.shareWhoAreYa({
-        isWon,
-        attemptsUsed,
-        maxAttempts,
-        currentStreak,
-        guesses,
-        leagueLabel,
-      });
+      let success = false;
+      if (guesses && guesses.length > 0) {
+        success = await shareService.shareWhoAreYa({
+          isWon,
+          attemptsUsed,
+          maxAttempts,
+          currentStreak,
+          guesses,
+          leagueLabel,
+        });
+      } else {
+        success = await shareService.shareGeneral({
+          gameTitle: playerName,
+          isWon,
+          attemptsUsed,
+          maxAttempts,
+          currentStreak,
+        });
+      }
       if (success) {
         setHasShared(true);
       }
-    }, [isWon, attemptsUsed, maxAttempts, currentStreak, guesses, leagueLabel]);
+    }, [isWon, attemptsUsed, maxAttempts, currentStreak, guesses, leagueLabel, playerName]);
 
     const handleReviveWithCoins = useCallback(() => {
       if (!onRevive) return;

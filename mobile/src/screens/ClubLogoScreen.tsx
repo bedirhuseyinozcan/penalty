@@ -251,9 +251,11 @@ export const ClubLogoScreen: React.FC<IClubLogoScreenProps> = React.memo(
           playerName={targetClubName}
           playerClub={`Yıldız: ${challengeData?.playerName || targetClubInfo?.starPlayer || ''}`}
           finalImageUrl={logoUrl}
-          rewardCoins={isCurrentReplay ? 0 : 30}
+          rewardCoins={isCurrentReplay ? 0 : isDaily ? 30 : 20}
           attemptsUsed={guesses.length}
           maxAttempts={maxAttempts}
+          leagueLabel={selectedLeagueMode === 'super_lig' ? 'Süper Lig' : 'Global 5 Lig'}
+          isDaily={isDaily}
           onOpenMap={!isDaily ? onOpenMap : undefined}
           onNextLevel={() => {
             setIsResultModalVisible(false);
