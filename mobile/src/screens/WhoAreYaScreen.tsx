@@ -173,7 +173,7 @@ export const WhoAreYaScreen: React.FC<IWhoAreYaScreenProps> = React.memo(
 
         <WhoAreYaWinModal
           visible={isResultModalVisible}
-          status={gameStatus === 'won' ? 'won' : 'lost'}
+          status={gameStatus === 'lost' ? 'lost' : 'won'}
           playerName={challengeData?.playerName || targetPlayerInfo?.name || 'Yıldız Futbolcu'}
           playerClub={challengeData?.playerClub || targetPlayerInfo?.club || 'Süper Lig'}
           finalImageUrl={challengeData?.imageUrl || blurImages[blurImages.length - 1]}
@@ -195,10 +195,10 @@ export const WhoAreYaScreen: React.FC<IWhoAreYaScreenProps> = React.memo(
           onNextLevel={() => {
             setIsResultModalVisible(false);
             setHintUnlocked(false);
-            resetGame();
             if (isDaily) {
               onBack();
             } else {
+              resetGame();
               goToNextLevel();
             }
           }}

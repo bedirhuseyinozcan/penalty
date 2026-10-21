@@ -171,7 +171,7 @@ export const CareerPathScreen: React.FC<ICareerPathScreenProps> = React.memo(
 
         <WhoAreYaWinModal
           visible={isResultModalVisible}
-          status={gameStatus === 'won' ? 'won' : 'lost'}
+          status={gameStatus === 'lost' ? 'lost' : 'won'}
           playerName={challengeData?.playerName || targetPlayerInfo?.name || 'Yıldız Futbolcu'}
           playerClub={challengeData?.playerClub || targetPlayerInfo?.club || 'Süper Lig'}
           finalImageUrl={challengeData?.imageUrl}
@@ -184,10 +184,10 @@ export const CareerPathScreen: React.FC<ICareerPathScreenProps> = React.memo(
           onNextLevel={() => {
             setIsResultModalVisible(false);
             setHintUnlocked(false);
-            resetGame();
             if (isDaily) {
               onBack();
             } else {
+              resetGame();
               goToNextLevel();
             }
           }}

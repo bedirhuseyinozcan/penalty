@@ -179,7 +179,7 @@ export const TicTacToeScreen: React.FC<ITicTacToeScreenProps> = React.memo(
 
         <WhoAreYaWinModal
           visible={isResultModalVisible}
-          status={gameStatus === 'won' ? 'won' : 'lost'}
+          status={gameStatus === 'lost' ? 'lost' : 'won'}
           playerName="Tiki-Taka (3x3)"
           playerClub={`${filledCount}/9 Hücre Tamamlandı`}
           rewardCoins={isCurrentReplay ? 0 : isDaily ? 35 : 25}
@@ -200,10 +200,10 @@ export const TicTacToeScreen: React.FC<ITicTacToeScreenProps> = React.memo(
             setIsResultModalVisible(false);
             setHintUnlocked(false);
             setHintText('');
-            resetGame();
             if (isDaily) {
               onBack();
             } else {
+              resetGame();
               goToNextLevel();
             }
           }}

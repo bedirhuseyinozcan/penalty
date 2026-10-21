@@ -150,4 +150,6 @@ export const StorageKeys = {
   GAME_STATS: 'penalty_game_stats',
   SERVER_TIME_OFFSET_MS: 'penalty_server_time_offset_ms',
   LAST_SERVER_UTC_DATE: 'penalty_last_server_utc_date',
+  UNLOCKED_COSMETICS: 'penalty_unlocked_cosmetics',
+  EQUIPPED_COSMETIC_ID: 'penalty_equipped_cosmetic_id',
 } as const;

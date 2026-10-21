@@ -260,7 +260,7 @@ export const ContextinhoScreen: React.FC<IContextinhoScreenProps> = React.memo(
 
         <WhoAreYaWinModal
           visible={isResultModalVisible}
-          status={gameStatus === 'won' ? 'won' : 'lost'}
+          status={gameStatus === 'lost' ? 'lost' : 'won'}
           playerName={challengeData?.playerName || targetPlayerInfo?.name || 'Gizli Yıldız'}
           playerClub={challengeData?.playerClub || targetPlayerInfo?.club || ''}
           finalImageUrl={challengeData?.imageUrl}
@@ -274,10 +274,10 @@ export const ContextinhoScreen: React.FC<IContextinhoScreenProps> = React.memo(
             setIsResultModalVisible(false);
             setHintUnlocked(false);
             setHintText('');
-            resetGame();
             if (isDaily) {
               onBack();
             } else {
+              resetGame();
               goToNextLevel();
             }
           }}

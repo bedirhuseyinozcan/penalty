@@ -36,6 +36,19 @@ interface IWhoAreYaWinModalProps {
   onRevive?: () => void;
 }
 
+interface IModalDisplayData {
+  status: 'won' | 'lost';
+  playerName: string;
+  playerClub: string;
+  finalImageUrl?: string;
+  rewardCoins: number;
+  attemptsUsed: number;
+  maxAttempts: number;
+  guesses: IWhoAreYaGuess[];
+  leagueLabel?: string;
+  isDaily: boolean;
+}
+
 export const WhoAreYaWinModal: React.FC<IWhoAreYaWinModalProps> = React.memo(
   ({
     visible,
@@ -54,7 +67,8 @@ export const WhoAreYaWinModal: React.FC<IWhoAreYaWinModalProps> = React.memo(
     onClose,
     onRevive,
   }) => {
-    const isWon = status === 'won';
+    const [frozenData, setFrozenData] = useState<IModalDisplayData | null>(null);
+
     const scaleAnim = useRef(new Animated.Value(0.85)).current;
     const opacityAnim = useRef(new Animated.Value(0)).current;
 
@@ -71,6 +85,18 @@ export const WhoAreYaWinModal: React.FC<IWhoAreYaWinModalProps> = React.memo(
 
     useEffect(() => {
       if (visible) {
+        setFrozenData({
+          status,
+          playerName,
+          playerClub,
+          finalImageUrl,
+          rewardCoins,
+          attemptsUsed,
+          maxAttempts,
+          guesses,
+          leagueLabel,
+          isDaily,
+        });
         setHasShared(false);
         setIsDoubled(false);
         scaleAnim.setValue(0.85);
@@ -88,34 +114,64 @@ export const WhoAreYaWinModal: React.FC<IWhoAreYaWinModalProps> = React.memo(
             useNativeDriver: true,
           }),
         ]).start();
+      } else {
+        
+        const timer = setTimeout(() => {
+          setFrozenData(null);
+        }, 350);
+        return () => clearTimeout(timer);
       }
-    }, [visible, scaleAnim, opacityAnim]);
+    }, [visible]);
+
+    const activeData: IModalDisplayData = frozenData ?? {
+      status,
+      playerName,
+      playerClub,
+      finalImageUrl,
+      rewardCoins,
+      attemptsUsed,
+      maxAttempts,
+      guesses,
+      leagueLabel,
+      isDaily,
+    };
+
+    const isWon = activeData.status === 'won';
+    const displayName = activeData.playerName;
+    const displayClub = activeData.playerClub;
+    const displayImage = activeData.finalImageUrl;
+    const displayAttemptsUsed = activeData.attemptsUsed;
+    const displayMaxAttempts = activeData.maxAttempts;
+    const displayRewardCoins = activeData.rewardCoins;
+    const displayIsDaily = activeData.isDaily;
+    const displayGuesses = activeData.guesses;
+    const displayLeagueLabel = activeData.leagueLabel;
 
     const handleShare = useCallback(async () => {
       hapticsService.selection();
       let success = false;
-      if (guesses && guesses.length > 0) {
+      if (displayGuesses && displayGuesses.length > 0) {
         success = await shareService.shareWhoAreYa({
           isWon,
-          attemptsUsed,
-          maxAttempts,
+          attemptsUsed: displayAttemptsUsed,
+          maxAttempts: displayMaxAttempts,
           currentStreak,
-          guesses,
-          leagueLabel,
+          guesses: displayGuesses,
+          leagueLabel: displayLeagueLabel,
         });
       } else {
         success = await shareService.shareGeneral({
-          gameTitle: playerName,
+          gameTitle: displayName,
           isWon,
-          attemptsUsed,
-          maxAttempts,
+          attemptsUsed: displayAttemptsUsed,
+          maxAttempts: displayMaxAttempts,
           currentStreak,
         });
       }
       if (success) {
         setHasShared(true);
       }
-    }, [isWon, attemptsUsed, maxAttempts, currentStreak, guesses, leagueLabel, playerName]);
+    }, [isWon, displayAttemptsUsed, displayMaxAttempts, currentStreak, displayGuesses, displayLeagueLabel, displayName]);
 
     const handleReviveWithCoins = useCallback(() => {
       if (!onRevive) return;
@@ -179,22 +235,22 @@ export const WhoAreYaWinModal: React.FC<IWhoAreYaWinModalProps> = React.memo(
             <Text style={styles.titleIcon}>{isWon ? '🏆' : '💔'}</Text>
             <Text style={styles.title}>{isWon ? 'TEBRİKLER!' : 'MAALESEF BİLEMEDİNİZ'}</Text>
 
-            {finalImageUrl ? (
-              <Image source={{ uri: finalImageUrl }} style={styles.image} resizeMode="cover" />
+            {displayImage ? (
+              <Image source={{ uri: displayImage }} style={styles.image} resizeMode="cover" />
             ) : null}
 
-            <Text style={styles.playerName}>{playerName}</Text>
-            <Text style={styles.clubName}>{playerClub}</Text>
+            <Text style={styles.playerName}>{displayName}</Text>
+            <Text style={styles.clubName}>{displayClub}</Text>
 
             <View style={styles.statsBox}>
               <Text style={styles.statsText}>
                 {isWon
-                  ? `${attemptsUsed}/${maxAttempts} tahminde bildiniz!`
-                  : `Tüm haklarınızı (${maxAttempts}/${maxAttempts}) kullandınız.`}
+                  ? `${displayAttemptsUsed}/${displayMaxAttempts} tahminde bildiniz!`
+                  : `Tüm haklarınızı (${displayMaxAttempts}/${displayMaxAttempts}) kullandınız.`}
               </Text>
               {isWon && (
                 <Text style={styles.rewardText}>
-                  {rewardCoins > 0 ? `+${rewardCoins} Altın Kazandınız 🪙` : '⭐ Seviye Tekrarı (Ödül Yok)'}
+                  {displayRewardCoins > 0 ? `+${displayRewardCoins} Altın Kazandınız 🪙` : '⭐ Seviye Tekrarı (Ödül Yok)'}
                 </Text>
               )}
             </View>
@@ -225,7 +281,7 @@ export const WhoAreYaWinModal: React.FC<IWhoAreYaWinModalProps> = React.memo(
               </View>
             )}
 
-            {isWon && isDaily && (
+            {isWon && displayIsDaily && (
               <TouchableOpacity
                 style={[styles.doubleRewardBtn, isDoubled && styles.doubleRewardDone]}
                 activeOpacity={0.8}

@@ -14,6 +14,8 @@ import { getAuthoritativeUtcDate } from '../services/authoritativeTime';
 import { getRankByXp } from '../features/stats/utils/rankUtils';
 import { HomeGameCard } from '../features/home/components/HomeGameCard';
 import { PlayerStatsModal } from '../features/stats/components/PlayerStatsModal';
+import { ScoutShopModal } from '../features/shop/components/ScoutShopModal';
+import { getCosmeticById } from '../features/shop/catalog';
 import { GameModeType } from '../api/dailyApi';
 import { Colors } from '../theme/colors';
 import { Spacing, BorderRadius } from '../theme/spacing';
@@ -46,6 +48,13 @@ export const HomeScreen: React.FC<IHomeScreenProps> = React.memo(({ onNavigate }
   const setLeagueMode = useSettingsStore((s) => s.setLeagueMode);
 
   const [isStatsModalVisible, setIsStatsModalVisible] = useState(false);
+  const [isShopModalVisible, setIsShopModalVisible] = useState(false);
+
+  const equippedCosmeticId = useGameStore((s) => s.equippedCosmeticId);
+  const equippedCosmetic = useMemo(
+    () => getCosmeticById(equippedCosmeticId),
+    [equippedCosmeticId]
+  );
 
   const isSuperLig = selectedLeagueMode === 'super_lig';
 
@@ -87,9 +96,13 @@ export const HomeScreen: React.FC<IHomeScreenProps> = React.memo(({ onNavigate }
               <Text style={styles.currencyText}>🪙 {coins}</Text>
             </View>
 
-            <View style={[styles.currencyBadge, styles.xpBadge]}>
-              <Text style={styles.xpText}>⚡ {xp} XP</Text>
-            </View>
+            <TouchableOpacity
+              style={[styles.currencyBadge, styles.shopBtn]}
+              activeOpacity={0.8}
+              onPress={() => setIsShopModalVisible(true)}
+            >
+              <Text style={styles.shopBtnText}>🛍️ Dükkan</Text>
+            </TouchableOpacity>
 
             <TouchableOpacity
               style={[styles.currencyBadge, styles.statsBtn]}
@@ -102,15 +115,51 @@ export const HomeScreen: React.FC<IHomeScreenProps> = React.memo(({ onNavigate }
         </View>
 
         <TouchableOpacity
-          style={styles.rankCard}
+          style={[
+            styles.rankCard,
+            { borderColor: equippedCosmetic.frameBorderColor },
+          ]}
           activeOpacity={0.85}
           onPress={() => setIsStatsModalVisible(true)}
         >
           <View style={styles.rankHeader}>
             <View style={styles.rankTitleCol}>
-              <Text style={styles.rankBadgeEmoji}>{rankInfo.badge}</Text>
-              <View>
-                <Text style={styles.rankTitle}>{rankInfo.title}</Text>
+              <View
+                style={[
+                  styles.equippedAvatarCircle,
+                  {
+                    borderColor: equippedCosmetic.frameBorderColor,
+                    shadowColor: equippedCosmetic.frameBorderColor,
+                  },
+                ]}
+              >
+                <Text style={styles.equippedAvatarEmoji}>{equippedCosmetic.avatarEmoji}</Text>
+              </View>
+
+              <View style={{ flex: 1 }}>
+                <View style={styles.rankBadgeRow}>
+                  <Text style={styles.rankTitle}>{rankInfo.title}</Text>
+                  <View
+                    style={[
+                      styles.cosmeticTitlePill,
+                      { backgroundColor: equippedCosmetic.themeGlowColor },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.cosmeticTitleText,
+                        {
+                          color:
+                            equippedCosmetic.frameBorderColor === '#FFFFFF'
+                              ? '#FBBF24'
+                              : equippedCosmetic.frameBorderColor,
+                        },
+                      ]}
+                    >
+                      {equippedCosmetic.titleBadge}
+                    </Text>
+                  </View>
+                </View>
                 <Text style={styles.rankSub}>
                   {rankInfo.tier === 4
                     ? 'Zirve Rütbe • Efsane Direktör'
@@ -214,6 +263,11 @@ export const HomeScreen: React.FC<IHomeScreenProps> = React.memo(({ onNavigate }
         visible={isStatsModalVisible}
         onClose={() => setIsStatsModalVisible(false)}
       />
+
+      <ScoutShopModal
+        visible={isShopModalVisible}
+        onClose={() => setIsShopModalVisible(false)}
+      />
     </SafeAreaView>
   );
 });
@@ -285,6 +339,46 @@ const styles = StyleSheet.create({
   },
   statsIconText: {
     fontSize: 14,
+  },
+  shopBtn: {
+    borderColor: Colors.accent,
+    backgroundColor: 'rgba(234, 179, 8, 0.15)',
+  },
+  shopBtnText: {
+    ...Typography.bodyBold,
+    color: Colors.accent,
+    fontSize: 12,
+  },
+  equippedAvatarCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 2.5,
+    backgroundColor: Colors.surfaceLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.6,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  equippedAvatarEmoji: {
+    fontSize: 22,
+  },
+  rankBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+  },
+  cosmeticTitlePill: {
+    paddingVertical: 1,
+    paddingHorizontal: 6,
+    borderRadius: BorderRadius.xs,
+  },
+  cosmeticTitleText: {
+    fontSize: 9,
+    fontWeight: '800',
+    textTransform: 'uppercase',
   },
   rankCard: {
     backgroundColor: Colors.surface,

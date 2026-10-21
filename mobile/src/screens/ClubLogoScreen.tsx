@@ -247,7 +247,7 @@ export const ClubLogoScreen: React.FC<IClubLogoScreenProps> = React.memo(
 
         <WhoAreYaWinModal
           visible={isResultModalVisible}
-          status={gameStatus === 'won' ? 'won' : 'lost'}
+          status={gameStatus === 'lost' ? 'lost' : 'won'}
           playerName={targetClubName}
           playerClub={`Yıldız: ${challengeData?.playerName || targetClubInfo?.starPlayer || ''}`}
           finalImageUrl={logoUrl}
@@ -260,10 +260,10 @@ export const ClubLogoScreen: React.FC<IClubLogoScreenProps> = React.memo(
           onNextLevel={() => {
             setIsResultModalVisible(false);
             setHintUnlocked(false);
-            resetGame();
             if (isDaily) {
               onBack();
             } else {
+              resetGame();
               goToNextLevel();
             }
           }}

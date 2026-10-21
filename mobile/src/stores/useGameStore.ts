@@ -19,8 +19,9 @@ interface IGameStore {
   gamesPlayed: number;
   gamesWon: number;
   guessDistribution: Record<number, number>;
+  unlockedCosmetics: string[];
+  equippedCosmeticId: string;
 
-  // Actions
   addCoins: (amount: number) => void;
   spendCoins: (amount: number) => boolean;
   addXp: (amount: number) => void;
@@ -34,6 +35,9 @@ interface IGameStore {
   clearDailyCompleted: (dailyKey: string) => void;
   isDailyCompleted: (dailyKey: string) => boolean;
   recordGameResult: (isWon: boolean, attemptsUsed: number) => void;
+  unlockCosmetic: (id: string, cost: number) => boolean;
+  equipCosmetic: (id: string) => void;
+  isCosmeticUnlocked: (id: string) => boolean;
 }
 
 const loadInitialCoins = (): number => {
@@ -42,6 +46,21 @@ const loadInitialCoins = (): number => {
 
 const loadInitialXp = (): number => {
   return appStorage.getNumber(StorageKeys.USER_XP) ?? 0;
+};
+
+const loadInitialUnlockedCosmetics = (): string[] => {
+  const data = appStorage.getString(StorageKeys.UNLOCKED_COSMETICS);
+  if (data) {
+    try {
+      const parsed = JSON.parse(data);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    } catch {}
+  }
+  return ['avatar_default'];
+};
+
+const loadInitialEquippedCosmetic = (): string => {
+  return appStorage.getString(StorageKeys.EQUIPPED_COSMETIC_ID) || 'avatar_default';
 };
 
 const loadInitialLevels = (): Record<string, number> => {
@@ -83,6 +102,8 @@ export const useGameStore = create<IGameStore>((set, get) => ({
   gamesPlayed: initialStats.gamesPlayed,
   gamesWon: initialStats.gamesWon,
   guessDistribution: initialStats.guessDistribution,
+  unlockedCosmetics: loadInitialUnlockedCosmetics(),
+  equippedCosmeticId: loadInitialEquippedCosmetic(),
 
   addCoins: (amount: number) => {
     set((state) => {
@@ -232,5 +253,40 @@ export const useGameStore = create<IGameStore>((set, get) => ({
 
       return nextStats;
     });
+  },
+
+  unlockCosmetic: (id: string, cost: number) => {
+    const { coins, unlockedCosmetics, spendCoins } = get();
+    if (unlockedCosmetics.includes(id)) {
+      get().equipCosmetic(id);
+      return true;
+    }
+    if (coins < cost) return false;
+
+    const spent = spendCoins(cost);
+    if (!spent) return false;
+
+    const nextList = [...unlockedCosmetics, id];
+    appStorage.set(StorageKeys.UNLOCKED_COSMETICS, JSON.stringify(nextList));
+    appStorage.set(StorageKeys.EQUIPPED_COSMETIC_ID, id);
+
+    set({
+      unlockedCosmetics: nextList,
+      equippedCosmeticId: id,
+    });
+    return true;
+  },
+
+  equipCosmetic: (id: string) => {
+    const { unlockedCosmetics } = get();
+    if (!unlockedCosmetics.includes(id) && id !== 'avatar_default') return;
+
+    appStorage.set(StorageKeys.EQUIPPED_COSMETIC_ID, id);
+    set({ equippedCosmeticId: id });
+  },
+
+  isCosmeticUnlocked: (id: string) => {
+    if (id === 'avatar_default') return true;
+    return get().unlockedCosmetics.includes(id);
   },
 }));

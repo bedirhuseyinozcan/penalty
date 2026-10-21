@@ -1,7 +1,9 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, Text, Modal, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { useGameStore } from '../../../stores/useGameStore';
 import { getRankByXp } from '../utils/rankUtils';
+import { getCosmeticById } from '../../shop/catalog';
+import { ScoutShopModal } from '../../shop/components/ScoutShopModal';
 import { Colors } from '../../../theme/colors';
 import { Spacing, BorderRadius } from '../../../theme/spacing';
 import { Typography } from '../../../theme/typography';
@@ -25,6 +27,10 @@ export const PlayerStatsModal: React.FC<IPlayerStatsModalProps> = React.memo(
     const distValues = Object.values(guessDistribution);
     const maxDist = Math.max(1, ...distValues);
 
+    const [isShopModalVisible, setIsShopModalVisible] = useState(false);
+    const equippedCosmeticId = useGameStore((s) => s.equippedCosmeticId);
+    const equippedCosmetic = useMemo(() => getCosmeticById(equippedCosmeticId), [equippedCosmeticId]);
+
     const attemptsList = useMemo(() => {
       const attemptsWithWins = Object.entries(guessDistribution)
         .filter(([_, count]) => (count || 0) > 0)
@@ -46,11 +52,49 @@ export const PlayerStatsModal: React.FC<IPlayerStatsModalProps> = React.memo(
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
-              <View style={styles.rankModalCard}>
+              <View
+                style={[
+                  styles.rankModalCard,
+                  { borderColor: equippedCosmetic.frameBorderColor },
+                ]}
+              >
                 <View style={styles.rankModalHeader}>
-                  <Text style={styles.rankModalBadge}>{rankInfo.badge}</Text>
+                  <View
+                    style={[
+                      styles.avatarBox,
+                      {
+                        borderColor: equippedCosmetic.frameBorderColor,
+                        shadowColor: equippedCosmetic.frameBorderColor,
+                      },
+                    ]}
+                  >
+                    <Text style={styles.avatarEmojiText}>{equippedCosmetic.avatarEmoji}</Text>
+                  </View>
+
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.rankModalTitle}>{rankInfo.title}</Text>
+                    <View style={styles.rankBadgeRow}>
+                      <Text style={styles.rankModalTitle}>{rankInfo.title}</Text>
+                      <View
+                        style={[
+                          styles.titlePill,
+                          { backgroundColor: equippedCosmetic.themeGlowColor },
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.titlePillText,
+                            {
+                              color:
+                                equippedCosmetic.frameBorderColor === '#FFFFFF'
+                                  ? '#FBBF24'
+                                  : equippedCosmetic.frameBorderColor,
+                            },
+                          ]}
+                        >
+                          {equippedCosmetic.titleBadge}
+                        </Text>
+                      </View>
+                    </View>
                     <Text style={styles.rankModalSubtitle}>
                       {xp} Toplam XP •{' '}
                       {rankInfo.tier === 4
@@ -68,6 +112,16 @@ export const PlayerStatsModal: React.FC<IPlayerStatsModalProps> = React.memo(
                     ]}
                   />
                 </View>
+
+                <TouchableOpacity
+                  style={styles.shopShortcutBtn}
+                  activeOpacity={0.8}
+                  onPress={() => setIsShopModalVisible(true)}
+                >
+                  <Text style={styles.shopShortcutBtnText}>
+                    🛍️ Scout & Taraftar Dükkanı • Çerçeve Değiştir
+                  </Text>
+                </TouchableOpacity>
               </View>
 
               {/* 4 KPI Cards */}
@@ -136,6 +190,11 @@ export const PlayerStatsModal: React.FC<IPlayerStatsModalProps> = React.memo(
             </TouchableOpacity>
           </View>
         </View>
+
+        <ScoutShopModal
+          visible={isShopModalVisible}
+          onClose={() => setIsShopModalVisible(false)}
+        />
       </Modal>
     );
   }
@@ -203,6 +262,49 @@ const styles = StyleSheet.create({
     ...Typography.bodyBold,
     color: Colors.textPrimary,
     fontSize: 14,
+  },
+  avatarBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 2.5,
+    backgroundColor: Colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 4,
+  },
+  avatarEmojiText: {
+    fontSize: 22,
+  },
+  rankBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+  },
+  titlePill: {
+    paddingVertical: 1,
+    paddingHorizontal: 6,
+    borderRadius: BorderRadius.xs,
+  },
+  titlePillText: {
+    fontSize: 9,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+  },
+  shopShortcutBtn: {
+    backgroundColor: 'rgba(234, 179, 8, 0.12)',
+    borderWidth: 1,
+    borderColor: Colors.accent,
+    borderRadius: BorderRadius.sm,
+    paddingVertical: 6,
+    paddingHorizontal: Spacing.sm,
+    alignItems: 'center',
+    marginTop: Spacing.sm,
+  },
+  shopShortcutBtnText: {
+    ...Typography.captionBold,
+    color: Colors.accent,
+    fontSize: 11,
   },
   rankModalSubtitle: {
     ...Typography.caption,

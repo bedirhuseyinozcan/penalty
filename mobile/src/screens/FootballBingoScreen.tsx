@@ -165,7 +165,7 @@ export const FootballBingoScreen: React.FC<IFootballBingoScreenProps> = React.me
 
         <WhoAreYaWinModal
           visible={isResultModalVisible}
-          status={gameStatus === 'won' ? 'won' : 'lost'}
+          status={gameStatus === 'lost' ? 'lost' : 'won'}
           playerName="Futbol Bingo (4x4)"
           playerClub={`${matchedCount}/${totalTilesCount} Kutu Tamamlandı`}
           rewardCoins={isCurrentReplay ? 0 : isDaily ? 40 : 25}
@@ -186,10 +186,10 @@ export const FootballBingoScreen: React.FC<IFootballBingoScreenProps> = React.me
             setIsResultModalVisible(false);
             setHintUnlocked(false);
             setHintText('');
-            resetGame();
             if (isDaily) {
               onBack();
             } else {
+              resetGame();
               goToNextLevel();
             }
           }}
