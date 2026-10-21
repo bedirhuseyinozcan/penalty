@@ -7,6 +7,7 @@ import {
   ScrollView,
   StyleSheet,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { useCareerPathGame } from '../features/careerPath/hooks/useCareerPathGame';
 import { CareerTimeline } from '../features/careerPath/components/CareerTimeline';
@@ -150,7 +151,12 @@ export const CareerPathScreen: React.FC<ICareerPathScreenProps> = React.memo(
 
         {gameStatus === 'playing' ? (
           <View style={styles.bottomBar}>
-            <TouchableOpacity style={styles.guessBtn} activeOpacity={0.8} onPress={openSearch}>
+            <TouchableOpacity
+              style={styles.guessBtn}
+              activeOpacity={0.7}
+              onPress={openSearch}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            >
               <Text style={styles.guessBtnText}>🔍 Futbolcu Tahmin Et</Text>
             </TouchableOpacity>
           </View>
@@ -238,14 +244,17 @@ const styles = StyleSheet.create({
     marginVertical: Spacing.sm,
   },
   bottomBar: {
-    padding: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    paddingTop: Spacing.sm,
+    paddingBottom: Platform.OS === 'android' ? 26 : Spacing.md,
     borderTopWidth: 1,
     borderTopColor: Colors.border,
     backgroundColor: Colors.surface,
   },
   guessBtn: {
     backgroundColor: Colors.primary,
-    paddingVertical: Spacing.md,
+    minHeight: 52,
+    justifyContent: 'center',
     borderRadius: 12,
     alignItems: 'center',
   },
@@ -253,5 +262,6 @@ const styles = StyleSheet.create({
     ...Typography.bodyBold,
     color: Colors.background,
     fontSize: 16,
+    fontWeight: '800',
   },
 });

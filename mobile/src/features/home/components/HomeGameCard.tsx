@@ -66,6 +66,7 @@ export const HomeGameCard: React.FC<IHomeGameCardProps> = React.memo(
             ]}
             activeOpacity={0.8}
             onPress={onPressDaily}
+            hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
           >
             <Text
               style={[
@@ -85,6 +86,7 @@ export const HomeGameCard: React.FC<IHomeGameCardProps> = React.memo(
             ]}
             activeOpacity={0.8}
             onPress={onPressCareer}
+            hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
           >
             <Text style={[styles.careerBtnText, { color: careerTextColor }]}>
               {careerBtnText}
@@ -134,6 +136,7 @@ const styles = StyleSheet.create({
   },
   gameActionBtn: {
     flex: 1,
+    minHeight: 46,
     paddingVertical: Spacing.md,
     borderRadius: BorderRadius.md,
     alignItems: 'center',

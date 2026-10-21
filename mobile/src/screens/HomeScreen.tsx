@@ -7,6 +7,7 @@ import {
   SafeAreaView,
   StatusBar,
   TouchableOpacity,
+  Platform,
 } from 'react-native';
 import { GameModeType } from '../api/dailyApi';
 import { useGameStore } from '../stores/useGameStore';
@@ -110,6 +111,7 @@ export const HomeScreen: React.FC<IHomeScreenProps> = React.memo(({ onNavigate }
               style={[styles.currencyBadge, styles.streakBadge]}
               activeOpacity={0.8}
               onPress={() => setIsStatsModalVisible(true)}
+              hitSlop={{ top: 10, bottom: 10, left: 6, right: 6 }}
             >
               <Text style={styles.streakText}>🔥 {currentStreak}</Text>
             </TouchableOpacity>
@@ -126,6 +128,7 @@ export const HomeScreen: React.FC<IHomeScreenProps> = React.memo(({ onNavigate }
               ]}
               activeOpacity={0.8}
               onPress={() => setIsShopModalVisible(true)}
+              hitSlop={{ top: 10, bottom: 10, left: 6, right: 6 }}
             >
               <Text style={[styles.shopBtnText, { color: theme.primaryColor }]}>🛍️ Dükkan</Text>
             </TouchableOpacity>
@@ -134,6 +137,7 @@ export const HomeScreen: React.FC<IHomeScreenProps> = React.memo(({ onNavigate }
               style={[styles.currencyBadge, styles.statsBtn]}
               activeOpacity={0.8}
               onPress={() => setIsStatsModalVisible(true)}
+              hitSlop={{ top: 10, bottom: 10, left: 6, right: 6 }}
             >
               <Text style={styles.statsIconText}>📊</Text>
             </TouchableOpacity>
@@ -362,6 +366,7 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: Colors.background,
+    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 24) + Spacing.xs : 0,
   },
   ambientGlow: {
     position: 'absolute',
@@ -418,6 +423,9 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surface,
     paddingHorizontal: Spacing.sm,
     paddingVertical: Spacing.xs,
+    minHeight: 34,
+    justifyContent: 'center',
+    alignItems: 'center',
     borderRadius: BorderRadius.full,
     borderWidth: 1,
     borderColor: Colors.border,
@@ -591,6 +599,8 @@ const styles = StyleSheet.create({
   },
   tabBtn: {
     flex: 1,
+    minHeight: 42,
+    justifyContent: 'center',
     paddingVertical: Spacing.sm,
     alignItems: 'center',
     borderRadius: BorderRadius.md,

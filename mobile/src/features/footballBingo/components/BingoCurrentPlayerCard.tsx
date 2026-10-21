@@ -89,6 +89,7 @@ export const BingoCurrentPlayerCard: React.FC<IBingoCurrentPlayerCardProps> = Re
                 activeOpacity={0.8}
                 onPress={onSkip}
                 disabled={disabled}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
                 <Text style={styles.skipBtnText}>Pas Geç</Text>
                 <Text style={styles.skipSub}>⏭️ -1</Text>
@@ -219,6 +220,8 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surfaceLight,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.15)',
+    minHeight: 42,
+    minWidth: 56,
     paddingVertical: 6,
     paddingHorizontal: Spacing.sm,
     borderRadius: BorderRadius.sm,

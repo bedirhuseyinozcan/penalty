@@ -1,5 +1,5 @@
 import React, { useState, useEffect, Component, ErrorInfo, ReactNode } from 'react';
-import { View, StyleSheet, StatusBar, Text, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, StatusBar, Text, TouchableOpacity, BackHandler } from 'react-native';
 import { HomeScreen, AppScreenType } from './src/screens/HomeScreen';
 import { WhoAreYaScreen } from './src/screens/WhoAreYaScreen';
 import { CareerPathScreen } from './src/screens/CareerPathScreen';
@@ -77,6 +77,30 @@ function App() {
       console.warn('Authoritative time sync warning:', e);
     });
   }, []);
+
+  // Hardware Back Button handler for Android
+  useEffect(() => {
+    const onBackPress = () => {
+      if (currentScreen !== 'home') {
+        if (currentScreen === 'levelMap') {
+          setCurrentScreen('home');
+          return true;
+        } else {
+          // In active game screen
+          if (isDailySelected) {
+            setCurrentScreen('home');
+          } else {
+            setCurrentScreen('levelMap');
+          }
+          return true;
+        }
+      }
+      return false; // Exit app on home screen
+    };
+
+    const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => subscription.remove();
+  }, [currentScreen, isDailySelected]);
 
   const handleNavigate = (
     screen: AppScreenType,

@@ -7,6 +7,7 @@ import {
   ScrollView,
   StyleSheet,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { useContextinhoGame } from '../features/contextinho/hooks/useContextinhoGame';
 import { IContextinhoRankedEntry, TemperatureTier } from '../features/contextinho/utils/contextinhoEngine';
@@ -239,7 +240,12 @@ export const ContextinhoScreen: React.FC<IContextinhoScreenProps> = React.memo(
 
         {gameStatus === 'playing' ? (
           <View style={styles.bottomBar}>
-            <TouchableOpacity style={styles.guessBtn} activeOpacity={0.8} onPress={openSearch}>
+            <TouchableOpacity
+              style={styles.guessBtn}
+              activeOpacity={0.8}
+              onPress={openSearch}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            >
               <Text style={styles.guessBtnText}>🔥 Futbolcu Tahmin Et</Text>
             </TouchableOpacity>
           </View>
@@ -450,15 +456,18 @@ const styles = StyleSheet.create({
   },
   bottomBar: {
     padding: Spacing.md,
+    paddingBottom: Platform.OS === 'android' ? 26 : Spacing.md,
     borderTopWidth: 1,
     borderTopColor: Colors.border,
     backgroundColor: Colors.surface,
   },
   guessBtn: {
     backgroundColor: Colors.primary,
+    minHeight: 52,
     paddingVertical: Spacing.md,
     borderRadius: 12,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   guessBtnText: {
     ...Typography.bodyBold,

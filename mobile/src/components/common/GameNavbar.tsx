@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform, StatusBar } from 'react-native';
 import { Colors } from '../../theme/colors';
 import { Spacing, BorderRadius } from '../../theme/spacing';
 import { Typography } from '../../theme/typography';
@@ -35,7 +35,12 @@ export const GameNavbar: React.FC<IGameNavbarProps> = React.memo(
 
     return (
       <View style={[styles.navbar, { borderBottomColor: theme.cardBorder }]}>
-        <TouchableOpacity onPress={onBack} style={styles.backBtn} activeOpacity={0.8}>
+        <TouchableOpacity
+          onPress={onBack}
+          style={styles.backBtn}
+          activeOpacity={0.7}
+          hitSlop={{ top: 16, bottom: 16, left: 16, right: 20 }}
+        >
           <Text style={[styles.backBtnText, { color: theme.primaryColor }]}>‹ Geri</Text>
         </TouchableOpacity>
 
@@ -50,11 +55,17 @@ export const GameNavbar: React.FC<IGameNavbarProps> = React.memo(
 
         <View style={styles.navRightRow}>
           {showMapButton && onOpenMap ? (
-            <TouchableOpacity onPress={onOpenMap} style={styles.mapHeaderBtn} activeOpacity={0.8}>
+            <TouchableOpacity
+              onPress={onOpenMap}
+              style={styles.mapHeaderBtn}
+              activeOpacity={0.7}
+              hitSlop={{ top: 12, bottom: 12, left: 10, right: 10 }}
+            >
               <Text style={styles.mapHeaderBtnText}>🗺️ Harita</Text>
             </TouchableOpacity>
           ) : null}
 
+          {/* Theme Avatar Badge */}
           <View
             style={[
               styles.navAvatarBadge,
@@ -94,17 +105,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
+    paddingTop:
+      Platform.OS === 'android' ? (StatusBar.currentHeight || 24) + Spacing.xs : Spacing.sm,
+    paddingBottom: Spacing.sm,
     borderBottomWidth: 1,
     borderBottomColor: Colors.border,
+    minHeight: Platform.OS === 'android' ? (StatusBar.currentHeight || 24) + 54 : 54,
   },
   backBtn: {
+    minHeight: 44,
+    minWidth: 54,
+    justifyContent: 'center',
     paddingVertical: Spacing.xs,
+    paddingRight: Spacing.sm,
   },
   backBtnText: {
     ...Typography.bodyBold,
     color: Colors.primary,
-    fontSize: 16,
+    fontSize: 17,
   },
   navTitleContainer: {
     flexDirection: 'row',
@@ -136,7 +154,9 @@ const styles = StyleSheet.create({
   mapHeaderBtn: {
     backgroundColor: Colors.surfaceLight,
     paddingHorizontal: Spacing.sm,
-    paddingVertical: 4,
+    paddingVertical: 6,
+    minHeight: 36,
+    justifyContent: 'center',
     borderRadius: BorderRadius.full,
     borderWidth: 1,
     borderColor: Colors.border,

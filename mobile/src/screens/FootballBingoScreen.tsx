@@ -6,6 +6,7 @@ import {
   SafeAreaView,
   ActivityIndicator,
   ScrollView,
+  Platform,
 } from 'react-native';
 import { GameNavbar } from '../components/common/GameNavbar';
 import { DailyHeaderCard } from '../features/daily/components/DailyHeaderCard';
@@ -213,7 +214,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   scroll: {
-    paddingBottom: Spacing.xl,
+    paddingBottom: Platform.OS === 'android' ? 36 : Spacing.xl,
   },
   centerContainer: {
     flex: 1,

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform, StatusBar } from 'react-native';
 import { Colors } from '../../../theme/colors';
 import { Spacing, BorderRadius } from '../../../theme/spacing';
 import { Typography } from '../../../theme/typography';
@@ -14,7 +14,12 @@ export const LevelMapNavbar: React.FC<ILevelMapNavbarProps> = React.memo(
   ({ coins, xp, onBack }) => {
     return (
       <View style={styles.navbar}>
-        <TouchableOpacity style={styles.backBtn} onPress={onBack} activeOpacity={0.8}>
+        <TouchableOpacity
+          style={styles.backBtn}
+          onPress={onBack}
+          activeOpacity={0.7}
+          hitSlop={{ top: 16, bottom: 16, left: 16, right: 20 }}
+        >
           <Text style={styles.backBtnText}>‹ Ana Menü</Text>
         </TouchableOpacity>
 
@@ -39,12 +44,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
+    paddingTop:
+      Platform.OS === 'android' ? (StatusBar.currentHeight || 24) + Spacing.xs : Spacing.sm,
+    paddingBottom: Spacing.sm,
     borderBottomWidth: 1,
     borderBottomColor: Colors.border,
+    minHeight: Platform.OS === 'android' ? (StatusBar.currentHeight || 24) + 54 : 54,
   },
   backBtn: {
+    minHeight: 44,
+    minWidth: 80,
+    justifyContent: 'center',
     paddingVertical: Spacing.xs,
+    paddingRight: Spacing.sm,
   },
   backBtnText: {
     ...Typography.bodyBold,
