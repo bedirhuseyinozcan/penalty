@@ -102,9 +102,10 @@ export class LevelService {
       response.initialBlurImageUrl = player.blurImages?.[0] || player.originalImageUrl;
       response.imageUrl = player.originalImageUrl;
     } else if (gameMode === 'clubLogo') {
+      const cleanId = String(player.currentClub?.id || '36').replace(/^club_/, '');
       const logoUrl =
         player.currentClub?.logoUrl ||
-        `https://tmssl.akamaized.net/images/wappen/head/${player.currentClub?.id || '36'}.png`;
+        `https://tmssl.akamaized.net/images/wappen/head/${cleanId}.png`;
       response.imageUrl = logoUrl;
       response.initialBlurImageUrl = logoUrl;
       response.hints = [`Kadrodaki Yıldız: ${player.name} (${player.position})`];

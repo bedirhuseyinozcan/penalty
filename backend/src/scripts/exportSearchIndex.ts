@@ -73,7 +73,7 @@ export async function exportSearchIndex(): Promise<void> {
   const players = await PlayerModel.find({ isActive: true })
     .sort({ marketValueEur: -1 })
     .select(
-      'playerId name nationality position currentClub leagues age shirtNumber careerPath marketValueEur'
+      'playerId name nationality position currentClub leagues age shirtNumber careerPath marketValueEur originalImageUrl'
     )
     .lean();
 
@@ -93,6 +93,10 @@ export async function exportSearchIndex(): Promise<void> {
 
     const clubs = Array.from(clubSet);
     const trophies = inferPlayerTrophies(p, clubs);
+    const cleanClubId = p.currentClub?.id ? String(p.currentClub.id).replace(/^club_/, '') : undefined;
+    const clubLogo =
+      p.currentClub?.logoUrl ||
+      (cleanClubId ? `https://tmssl.akamaized.net/images/wappen/head/${cleanClubId}.png` : undefined);
 
     return {
       id: p.playerId,
@@ -100,10 +104,12 @@ export async function exportSearchIndex(): Promise<void> {
       nationality: p.nationality,
       position: p.position,
       club: p.currentClub?.name || '',
-      clubId: p.currentClub?.id,
+      clubId: cleanClubId,
       league: p.currentClub?.league,
       age: p.age,
       shirtNumber: p.shirtNumber,
+      imageUrl: p.originalImageUrl || undefined,
+      logoUrl: clubLogo,
       clubs,
       ...(trophies.length > 0 ? { trophies } : {}),
     };

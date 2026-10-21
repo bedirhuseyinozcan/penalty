@@ -3,137 +3,6 @@ import { ILevelData, levelApi } from '../api/levelApi';
 import { GameModeType } from '../api/dailyApi';
 import { searchEngine } from './searchEngine';
 
-const LOCAL_SEED_PACK: Record<string, Record<number, ILevelData>> = {
-  whoAreYa_super_lig: {
-    1: {
-      levelNumber: 1,
-      gameMode: 'whoAreYa',
-      leagueMode: 'super_lig',
-      targetPlayerId: 'tmid_401923',
-      playerName: 'Victor Osimhen',
-      playerClub: 'Galatasaray',
-      imageUrl: 'https://img.a.transfermarkt.technology/portrait/big/401923-1671105169.png',
-      blurImages: [],
-      rewardCoins: 30,
-      rewardXp: 50,
-      hints: ['Nijeryalı golcü, Serie A şampiyonluğu yaşadı'],
-    },
-    2: {
-      levelNumber: 2,
-      gameMode: 'whoAreYa',
-      leagueMode: 'super_lig',
-      targetPlayerId: 'tmid_382528',
-      playerName: 'Kerem Aktürkoğlu',
-      playerClub: 'Fenerbahçe',
-      imageUrl: 'https://img.a.transfermarkt.technology/portrait/big/382528-1791386984.jpg',
-      blurImages: [],
-      rewardCoins: 30,
-      rewardXp: 50,
-      hints: ['Milli sol kanat, Portekiz tecrübesi var'],
-    },
-    3: {
-      levelNumber: 3,
-      gameMode: 'whoAreYa',
-      leagueMode: 'super_lig',
-      targetPlayerId: 'tmid_68863',
-      playerName: 'Mauro Icardi',
-      playerClub: 'Galatasaray',
-      imageUrl: 'https://img.a.transfermarkt.technology/portrait/big/68863-1671105169.png',
-      blurImages: [],
-      rewardCoins: 30,
-      rewardXp: 50,
-      hints: ['Arjantinli santrafor, Serie A ve Ligue 1 tecrübeli'],
-    },
-  },
-  whoAreYa_global: {
-    1: {
-      levelNumber: 1,
-      gameMode: 'whoAreYa',
-      leagueMode: 'global',
-      targetPlayerId: 'tmid_418560',
-      playerName: 'Erling Haaland',
-      playerClub: 'Man City',
-      imageUrl: 'https://img.a.transfermarkt.technology/portrait/big/418560-1709108116.png',
-      blurImages: [],
-      rewardCoins: 30,
-      rewardXp: 50,
-      hints: ['Norveçli gol makinesi'],
-    },
-    2: {
-      levelNumber: 2,
-      gameMode: 'whoAreYa',
-      leagueMode: 'global',
-      targetPlayerId: 'tmid_581678',
-      playerName: 'Jude Bellingham',
-      playerClub: 'Real Madrid',
-      imageUrl: 'https://img.a.transfermarkt.technology/portrait/big/581678-1693212850.png',
-      blurImages: [],
-      rewardCoins: 30,
-      rewardXp: 50,
-      hints: ['İngiliz süperstar orta saha'],
-    },
-  },
-  careerPath_super_lig: {
-    1: {
-      levelNumber: 1,
-      gameMode: 'careerPath',
-      leagueMode: 'super_lig',
-      targetPlayerId: 'tmid_382528',
-      playerName: 'Kerem Aktürkoğlu',
-      playerClub: 'Fenerbahçe',
-      rewardCoins: 35,
-      rewardXp: 60,
-      hints: ['Erzincanspor -> Galatasaray -> Benfica -> Fenerbahçe'],
-      careerPath: [
-        { clubName: 'Bodrum FK', startYear: 2016, endYear: 2017, apps: 28, goals: 4 },
-        { clubName: 'Karacabey Bld', startYear: 2018, endYear: 2019, apps: 35, goals: 3 },
-        { clubName: 'Erzincanspor', startYear: 2019, endYear: 2020, apps: 34, goals: 20 },
-        { clubName: 'Galatasaray', startYear: 2020, endYear: 2024, apps: 179, goals: 46 },
-        { clubName: 'Benfica', startYear: 2024, endYear: 2025, apps: 58, goals: 17 },
-        { clubName: 'Fenerbahçe', startYear: 2025, apps: 38, goals: 12 },
-      ],
-    },
-    2: {
-      levelNumber: 2,
-      gameMode: 'careerPath',
-      leagueMode: 'super_lig',
-      targetPlayerId: 'tmid_401923',
-      playerName: 'Victor Osimhen',
-      playerClub: 'Galatasaray',
-      rewardCoins: 35,
-      rewardXp: 60,
-      hints: ['Wolfsburg -> Charleroi -> Lille -> Napoli -> Galatasaray'],
-      careerPath: [
-        { clubName: 'Wolfsburg', startYear: 2017, endYear: 2018, apps: 16, goals: 0 },
-        { clubName: 'Charleroi', startYear: 2018, endYear: 2019, apps: 36, goals: 20 },
-        { clubName: 'Lille', startYear: 2019, endYear: 2020, apps: 38, goals: 18 },
-        { clubName: 'Napoli', startYear: 2020, endYear: 2024, apps: 133, goals: 76 },
-        { clubName: 'Galatasaray', startYear: 2024, apps: 70, goals: 56 },
-      ],
-    },
-  },
-  careerPath_global: {
-    1: {
-      levelNumber: 1,
-      gameMode: 'careerPath',
-      leagueMode: 'global',
-      targetPlayerId: 'tmid_418560',
-      playerName: 'Erling Haaland',
-      playerClub: 'Man City',
-      rewardCoins: 35,
-      rewardXp: 60,
-      hints: ['Bryne -> Molde -> Salzburg -> Dortmund -> Man City'],
-      careerPath: [
-        { clubName: 'Bryne', startYear: 2015, endYear: 2017, apps: 16, goals: 0 },
-        { clubName: 'Molde FK', startYear: 2017, endYear: 2019, apps: 50, goals: 20 },
-        { clubName: 'Salzburg', startYear: 2019, endYear: 2020, apps: 27, goals: 29 },
-        { clubName: 'Dortmund', startYear: 2020, endYear: 2022, apps: 89, goals: 86 },
-        { clubName: 'Man City', startYear: 2022, apps: 191, goals: 157 },
-      ],
-    },
-  },
-};
-
 class LevelCacheService {
   private getStorageKey(gameMode: string, leagueMode: string): string {
     return `${StorageKeys.LEVEL_CACHE_PREFIX}${gameMode}_${leagueMode}`;
@@ -175,13 +44,7 @@ class LevelCacheService {
       return memory[levelNumber];
     }
 
-    const seedKey = `${gameMode}_${leagueMode}`;
-    const seedGroup = LOCAL_SEED_PACK[seedKey];
-    if (seedGroup && seedGroup[levelNumber]) {
-      return seedGroup[levelNumber];
-    }
-
-    // Dynamic offline generator from bundled search-index.json
+  
     if (gameMode === 'clubLogo') {
       const clubs = searchEngine.searchClubs('', leagueMode);
       if (clubs.length > 0) {
@@ -196,23 +59,49 @@ class LevelCacheService {
           playerName: club.starPlayer,
           playerClub: club.name,
           imageUrl: club.logoUrl,
+          initialBlurImageUrl: club.logoUrl,
           hints: [`Kadrodaki Yıldız: ${club.starPlayer}`],
         };
       }
-    } else if (gameMode === 'contextinho' || gameMode === 'whoAreYa') {
+    } else if (
+      gameMode === 'whoAreYa' ||
+      gameMode === 'contextinho' ||
+      gameMode === 'careerPath'
+    ) {
       const players = searchEngine.getPlayersByLeagueMode(leagueMode);
       if (players.length > 0) {
-        const offset = gameMode === 'contextinho' ? 13 : 0;
-        const p = players[(levelNumber - 1 + offset) % Math.min(200, players.length)];
+        const offset =
+          gameMode === 'contextinho' ? 17 : gameMode === 'careerPath' ? 7 : 0;
+        const poolSize = Math.min(250, players.length);
+        const p = players[(levelNumber - 1 + offset) % poolSize];
+
+        const careerSteps =
+          p.clubs && p.clubs.length > 0
+            ? p.clubs.map((cName, idx) => ({
+                clubName: cName,
+                startYear: 2018 + idx * 2,
+                ...(idx < p.clubs!.length - 1 ? { endYear: 2020 + idx * 2 } : {}),
+              }))
+            : [{ clubName: p.club, startYear: 2025 }];
+
+        const pImg =
+          p.imageUrl ||
+          p.img ||
+          (p.id ? `https://img.a.transfermarkt.technology/portrait/big/${p.id.replace(/^tmid_/, '')}.jpg` : undefined);
+
         return {
           levelNumber,
           gameMode,
           leagueMode,
-          rewardCoins: 35,
-          rewardXp: 60,
+          rewardCoins: gameMode === 'whoAreYa' ? 30 : 35,
+          rewardXp: gameMode === 'whoAreYa' ? 50 : 60,
           targetPlayerId: p.id,
           playerName: p.name,
           playerClub: p.club,
+          imageUrl: pImg,
+          initialBlurImageUrl: pImg,
+          blurImages: [],
+          careerPath: careerSteps,
           hints: [`${p.nationality} • ${p.position}`],
         };
       }

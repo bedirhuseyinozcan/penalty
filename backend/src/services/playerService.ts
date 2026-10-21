@@ -15,6 +15,8 @@ export interface ISearchIndexItem {
   league: string;
   age?: number;
   shirtNumber?: number;
+  imageUrl?: string;
+  logoUrl?: string;
   clubs?: string[];
   trophies?: string[];
 }
@@ -86,14 +88,21 @@ export class PlayerService {
         }
       }
 
+      const cleanClubId = p.currentClub?.id ? String(p.currentClub.id).replace(/^club_/, '') : undefined;
+      const clubLogo =
+        p.currentClub?.logoUrl ||
+        (cleanClubId ? `https://tmssl.akamaized.net/images/wappen/head/${cleanClubId}.png` : undefined);
+
       return {
         id: p.playerId,
         name: p.name,
         nationality: p.nationality,
         position: p.position,
         club: p.currentClub?.name || '',
-        clubId: p.currentClub?.id,
-        clubLogoUrl: p.currentClub?.logoUrl,
+        clubId: cleanClubId,
+        clubLogoUrl: clubLogo,
+        logoUrl: clubLogo,
+        imageUrl: (p as any).originalImageUrl || undefined,
         league: p.currentClub?.league || '',
         age: p.age,
         shirtNumber: p.shirtNumber,

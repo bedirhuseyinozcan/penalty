@@ -13,6 +13,10 @@ export interface ILightPlayer {
   league: string;
   age?: number;
   shirtNumber?: number;
+  imageUrl?: string;
+  img?: string;
+  logoUrl?: string;
+  logo?: string;
   clubs?: string[];
   trophies?: string[];
 }
@@ -70,12 +74,18 @@ class SearchEngineService {
       if (clubName) {
         const clubKey = clubName.toLowerCase();
         if (!clubMap.has(clubKey)) {
-          const cid = p.clubId || '36';
+          const rawId = p.clubId || '36';
+          const cleanId = String(rawId).replace(/^club_/, '');
+          const crestUrl =
+            p.logoUrl ||
+            p.logo ||
+            `https://tmssl.akamaized.net/images/wappen/head/${cleanId}.png`;
+
           clubMap.set(clubKey, {
-            id: cid,
+            id: cleanId,
             name: clubName,
             league: p.league,
-            logoUrl: `https://tmssl.akamaized.net/images/wappen/head/${cid}.png`,
+            logoUrl: crestUrl,
             starPlayer: p.name,
             playerCount: 1,
           });

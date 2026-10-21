@@ -68,6 +68,7 @@ export const ClubLogoScreen: React.FC<IClubLogoScreenProps> = React.memo(
 
     const [hintUnlocked, setHintUnlocked] = useState(false);
     const [isResultModalVisible, setIsResultModalVisible] = useState(false);
+    const [logoError, setLogoError] = useState(false);
 
     const targetClubName = challengeData?.playerClub || 'Fenerbahçe';
     const targetClubInfo = useMemo(
@@ -110,6 +111,10 @@ export const ClubLogoScreen: React.FC<IClubLogoScreenProps> = React.memo(
       dailyKey,
       leagueModeKey: selectedLeagueMode,
     });
+
+    useEffect(() => {
+      setLogoError(false);
+    }, [logoUrl]);
 
     useEffect(() => {
       if (gameStatus !== 'playing') {
@@ -162,24 +167,31 @@ export const ClubLogoScreen: React.FC<IClubLogoScreenProps> = React.memo(
             </View>
 
             <View style={styles.crestCircle}>
-              <Image
-                source={{
-                  uri: logoUrl,
-                  headers: {
-                    'User-Agent':
-                      'Mozilla/5.0 (Linux; Android 13; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
-                    Accept: 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
-                  },
-                }}
-                style={[
-                  styles.crestImage,
-                  !isRevealed && {
-                    transform: [{ scale: 1 + (maxAttempts - guesses.length) * 0.08 }],
-                  },
-                ]}
-                blurRadius={blurRadius}
-                resizeMode="contain"
-              />
+              {!logoError ? (
+                <Image
+                  key={logoUrl}
+                  source={{
+                    uri: logoUrl,
+                    headers: {
+                      'User-Agent':
+                        'Mozilla/5.0 (Linux; Android 13; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
+                      Accept: 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+                      Referer: 'https://www.transfermarkt.com/',
+                    },
+                  }}
+                  style={[
+                    styles.crestImage,
+                    !isRevealed && {
+                      transform: [{ scale: 1 + (maxAttempts - guesses.length) * 0.08 }],
+                    },
+                  ]}
+                  blurRadius={blurRadius}
+                  resizeMode="contain"
+                  onError={() => setLogoError(true)}
+                />
+              ) : (
+                <Text style={{ fontSize: 48 }}>🛡️</Text>
+              )}
             </View>
 
             <Text style={styles.heroCaption}>
