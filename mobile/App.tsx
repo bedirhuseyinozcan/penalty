@@ -1,6 +1,5 @@
 import React, { useState, useEffect, Component, ErrorInfo, ReactNode } from 'react';
 import { View, StyleSheet, StatusBar, Text, TouchableOpacity } from 'react-native';
-import { registerRootComponent } from 'expo';
 import { HomeScreen, AppScreenType } from './src/screens/HomeScreen';
 import { WhoAreYaScreen } from './src/screens/WhoAreYaScreen';
 import { CareerPathScreen } from './src/screens/CareerPathScreen';
@@ -225,4 +224,3 @@ const styles = StyleSheet.create({
 });
 
 export default App;
-registerRootComponent(App);
