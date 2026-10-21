@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, Modal, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { useGameStore } from '../../../stores/useGameStore';
 import { Colors } from '../../../theme/colors';
@@ -22,7 +22,14 @@ export const PlayerStatsModal: React.FC<IPlayerStatsModalProps> = React.memo(
     const distValues = Object.values(guessDistribution);
     const maxDist = Math.max(1, ...distValues);
 
-    const attemptsList = [1, 2, 3, 4, 5, 6];
+    const attemptsList = useMemo(() => {
+      const attemptsWithWins = Object.entries(guessDistribution)
+        .filter(([_, count]) => (count || 0) > 0)
+        .map(([att]) => Number(att));
+      const highestAttemptWithWin = attemptsWithWins.length > 0 ? Math.max(...attemptsWithWins) : 8;
+      const maxRange = Math.min(12, Math.max(8, highestAttemptWithWin));
+      return Array.from({ length: maxRange }, (_, i) => i + 1);
+    }, [guessDistribution]);
 
     return (
       <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>

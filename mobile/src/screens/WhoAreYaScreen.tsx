@@ -128,7 +128,8 @@ export const WhoAreYaScreen: React.FC<IWhoAreYaScreenProps> = React.memo(
         )}
 
         <BlurredImageHero
-          imageUrl={challengeData?.imageUrl || currentBlurImageUrl}
+          imageUrl={currentBlurImageUrl || challengeData?.imageUrl}
+          hasServerBlur={Boolean(currentBlurImageUrl)}
           currentAttempt={guesses.length}
           maxAttempts={maxAttempts}
         />

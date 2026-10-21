@@ -9,6 +9,7 @@ import { ContextinhoScreen } from './src/screens/ContextinhoScreen';
 import { LevelMapScreen } from './src/screens/LevelMapScreen';
 import { GameModeType } from './src/api/dailyApi';
 import { searchEngine } from './src/services/searchEngine';
+import { authoritativeTime } from './src/services/authoritativeTime';
 import { Colors } from './src/theme/colors';
 
 interface ErrorBoundaryProps {
@@ -68,6 +69,9 @@ function App() {
     } catch (e) {
       console.warn('Search engine init warning:', e);
     }
+    authoritativeTime.sync().catch((e) => {
+      console.warn('Authoritative time sync warning:', e);
+    });
   }, []);
 
   const handleNavigate = (

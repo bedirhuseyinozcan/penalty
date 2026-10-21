@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useGameStore } from '../stores/useGameStore';
 import { useSettingsStore, LeagueMode } from '../stores/useSettingsStore';
+import { getAuthoritativeUtcDate } from '../services/authoritativeTime';
 import { HomeGameCard } from '../features/home/components/HomeGameCard';
 import { PlayerStatsModal } from '../features/stats/components/PlayerStatsModal';
 import { GameModeType } from '../api/dailyApi';
@@ -39,7 +40,7 @@ export const HomeScreen: React.FC<IHomeScreenProps> = React.memo(({ onNavigate }
 
   const isSuperLig = selectedLeagueMode === 'super_lig';
 
-  const todayDate = useMemo(() => new Date().toISOString().split('T')[0], []);
+  const todayDate = useMemo(() => getAuthoritativeUtcDate(), []);
   const isWhoAreYaDailyCompleted = isDailyCompleted(`${todayDate}_whoAreYa_${selectedLeagueMode}`);
   const isCareerDailyCompleted = isDailyCompleted(`${todayDate}_careerPath_${selectedLeagueMode}`);
   const isClubLogoDailyCompleted = isDailyCompleted(`${todayDate}_clubLogo_${selectedLeagueMode}`);

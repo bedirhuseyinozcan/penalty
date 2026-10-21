@@ -103,7 +103,7 @@ export const useClubLogoGame = ({
         recordGameResult(true, nextGuesses.length);
 
         if (isDaily && dailyKey) {
-          const { streakBonusCoins } = markDailyCompleted(dailyKey);
+          const { streakBonusCoins } = markDailyCompleted(dailyKey, true);
           addCoins(40 + streakBonusCoins);
           addXp(80);
         } else if (!isReplay) {
@@ -118,7 +118,7 @@ export const useClubLogoGame = ({
         recordGameResult(false, nextGuesses.length);
 
         if (isDaily && dailyKey) {
-          markDailyCompleted(dailyKey);
+          markDailyCompleted(dailyKey, false);
         }
       } else {
         hapticsService.medium();

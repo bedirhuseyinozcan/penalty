@@ -1,8 +1,18 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { Alert } from 'react-native';
 
 export const useRewardedAd = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, []);
 
   const showRewardedAd = useCallback(
     async (rewardTitle: string, onRewardGranted: () => void) => {
@@ -20,9 +30,13 @@ export const useRewardedAd = () => {
           {
             text: 'İzle & İpucunu Al',
             onPress: () => {
-              setTimeout(() => {
+              if (timerRef.current) {
+                clearTimeout(timerRef.current);
+              }
+              timerRef.current = setTimeout(() => {
                 setIsLoading(false);
                 onRewardGranted();
+                timerRef.current = null;
               }, 600);
             },
           },

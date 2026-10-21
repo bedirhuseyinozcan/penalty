@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { appStorage, StorageKeys } from '../storage/mmkv';
+import { getAuthoritativeUtcDate } from '../services/authoritativeTime';
 
 export interface IGameStats {
   gamesPlayed: number;
@@ -27,6 +28,7 @@ interface IGameStore {
   getUnlockedLevel: (gameMode: string, leagueMode: string) => number;
   markDailyCompleted: (
     dailyKey: string,
+    isWon?: boolean,
     dateStr?: string
   ) => { streakBonusCoins: number; newStreak: number };
   isDailyCompleted: (dailyKey: string) => boolean;
@@ -127,14 +129,30 @@ export const useGameStore = create<IGameStore>((set, get) => ({
     return get().unlockedLevels[key] ?? 1;
   },
 
-  markDailyCompleted: (dailyKey: string, dateStr?: string) => {
-    const today = dateStr || new Date().toISOString().split('T')[0];
+  markDailyCompleted: (dailyKey: string, isWon: boolean = true, dateStr?: string) => {
+    const today = dateStr || getAuthoritativeUtcDate();
     const state = get();
     let streakBonusCoins = 0;
     let newStreak = state.currentStreak;
 
     if (!state.completedDailyDates.includes(dailyKey)) {
       appStorage.set(`${StorageKeys.DAILY_COMPLETED_PREFIX}${dailyKey}`, true);
+    }
+
+    if (!isWon) {
+      newStreak = 0;
+      appStorage.set(StorageKeys.CURRENT_STREAK, 0);
+      appStorage.set(StorageKeys.LAST_COMPLETED_DATE, today);
+
+      set((s) => ({
+        completedDailyDates: s.completedDailyDates.includes(dailyKey)
+          ? s.completedDailyDates
+          : [...s.completedDailyDates, dailyKey],
+        currentStreak: 0,
+        lastCompletedDate: today,
+      }));
+
+      return { streakBonusCoins: 0, newStreak: 0 };
     }
 
     if (state.lastCompletedDate !== today) {
@@ -175,6 +193,12 @@ export const useGameStore = create<IGameStore>((set, get) => ({
         currentStreak: newStreak,
         maxStreak: newMax,
         lastCompletedDate: today,
+      }));
+    } else {
+      set((s) => ({
+        completedDailyDates: s.completedDailyDates.includes(dailyKey)
+          ? s.completedDailyDates
+          : [...s.completedDailyDates, dailyKey],
       }));
     }
 

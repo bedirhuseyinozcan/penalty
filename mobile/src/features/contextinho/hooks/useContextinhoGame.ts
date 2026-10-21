@@ -117,7 +117,7 @@ export const useContextinhoGame = ({
         recordGameResult(true, nextGuesses.length);
 
         if (isDaily && dailyKey) {
-          const { streakBonusCoins } = markDailyCompleted(dailyKey);
+          const { streakBonusCoins } = markDailyCompleted(dailyKey, true);
           addCoins(45 + streakBonusCoins);
           addXp(90);
         } else if (!isReplay) {
@@ -132,7 +132,7 @@ export const useContextinhoGame = ({
         recordGameResult(false, nextGuesses.length);
 
         if (isDaily && dailyKey) {
-          markDailyCompleted(dailyKey);
+          markDailyCompleted(dailyKey, false);
         }
       } else if (finalEntry.tier === 'hot') {
         hapticsService.medium();

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { dailyApi, GameModeType } from '../api/dailyApi';
 import { levelApi } from '../api/levelApi';
 import { levelCacheService } from '../services/levelCacheService';
+import { getAuthoritativeUtcDate } from '../services/authoritativeTime';
 import { useSettingsStore } from '../stores/useSettingsStore';
 import { useGameStore } from '../stores/useGameStore';
 
@@ -58,7 +59,7 @@ export const useChallengeDataLoader = ({
     }
   }, [initialLevel, isReplay, selectedLeagueMode, getUnlockedLevel, gameMode]);
 
-  const todayDate = useMemo(() => new Date().toISOString().split('T')[0], []);
+  const todayDate = useMemo(() => getAuthoritativeUtcDate(), []);
   const dailyKey = `${todayDate}_${gameMode}_${selectedLeagueMode}`;
   const alreadyCompleted = isDaily && isDailyCompleted(dailyKey);
 

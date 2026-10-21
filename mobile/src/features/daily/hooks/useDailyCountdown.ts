@@ -1,24 +1,26 @@
 import { useState, useEffect } from 'react';
 import { systemApi } from '../../../api/systemApi';
+import { authoritativeTime } from '../../../services/authoritativeTime';
 
 export const useDailyCountdown = () => {
   const [secondsRemaining, setSecondsRemaining] = useState<number>(0);
   const [isSynced, setIsSynced] = useState<boolean>(false);
 
   useEffect(() => {
-    let timerId: NodeJS.Timeout | null = null;
+    let timerId: ReturnType<typeof setInterval> | null = null;
     let isMounted = true;
 
     const syncTime = async () => {
       try {
         const data = await systemApi.getSystemTime();
+        await authoritativeTime.sync().catch(() => {});
         if (isMounted) {
           setSecondsRemaining(data.secondsUntilDailyReset);
           setIsSynced(true);
         }
       } catch {
         if (isMounted) {
-          const now = new Date();
+          const now = authoritativeTime.getAuthoritativeDate();
           const tomorrowUtc = new Date(
             Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1)
           );

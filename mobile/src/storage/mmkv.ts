@@ -148,4 +148,6 @@ export const StorageKeys = {
   MAX_STREAK: 'penalty_max_streak',
   LAST_COMPLETED_DATE: 'penalty_last_completed_date',
   GAME_STATS: 'penalty_game_stats',
+  SERVER_TIME_OFFSET_MS: 'penalty_server_time_offset_ms',
+  LAST_SERVER_UTC_DATE: 'penalty_last_server_utc_date',
 } as const;

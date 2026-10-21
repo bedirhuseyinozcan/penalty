@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { View, Image, Text, StyleSheet, Platform, ActivityIndicator } from 'react-native';
 import { Colors } from '../../../theme/colors';
 import { Spacing, BorderRadius } from '../../../theme/spacing';
@@ -6,19 +6,26 @@ import { Typography } from '../../../theme/typography';
 
 interface IBlurredImageHeroProps {
   imageUrl?: string;
+  hasServerBlur?: boolean;
   currentAttempt: number;
   maxAttempts: number;
 }
 
 export const BlurredImageHero = React.memo<IBlurredImageHeroProps>(
-  ({ imageUrl, currentAttempt, maxAttempts }) => {
+  ({ imageUrl, hasServerBlur = false, currentAttempt, maxAttempts }) => {
     const [imageError, setImageError] = useState(false);
     const [isLoaded, setIsLoaded] = useState(false);
 
+    useEffect(() => {
+      setIsLoaded(false);
+      setImageError(false);
+    }, [imageUrl]);
+
     const blurRadius = useMemo(() => {
+      if (hasServerBlur) return 0;
       const remaining = Math.max(0, maxAttempts - currentAttempt - 1);
       return Math.round((remaining / Math.max(1, maxAttempts - 1)) * 26);
-    }, [currentAttempt, maxAttempts]);
+    }, [hasServerBlur, currentAttempt, maxAttempts]);
 
     return (
       <View style={styles.card}>

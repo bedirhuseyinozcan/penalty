@@ -33,6 +33,7 @@ export const useCareerPathGame = ({
   const [isSearchModalVisible, setIsSearchModalVisible] = useState(false);
 
   const addCoins = useGameStore((s) => s.addCoins);
+  const addXp = useGameStore((s) => s.addXp);
   const unlockNextLevel = useGameStore((s) => s.unlockNextLevel);
   const markDailyCompleted = useGameStore((s) => s.markDailyCompleted);
   const recordGameResult = useGameStore((s) => s.recordGameResult);
@@ -82,9 +83,11 @@ export const useCareerPathGame = ({
         recordGameResult(true, updated.length);
 
         if (!isReplay) {
-          addCoins(35);
-
           if (isDaily && dailyKey) {
+            const { streakBonusCoins } = markDailyCompleted(dailyKey, true);
+            addCoins(40 + streakBonusCoins);
+            addXp(80);
+
             dailyStorage.saveSession(dailyKey, {
               dailyKey,
               status: 'won',
@@ -92,8 +95,9 @@ export const useCareerPathGame = ({
               attemptsUsed: updated.length,
               completedAt: new Date().toISOString(),
             });
-            markDailyCompleted(dailyKey);
           } else {
+            addCoins(35);
+            addXp(55);
             unlockNextLevel(gameModeKey, leagueModeKey);
           }
         }
@@ -112,7 +116,7 @@ export const useCareerPathGame = ({
             attemptsUsed: updated.length,
             completedAt: new Date().toISOString(),
           });
-          markDailyCompleted(dailyKey);
+          markDailyCompleted(dailyKey, false);
         }
       } else {
         hapticsService.warning();
@@ -125,6 +129,7 @@ export const useCareerPathGame = ({
       targetPlayerName,
       maxAttempts,
       addCoins,
+      addXp,
       isDaily,
       isReplay,
       dailyKey,
