@@ -11,6 +11,7 @@ import {
 import { useGameStore } from '../stores/useGameStore';
 import { useSettingsStore, LeagueMode } from '../stores/useSettingsStore';
 import { getAuthoritativeUtcDate } from '../services/authoritativeTime';
+import { getRankByXp } from '../features/stats/utils/rankUtils';
 import { HomeGameCard } from '../features/home/components/HomeGameCard';
 import { PlayerStatsModal } from '../features/stats/components/PlayerStatsModal';
 import { GameModeType } from '../api/dailyApi';
@@ -40,6 +41,7 @@ export const HomeScreen: React.FC<IHomeScreenProps> = React.memo(({ onNavigate }
 
   const isSuperLig = selectedLeagueMode === 'super_lig';
 
+  const rankInfo = useMemo(() => getRankByXp(xp), [xp]);
   const todayDate = useMemo(() => getAuthoritativeUtcDate(), []);
   const isWhoAreYaDailyCompleted = isDailyCompleted(`${todayDate}_whoAreYa_${selectedLeagueMode}`);
   const isCareerDailyCompleted = isDailyCompleted(`${todayDate}_careerPath_${selectedLeagueMode}`);
@@ -88,6 +90,35 @@ export const HomeScreen: React.FC<IHomeScreenProps> = React.memo(({ onNavigate }
             </TouchableOpacity>
           </View>
         </View>
+
+        <TouchableOpacity
+          style={styles.rankCard}
+          activeOpacity={0.85}
+          onPress={() => setIsStatsModalVisible(true)}
+        >
+          <View style={styles.rankHeader}>
+            <View style={styles.rankTitleCol}>
+              <Text style={styles.rankBadgeEmoji}>{rankInfo.badge}</Text>
+              <View>
+                <Text style={styles.rankTitle}>{rankInfo.title}</Text>
+                <Text style={styles.rankSub}>
+                  {rankInfo.tier === 4
+                    ? 'Zirve Rütbe • Efsane Direktör'
+                    : `Sonraki Rütbeye ${rankInfo.xpNeededForNext} XP kaldı`}
+                </Text>
+              </View>
+            </View>
+            <Text style={styles.rankPercentText}>%{rankInfo.currentProgressInTier}</Text>
+          </View>
+          <View style={styles.rankProgressBarBg}>
+            <View
+              style={[
+                styles.rankProgressBarFill,
+                { width: `${rankInfo.currentProgressInTier}%` },
+              ]}
+            />
+          </View>
+        </TouchableOpacity>
 
         <View style={styles.modeSwitcherContainer}>
           <Text style={styles.sectionTitle}>Lig Modu Seçimi</Text>
@@ -226,6 +257,55 @@ const styles = StyleSheet.create({
   },
   statsIconText: {
     fontSize: 14,
+  },
+  rankCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.md,
+    borderWidth: 1,
+    borderColor: 'rgba(59, 130, 246, 0.25)',
+    marginBottom: Spacing.lg,
+  },
+  rankHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.sm,
+  },
+  rankTitleCol: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    flex: 1,
+  },
+  rankBadgeEmoji: {
+    fontSize: 26,
+  },
+  rankTitle: {
+    ...Typography.bodyBold,
+    color: Colors.textPrimary,
+    fontSize: 14,
+  },
+  rankSub: {
+    ...Typography.caption,
+    color: Colors.textMuted,
+    fontSize: 11,
+  },
+  rankPercentText: {
+    ...Typography.captionBold,
+    color: Colors.primary,
+    fontSize: 13,
+  },
+  rankProgressBarBg: {
+    height: 6,
+    backgroundColor: Colors.surfaceLight,
+    borderRadius: BorderRadius.full,
+    overflow: 'hidden',
+  },
+  rankProgressBarFill: {
+    height: '100%',
+    backgroundColor: Colors.primary,
+    borderRadius: BorderRadius.full,
   },
   modeSwitcherContainer: {
     marginBottom: Spacing.lg,

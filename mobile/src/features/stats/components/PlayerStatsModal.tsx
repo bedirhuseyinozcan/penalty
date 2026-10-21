@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { View, Text, Modal, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { useGameStore } from '../../../stores/useGameStore';
+import { getRankByXp } from '../utils/rankUtils';
 import { Colors } from '../../../theme/colors';
 import { Spacing, BorderRadius } from '../../../theme/spacing';
 import { Typography } from '../../../theme/typography';
@@ -17,7 +18,9 @@ export const PlayerStatsModal: React.FC<IPlayerStatsModalProps> = React.memo(
     const currentStreak = useGameStore((s) => s.currentStreak);
     const maxStreak = useGameStore((s) => s.maxStreak);
     const guessDistribution = useGameStore((s) => s.guessDistribution);
+    const xp = useGameStore((s) => s.xp);
 
+    const rankInfo = useMemo(() => getRankByXp(xp), [xp]);
     const winRate = gamesPlayed > 0 ? Math.round((gamesWon / gamesPlayed) * 100) : 0;
     const distValues = Object.values(guessDistribution);
     const maxDist = Math.max(1, ...distValues);
@@ -43,6 +46,30 @@ export const PlayerStatsModal: React.FC<IPlayerStatsModalProps> = React.memo(
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+              <View style={styles.rankModalCard}>
+                <View style={styles.rankModalHeader}>
+                  <Text style={styles.rankModalBadge}>{rankInfo.badge}</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.rankModalTitle}>{rankInfo.title}</Text>
+                    <Text style={styles.rankModalSubtitle}>
+                      {xp} Toplam XP •{' '}
+                      {rankInfo.tier === 4
+                        ? 'En Yüksek Seviye'
+                        : `Sonraki Rütbeye ${rankInfo.xpNeededForNext} XP`}
+                    </Text>
+                  </View>
+                  <Text style={styles.rankModalPercent}>%{rankInfo.currentProgressInTier}</Text>
+                </View>
+                <View style={styles.rankProgressBarBg}>
+                  <View
+                    style={[
+                      styles.rankProgressBarFill,
+                      { width: `${rankInfo.currentProgressInTier}%` },
+                    ]}
+                  />
+                </View>
+              </View>
+
               {/* 4 KPI Cards */}
               <View style={styles.kpiGrid}>
                 <View style={styles.kpiCard}>
@@ -72,7 +99,7 @@ export const PlayerStatsModal: React.FC<IPlayerStatsModalProps> = React.memo(
                 <View style={styles.streakBannerCol}>
                   <Text style={styles.streakBannerTitle}>Seri Ödülleri</Text>
                   <Text style={styles.streakBannerText}>
-                    3 günlük seride +100🪙, 7 günlük seride +300🪙 ekstra ödül kazanırsınız!
+                    3 günlük seride +50🪙, 7 günlük seride +150🪙 ekstra ödül kazanırsınız!
                   </Text>
                 </View>
               </View>
@@ -154,6 +181,49 @@ const styles = StyleSheet.create({
   },
   scroll: {
     paddingBottom: Spacing.md,
+  },
+  rankModalCard: {
+    backgroundColor: Colors.surfaceLight,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
+    borderWidth: 1,
+    borderColor: 'rgba(59, 130, 246, 0.3)',
+    marginBottom: Spacing.md,
+  },
+  rankModalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    marginBottom: Spacing.sm,
+  },
+  rankModalBadge: {
+    fontSize: 28,
+  },
+  rankModalTitle: {
+    ...Typography.bodyBold,
+    color: Colors.textPrimary,
+    fontSize: 14,
+  },
+  rankModalSubtitle: {
+    ...Typography.caption,
+    color: Colors.textMuted,
+    fontSize: 11,
+  },
+  rankModalPercent: {
+    ...Typography.captionBold,
+    color: Colors.primary,
+    fontSize: 13,
+  },
+  rankProgressBarBg: {
+    height: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: BorderRadius.full,
+    overflow: 'hidden',
+  },
+  rankProgressBarFill: {
+    height: '100%',
+    backgroundColor: Colors.primary,
+    borderRadius: BorderRadius.full,
   },
   kpiGrid: {
     flexDirection: 'row',

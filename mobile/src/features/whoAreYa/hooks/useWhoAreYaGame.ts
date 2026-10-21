@@ -41,13 +41,18 @@ export const useWhoAreYaGame = ({
   onWin,
 }: IUseWhoAreYaGameProps) => {
   const [guesses, setGuesses] = useState<IWhoAreYaGuess[]>([]);
+  const [extraAttempts, setExtraAttempts] = useState(0);
+  const [hasRevived, setHasRevived] = useState(false);
   const [gameStatus, setGameStatus] = useState<GameStatus>('playing');
   const [isSearchModalVisible, setIsSearchModalVisible] = useState(false);
+
+  const effectiveMaxAttempts = maxAttempts + extraAttempts;
 
   const addCoins = useGameStore((s) => s.addCoins);
   const addXp = useGameStore((s) => s.addXp);
   const unlockNextLevel = useGameStore((s) => s.unlockNextLevel);
   const markDailyCompleted = useGameStore((s) => s.markDailyCompleted);
+  const clearDailyCompleted = useGameStore((s) => s.clearDailyCompleted);
   const recordGameResult = useGameStore((s) => s.recordGameResult);
 
   useEffect(() => {
@@ -126,7 +131,6 @@ export const useWhoAreYaGame = ({
   const submitGuess = useCallback(
     (guessedPlayer: ILightPlayer) => {
       if (gameStatus !== 'playing') return;
-      if (isDaily && dailyKey && dailyStorage.hasCompletedSession(dailyKey)) return;
 
       if (guesses.some((g) => g.player.id === guessedPlayer.id)) {
         return;
@@ -144,7 +148,7 @@ export const useWhoAreYaGame = ({
         if (!isReplay) {
           if (isDaily && dailyKey) {
             const { streakBonusCoins } = markDailyCompleted(dailyKey, true);
-            addCoins(40 + streakBonusCoins);
+            addCoins(30 + streakBonusCoins);
             addXp(80);
 
             dailyStorage.saveSession(dailyKey, {
@@ -155,27 +159,30 @@ export const useWhoAreYaGame = ({
               completedAt: new Date().toISOString(),
             });
           } else {
-            addCoins(30);
+            addCoins(20);
             addXp(50);
             unlockNextLevel(gameModeKey, leagueModeKey);
           }
         }
 
         onWin?.();
-      } else if (nextGuesses.length >= maxAttempts) {
+      } else if (nextGuesses.length >= effectiveMaxAttempts) {
         hapticsService.error();
         setGameStatus('lost');
-        recordGameResult(false, maxAttempts);
 
-        if (isDaily && dailyKey) {
-          dailyStorage.saveSession(dailyKey, {
-            dailyKey,
-            status: 'lost',
-            guesses: nextGuesses,
-            attemptsUsed: nextGuesses.length,
-            completedAt: new Date().toISOString(),
-          });
-          markDailyCompleted(dailyKey, false);
+        if (hasRevived) {
+          recordGameResult(false, effectiveMaxAttempts);
+
+          if (isDaily && dailyKey) {
+            dailyStorage.saveSession(dailyKey, {
+              dailyKey,
+              status: 'lost',
+              guesses: nextGuesses,
+              attemptsUsed: nextGuesses.length,
+              completedAt: new Date().toISOString(),
+            });
+            markDailyCompleted(dailyKey, false);
+          }
         }
       } else {
         hapticsService.warning();
@@ -185,7 +192,8 @@ export const useWhoAreYaGame = ({
       gameStatus,
       guesses,
       evaluateGuess,
-      maxAttempts,
+      effectiveMaxAttempts,
+      hasRevived,
       addCoins,
       addXp,
       isDaily,
@@ -199,6 +207,30 @@ export const useWhoAreYaGame = ({
     ]
   );
 
+  const finalizeLoss = useCallback(() => {
+    if (gameStatus === 'lost') {
+      recordGameResult(false, effectiveMaxAttempts);
+      if (isDaily && dailyKey) {
+        dailyStorage.saveSession(dailyKey, {
+          dailyKey,
+          status: 'lost',
+          guesses,
+          attemptsUsed: guesses.length,
+          completedAt: new Date().toISOString(),
+        });
+        markDailyCompleted(dailyKey, false);
+      }
+    }
+  }, [
+    gameStatus,
+    effectiveMaxAttempts,
+    isDaily,
+    dailyKey,
+    guesses,
+    recordGameResult,
+    markDailyCompleted,
+  ]);
+
   const openSearch = useCallback(() => {
     if (gameStatus === 'playing') setIsSearchModalVisible(true);
   }, [gameStatus]);
@@ -209,19 +241,34 @@ export const useWhoAreYaGame = ({
 
   const resetGame = useCallback(() => {
     setGuesses([]);
+    setExtraAttempts(0);
+    setHasRevived(false);
     setGameStatus('playing');
   }, []);
+
+  const reviveGame = useCallback(() => {
+    setHasRevived(true);
+    setExtraAttempts((prev) => prev + 2);
+    setGameStatus('playing');
+    if (isDaily && dailyKey) {
+      dailyStorage.deleteSession(dailyKey);
+      clearDailyCompleted(dailyKey);
+    }
+  }, [isDaily, dailyKey, clearDailyCompleted]);
 
   return {
     guesses,
     gameStatus,
     currentBlurImageUrl,
     isSearchModalVisible,
-    attemptsLeft: maxAttempts - guesses.length,
-    maxAttempts,
+    attemptsLeft: Math.max(0, effectiveMaxAttempts - guesses.length),
+    maxAttempts: effectiveMaxAttempts,
+    canRevive: !hasRevived,
     openSearch,
     closeSearch,
     submitGuess,
     resetGame,
+    reviveGame,
+    finalizeLoss,
   };
 };

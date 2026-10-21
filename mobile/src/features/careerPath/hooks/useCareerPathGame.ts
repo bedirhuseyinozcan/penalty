@@ -54,10 +54,9 @@ export const useCareerPathGame = ({
   const submitGuess = useCallback(
     (player: ILightPlayer) => {
       if (gameStatus !== 'playing') return;
-      if (isDaily && dailyKey && dailyStorage.hasCompletedSession(dailyKey)) return;
 
       if (guesses.some((g) => g.playerId === player.id)) {
-        return; // Prevent duplicate
+        return;
       }
 
       const isCorrect =
@@ -85,7 +84,7 @@ export const useCareerPathGame = ({
         if (!isReplay) {
           if (isDaily && dailyKey) {
             const { streakBonusCoins } = markDailyCompleted(dailyKey, true);
-            addCoins(40 + streakBonusCoins);
+            addCoins(30 + streakBonusCoins);
             addXp(80);
 
             dailyStorage.saveSession(dailyKey, {
@@ -96,8 +95,8 @@ export const useCareerPathGame = ({
               completedAt: new Date().toISOString(),
             });
           } else {
-            addCoins(35);
-            addXp(55);
+            addCoins(20);
+            addXp(50);
             unlockNextLevel(gameModeKey, leagueModeKey);
           }
         }

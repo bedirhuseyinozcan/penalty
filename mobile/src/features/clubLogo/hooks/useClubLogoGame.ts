@@ -104,10 +104,10 @@ export const useClubLogoGame = ({
 
         if (isDaily && dailyKey) {
           const { streakBonusCoins } = markDailyCompleted(dailyKey, true);
-          addCoins(40 + streakBonusCoins);
+          addCoins(30 + streakBonusCoins);
           addXp(80);
         } else if (!isReplay) {
-          addCoins(30);
+          addCoins(20);
           addXp(50);
           unlockNextLevel('clubLogo', leagueModeKey);
         }

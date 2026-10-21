@@ -31,6 +31,7 @@ interface IGameStore {
     isWon?: boolean,
     dateStr?: string
   ) => { streakBonusCoins: number; newStreak: number };
+  clearDailyCompleted: (dailyKey: string) => void;
   isDailyCompleted: (dailyKey: string) => boolean;
   recordGameResult: (isWon: boolean, attemptsUsed: number) => void;
 }
@@ -171,10 +172,9 @@ export const useGameStore = create<IGameStore>((set, get) => ({
         }
       }
 
-      // Check milestones for streak
-      if (newStreak === 3) streakBonusCoins = 100;
-      else if (newStreak === 7) streakBonusCoins = 300;
-      else if (newStreak > 7 && newStreak % 7 === 0) streakBonusCoins = 500;
+      if (newStreak === 3) streakBonusCoins = 50;
+      else if (newStreak === 7) streakBonusCoins = 150;
+      else if (newStreak > 7 && newStreak % 7 === 0) streakBonusCoins = 250;
 
       const newMax = Math.max(state.maxStreak, newStreak);
 
@@ -203,6 +203,13 @@ export const useGameStore = create<IGameStore>((set, get) => ({
     }
 
     return { streakBonusCoins, newStreak };
+  },
+
+  clearDailyCompleted: (dailyKey: string) => {
+    appStorage.delete(`${StorageKeys.DAILY_COMPLETED_PREFIX}${dailyKey}`);
+    set((s) => ({
+      completedDailyDates: s.completedDailyDates.filter((k) => k !== dailyKey),
+    }));
   },
 
   isDailyCompleted: (dailyKey: string) => {

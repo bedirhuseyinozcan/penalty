@@ -66,6 +66,9 @@ function App() {
   useEffect(() => {
     try {
       searchEngine.initialize();
+      searchEngine.syncSearchIndexIfNeeded().catch((e) => {
+        console.warn('Search index background sync warning:', e);
+      });
     } catch (e) {
       console.warn('Search engine init warning:', e);
     }

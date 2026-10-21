@@ -1,5 +1,6 @@
 import Fuse from 'fuse.js';
 import { appStorage, StorageKeys } from '../storage/mmkv';
+import { systemApi } from '../api/systemApi';
 import defaultPlayersData from '../assets/data/search-index.json';
 
 export interface ILightPlayer {
@@ -107,6 +108,24 @@ class SearchEngineService {
     appStorage.set(StorageKeys.SEARCH_INDEX_CACHE, JSON.stringify(newPlayers));
     appStorage.set(StorageKeys.SEARCH_INDEX_TIMESTAMP, Date.now());
     this.initialize(newPlayers);
+  }
+
+  public async syncSearchIndexIfNeeded(): Promise<boolean> {
+    try {
+      const lastSync = appStorage.getNumber(StorageKeys.SEARCH_INDEX_TIMESTAMP) ?? 0;
+      const oneDayMs = 24 * 60 * 60 * 1000;
+      if (Date.now() - lastSync < oneDayMs && this.players.length > 0) {
+        return false;
+      }
+      const remotePlayers = await systemApi.getSearchIndex();
+      if (Array.isArray(remotePlayers) && remotePlayers.length > 0) {
+        this.updateIndex(remotePlayers);
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
   }
 
   public search(query: string, leagueMode?: 'global' | 'super_lig'): ILightPlayer[] {

@@ -76,10 +76,13 @@ export const WhoAreYaScreen: React.FC<IWhoAreYaScreenProps> = React.memo(
       isSearchModalVisible,
       attemptsLeft,
       maxAttempts,
+      canRevive,
       openSearch,
       closeSearch,
       submitGuess,
       resetGame,
+      reviveGame,
+      finalizeLoss,
     } = useWhoAreYaGame({
       targetPlayerId,
       targetPlayerName: challengeData?.playerName,
@@ -174,9 +177,20 @@ export const WhoAreYaScreen: React.FC<IWhoAreYaScreenProps> = React.memo(
           playerName={challengeData?.playerName || targetPlayerInfo?.name || 'Yıldız Futbolcu'}
           playerClub={challengeData?.playerClub || targetPlayerInfo?.club || 'Süper Lig'}
           finalImageUrl={challengeData?.imageUrl || blurImages[blurImages.length - 1]}
-          rewardCoins={isCurrentReplay ? 0 : 30}
+          rewardCoins={isCurrentReplay ? 0 : isDaily ? 30 : 20}
           attemptsUsed={guesses.length}
           maxAttempts={maxAttempts}
+          guesses={guesses}
+          leagueLabel={selectedLeagueMode === 'super_lig' ? 'Süper Lig' : 'Global 5 Lig'}
+          isDaily={isDaily}
+          onRevive={
+            canRevive
+              ? () => {
+                  setIsResultModalVisible(false);
+                  reviveGame();
+                }
+              : undefined
+          }
           onOpenMap={!isDaily ? onOpenMap : undefined}
           onNextLevel={() => {
             setIsResultModalVisible(false);
@@ -188,7 +202,12 @@ export const WhoAreYaScreen: React.FC<IWhoAreYaScreenProps> = React.memo(
               goToNextLevel();
             }
           }}
-          onClose={() => setIsResultModalVisible(false)}
+          onClose={() => {
+            setIsResultModalVisible(false);
+            if (gameStatus === 'lost') {
+              finalizeLoss();
+            }
+          }}
         />
       </SafeAreaView>
     );

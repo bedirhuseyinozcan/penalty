@@ -1,5 +1,5 @@
-import React from 'react';
-import { TouchableOpacity, Text, StyleSheet } from 'react-native';
+import React, { useCallback } from 'react';
+import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { useRewardedAd } from '../hooks/useRewardedAd';
 import { Colors } from '../../../theme/colors';
 import { Spacing, BorderRadius } from '../../../theme/spacing';
@@ -10,36 +10,39 @@ interface IHintWithAdButtonProps {
   onHintUnlocked: () => void;
   isUnlocked?: boolean;
   unlockedText?: string;
+  coinCost?: number;
 }
 
 export const HintWithAdButton = React.memo<IHintWithAdButtonProps>(
   ({ hintTitle, onHintUnlocked, isUnlocked = false, unlockedText }) => {
     const { showRewardedAd, isLoading } = useRewardedAd();
 
-    const handlePress = () => {
+    const handleUnlockWithAd = useCallback(() => {
       if (isUnlocked) return;
       showRewardedAd(hintTitle, onHintUnlocked);
-    };
+    }, [isUnlocked, showRewardedAd, hintTitle, onHintUnlocked]);
 
     if (isUnlocked) {
       return (
-        <TouchableOpacity style={[styles.button, styles.unlockedButton]} disabled>
+        <View style={[styles.container, styles.unlockedContainer]}>
           <Text style={styles.unlockedText}>💡 {unlockedText || hintTitle}</Text>
-        </TouchableOpacity>
+        </View>
       );
     }
 
     return (
-      <TouchableOpacity
-        style={styles.button}
-        activeOpacity={0.8}
-        onPress={handlePress}
-        disabled={isLoading}
-      >
-        <Text style={styles.buttonText}>
-          🎬 {hintTitle} Aç {isLoading ? '...' : ''}
-        </Text>
-      </TouchableOpacity>
+      <View style={styles.container}>
+        <TouchableOpacity
+          style={styles.adBtn}
+          activeOpacity={0.8}
+          onPress={handleUnlockWithAd}
+          disabled={isLoading}
+        >
+          <Text style={styles.adBtnText}>
+            🎬 {hintTitle} Aç (Kısa Reklam) {isLoading ? '...' : ''}
+          </Text>
+        </TouchableOpacity>
+      </View>
     );
   }
 );
@@ -47,28 +50,38 @@ export const HintWithAdButton = React.memo<IHintWithAdButtonProps>(
 HintWithAdButton.displayName = 'HintWithAdButton';
 
 const styles = StyleSheet.create({
-  button: {
-    backgroundColor: Colors.surfaceLight,
+  container: {
+    width: '100%',
+    marginVertical: Spacing.xs,
+  },
+  adBtn: {
+    backgroundColor: 'rgba(59, 130, 246, 0.12)',
+    borderColor: Colors.primary,
+    borderWidth: 1,
     paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.md,
     borderRadius: BorderRadius.md,
-    borderWidth: 1,
-    borderColor: Colors.accent,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  buttonText: {
+  adBtnText: {
     ...Typography.bodyBold,
-    color: Colors.accent,
+    color: Colors.primary,
     fontSize: 13,
   },
-  unlockedButton: {
-    backgroundColor: 'rgba(34, 197, 94, 0.15)',
+  unlockedContainer: {
+    backgroundColor: 'rgba(34, 197, 94, 0.14)',
     borderColor: Colors.success,
+    borderWidth: 1,
+    borderRadius: BorderRadius.md,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    alignItems: 'center',
   },
   unlockedText: {
     ...Typography.bodyBold,
     color: Colors.success,
     fontSize: 13,
+    textAlign: 'center',
   },
 });

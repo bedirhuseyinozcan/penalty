@@ -118,11 +118,11 @@ export const useContextinhoGame = ({
 
         if (isDaily && dailyKey) {
           const { streakBonusCoins } = markDailyCompleted(dailyKey, true);
-          addCoins(45 + streakBonusCoins);
-          addXp(90);
+          addCoins(35 + streakBonusCoins);
+          addXp(80);
         } else if (!isReplay) {
-          addCoins(35);
-          addXp(60);
+          addCoins(25);
+          addXp(50);
           unlockNextLevel('contextinho', leagueModeKey);
         }
       } else if (nextGuesses.length >= MAX_ATTEMPTS) {

@@ -28,4 +28,13 @@ export const dailyStorage = {
     const key = `${StorageKeys.DAILY_SESSION_PREFIX}${dailyKey}`;
     return Boolean(appStorage.getString(key));
   },
+
+  deleteSession: (dailyKey: string): void => {
+    try {
+      const key = `${StorageKeys.DAILY_SESSION_PREFIX}${dailyKey}`;
+      appStorage.delete(key);
+    } catch (e) {
+      console.warn('Failed to delete daily session:', e);
+    }
+  },
 };
