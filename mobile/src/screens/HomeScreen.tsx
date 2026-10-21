@@ -92,18 +92,9 @@ export const HomeScreen: React.FC<IHomeScreenProps> = React.memo(({ onNavigate }
 
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.header}>
-          <View>
-            <View style={styles.brandRow}>
-              <Text style={[styles.brandTitle, { color: theme.primaryColor }]}>PENALTY</Text>
-              <View style={[styles.themeMiniPill, { backgroundColor: theme.accentGlow }]}>
-                <Text style={[styles.themeMiniPillText, { color: theme.primaryColor }]}>
-                  {theme.teamBadgeEmojis} {equippedCosmetic.titleBadge}
-                </Text>
-              </View>
-            </View>
-            <Text style={styles.brandSubtitle}>
-              Futbol Oyun Portalı • {theme.stadiumName}
-            </Text>
+          <View style={styles.brandCol}>
+            <Text style={[styles.brandTitle, { color: theme.primaryColor }]}>PENALTY</Text>
+            <Text style={styles.brandSubtitle}>Futbol Oyun Portalı</Text>
           </View>
 
           <View style={styles.currencyRow}>
@@ -111,7 +102,7 @@ export const HomeScreen: React.FC<IHomeScreenProps> = React.memo(({ onNavigate }
               style={[styles.currencyBadge, styles.streakBadge]}
               activeOpacity={0.8}
               onPress={() => setIsStatsModalVisible(true)}
-              hitSlop={{ top: 10, bottom: 10, left: 6, right: 6 }}
+              hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
             >
               <Text style={styles.streakText}>🔥 {currentStreak}</Text>
             </TouchableOpacity>
@@ -128,7 +119,7 @@ export const HomeScreen: React.FC<IHomeScreenProps> = React.memo(({ onNavigate }
               ]}
               activeOpacity={0.8}
               onPress={() => setIsShopModalVisible(true)}
-              hitSlop={{ top: 10, bottom: 10, left: 6, right: 6 }}
+              hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
             >
               <Text style={[styles.shopBtnText, { color: theme.primaryColor }]}>🛍️ Dükkan</Text>
             </TouchableOpacity>
@@ -137,101 +128,96 @@ export const HomeScreen: React.FC<IHomeScreenProps> = React.memo(({ onNavigate }
               style={[styles.currencyBadge, styles.statsBtn]}
               activeOpacity={0.8}
               onPress={() => setIsStatsModalVisible(true)}
-              hitSlop={{ top: 10, bottom: 10, left: 6, right: 6 }}
+              hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
             >
               <Text style={styles.statsIconText}>📊</Text>
             </TouchableOpacity>
           </View>
         </View>
 
-        <View
-          style={[
-            styles.fanAtmosphereCard,
-            {
-              borderColor: theme.cardBorder,
-              borderLeftWidth: 4,
-              borderLeftColor: theme.primaryColor,
-            },
-          ]}
-        >
-          <View style={styles.fanAtmosphereTop}>
-            <View style={[styles.fanBadgePill, { backgroundColor: theme.accentGlow }]}>
-              <View style={[styles.pulseDot, { backgroundColor: theme.primaryColor }]} />
-              <Text style={[styles.fanBadgePillText, { color: theme.primaryColor }]}>
-                {theme.fanBannerTitle}
-              </Text>
-            </View>
-
-            <Text style={styles.fanStadiumText}>{theme.stadiumName}</Text>
-          </View>
-
-          <Text style={styles.fanChantText}>{theme.anthemChant}</Text>
-        </View>
         <TouchableOpacity
           style={[
-            styles.rankCard,
+            styles.heroScoutCard,
             {
-              borderColor: theme.primaryColor,
+              borderColor: theme.cardBorder,
+              borderLeftColor: theme.primaryColor,
               shadowColor: theme.primaryColor,
             },
           ]}
-          activeOpacity={0.85}
+          activeOpacity={0.88}
           onPress={() => setIsStatsModalVisible(true)}
         >
-          <View style={styles.rankHeader}>
-            <View style={styles.rankTitleCol}>
-              <View
-                style={[
-                  styles.equippedAvatarCircle,
-                  {
-                    borderColor: theme.primaryColor,
-                    shadowColor: theme.primaryColor,
-                  },
-                ]}
-              >
-                <Text style={styles.equippedAvatarEmoji}>{equippedCosmetic.avatarEmoji}</Text>
+          {/* Üst Kısım: Avatar + Rütbe & Kozmetik Başlık + İlerleme Yüzdesi */}
+          <View style={styles.heroScoutHeader}>
+            <View
+              style={[
+                styles.heroAvatarCircle,
+                {
+                  borderColor: theme.primaryColor,
+                  shadowColor: theme.primaryColor,
+                },
+              ]}
+            >
+              <Text style={styles.heroAvatarEmoji}>{equippedCosmetic.avatarEmoji}</Text>
+            </View>
+
+            <View style={styles.heroScoutInfoCol}>
+              <View style={styles.heroScoutTitleRow}>
+                <Text style={styles.heroScoutRankTitle} numberOfLines={1}>
+                  {rankInfo.title}
+                </Text>
+                <View
+                  style={[
+                    styles.heroCosmeticPill,
+                    { backgroundColor: equippedCosmetic.themeGlowColor },
+                  ]}
+                >
+                  <Text style={[styles.heroCosmeticPillText, { color: theme.primaryColor }]}>
+                    {theme.teamBadgeEmojis} {equippedCosmetic.titleBadge}
+                  </Text>
+                </View>
               </View>
 
-              <View style={{ flex: 1 }}>
-                <View style={styles.rankBadgeRow}>
-                  <Text style={styles.rankTitle}>{rankInfo.title}</Text>
-                  <View
-                    style={[
-                      styles.cosmeticTitlePill,
-                      { backgroundColor: equippedCosmetic.themeGlowColor },
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.cosmeticTitleText,
-                        { color: theme.primaryColor },
-                      ]}
-                    >
-                      {equippedCosmetic.titleBadge}
-                    </Text>
-                  </View>
-                </View>
-                <Text style={styles.rankSub}>
+              <View style={styles.heroScoutMetaRow}>
+                <Text style={styles.heroStadiumText}>
+                  🏟️ {theme.stadiumName}
+                </Text>
+                <Text style={styles.heroMetaDot}>•</Text>
+                <Text style={styles.heroXpText}>
                   {rankInfo.tier === 4
-                    ? 'Zirve Rütbe • Efsane Direktör'
-                    : `Sonraki Rütbeye ${rankInfo.xpNeededForNext} XP kaldı`}
+                    ? 'Zirve Rütbe'
+                    : `${rankInfo.xpNeededForNext} XP kaldı`}
                 </Text>
               </View>
             </View>
-            <Text style={[styles.rankPercentText, { color: theme.primaryColor }]}>
-              %{rankInfo.currentProgressInTier}
-            </Text>
+
+            <View style={styles.heroProgressCol}>
+              <Text style={[styles.heroProgressPercent, { color: theme.primaryColor }]}>
+                %{rankInfo.currentProgressInTier}
+              </Text>
+              <Text style={styles.heroStatsHint}>İstatistik ➔</Text>
+            </View>
           </View>
-          <View style={styles.rankProgressBarBg}>
+
+          {/* İlerleme Çubuğu */}
+          <View style={styles.heroProgressBarBg}>
             <View
               style={[
-                styles.rankProgressBarFill,
+                styles.heroProgressBarFill,
                 {
                   width: `${rankInfo.currentProgressInTier}%`,
                   backgroundColor: theme.primaryColor,
                 },
               ]}
             />
+          </View>
+
+          {/* Alt Kısım: Canlı Tribün Tezahüratı Şeridi */}
+          <View style={[styles.heroAtmosphereStrip, { backgroundColor: theme.accentGlow }]}>
+            <View style={[styles.pulseDot, { backgroundColor: theme.primaryColor }]} />
+            <Text style={styles.heroChantText} numberOfLines={1}>
+              {theme.anthemChant}
+            </Text>
           </View>
         </TouchableOpacity>
         <View style={styles.modeSwitcherContainer}>
@@ -388,42 +374,31 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: Spacing.sm,
   },
-  brandRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
+  brandCol: {
+    justifyContent: 'center',
   },
   brandTitle: {
     ...Typography.h1,
     fontWeight: '900',
     letterSpacing: 1.2,
-    fontSize: 24,
-  },
-  themeMiniPill: {
-    paddingVertical: 2,
-    paddingHorizontal: 6,
-    borderRadius: BorderRadius.xs,
-  },
-  themeMiniPillText: {
-    fontSize: 9,
-    fontWeight: '800',
-    textTransform: 'uppercase',
+    fontSize: 22,
   },
   brandSubtitle: {
     ...Typography.caption,
     color: Colors.textSecondary,
-    fontSize: 11,
+    fontSize: 10,
     marginTop: 1,
   },
   currencyRow: {
     flexDirection: 'row',
-    gap: Spacing.xs,
+    alignItems: 'center',
+    gap: 5,
   },
   currencyBadge: {
     backgroundColor: Colors.surface,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
-    minHeight: 34,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    minHeight: 30,
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: BorderRadius.full,
@@ -437,147 +412,155 @@ const styles = StyleSheet.create({
   streakText: {
     ...Typography.bodyBold,
     color: Colors.warning,
-    fontSize: 13,
+    fontSize: 12,
   },
   currencyText: {
     ...Typography.bodyBold,
     color: Colors.accent,
-    fontSize: 13,
+    fontSize: 12,
   },
   statsBtn: {
     borderColor: Colors.secondary,
     backgroundColor: 'rgba(59, 130, 246, 0.15)',
+    paddingHorizontal: 7,
   },
   statsIconText: {
-    fontSize: 14,
+    fontSize: 13,
   },
   shopBtn: {
     backgroundColor: 'rgba(234, 179, 8, 0.15)',
+    paddingHorizontal: 8,
   },
   shopBtnText: {
     ...Typography.bodyBold,
-    fontSize: 12,
+    fontSize: 11,
   },
-  fanAtmosphereCard: {
+  heroScoutCard: {
     backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.md,
-    paddingVertical: Spacing.xs + 2,
-    paddingHorizontal: Spacing.sm,
-    marginBottom: Spacing.sm,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.sm + 2,
     borderWidth: 1,
+    borderLeftWidth: 4,
+    marginBottom: Spacing.sm,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 4,
   },
-  fanAtmosphereTop: {
+  heroScoutHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 2,
+    gap: Spacing.sm,
   },
-  fanBadgePill: {
+  heroAvatarCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 2,
+    backgroundColor: Colors.surfaceLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.5,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  heroAvatarEmoji: {
+    fontSize: 20,
+  },
+  heroScoutInfoCol: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  heroScoutTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 2,
+    gap: 6,
+    flexWrap: 'wrap',
+  },
+  heroScoutRankTitle: {
+    ...Typography.bodyBold,
+    color: Colors.textPrimary,
+    fontSize: 13,
+  },
+  heroCosmeticPill: {
+    paddingVertical: 1,
     paddingHorizontal: 6,
     borderRadius: BorderRadius.xs,
-    gap: 4,
+  },
+  heroCosmeticPillText: {
+    fontSize: 9,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+  },
+  heroScoutMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    marginTop: 2,
+  },
+  heroStadiumText: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  heroMetaDot: {
+    ...Typography.caption,
+    color: Colors.textMuted,
+    fontSize: 10,
+  },
+  heroXpText: {
+    ...Typography.caption,
+    color: Colors.textMuted,
+    fontSize: 10,
+  },
+  heroProgressCol: {
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+  },
+  heroProgressPercent: {
+    ...Typography.captionBold,
+    fontSize: 14,
+    fontWeight: '900',
+  },
+  heroStatsHint: {
+    fontSize: 9,
+    color: Colors.textSecondary,
+    fontWeight: '700',
+    marginTop: 1,
+  },
+  heroProgressBarBg: {
+    height: 5,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: BorderRadius.full,
+    overflow: 'hidden',
+    marginTop: 8,
+    marginBottom: 6,
+  },
+  heroProgressBarFill: {
+    height: '100%',
+    borderRadius: BorderRadius.full,
+  },
+  heroAtmosphereStrip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 3,
+    paddingHorizontal: 8,
+    borderRadius: 6,
+    gap: 6,
   },
   pulseDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
   },
-  fanBadgePillText: {
-    fontSize: 9,
-    fontWeight: '900',
-    letterSpacing: 0.6,
-  },
-  fanStadiumText: {
-    ...Typography.caption,
-    color: Colors.textMuted,
+  heroChantText: {
+    ...Typography.captionBold,
+    color: Colors.textPrimary,
     fontSize: 10,
-  },
-  fanChantText: {
-    ...Typography.captionBold,
-    color: Colors.textPrimary,
-    fontSize: 11,
     fontStyle: 'italic',
-  },
-  equippedAvatarCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    borderWidth: 2.5,
-    backgroundColor: Colors.surfaceLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.6,
-    shadowRadius: 6,
-    elevation: 4,
-  },
-  equippedAvatarEmoji: {
-    fontSize: 22,
-  },
-  rankBadgeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-  },
-  cosmeticTitlePill: {
-    paddingVertical: 1,
-    paddingHorizontal: 6,
-    borderRadius: BorderRadius.xs,
-  },
-  cosmeticTitleText: {
-    fontSize: 9,
-    fontWeight: '800',
-    textTransform: 'uppercase',
-  },
-  rankCard: {
-    backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.md,
-    borderWidth: 1.5,
-    marginBottom: Spacing.md,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  rankHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: Spacing.sm,
-  },
-  rankTitleCol: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
     flex: 1,
-  },
-  rankTitle: {
-    ...Typography.bodyBold,
-    color: Colors.textPrimary,
-    fontSize: 14,
-  },
-  rankSub: {
-    ...Typography.caption,
-    color: Colors.textMuted,
-    fontSize: 11,
-  },
-  rankPercentText: {
-    ...Typography.captionBold,
-    fontSize: 13,
-  },
-  rankProgressBarBg: {
-    height: 6,
-    backgroundColor: Colors.surfaceLight,
-    borderRadius: BorderRadius.full,
-    overflow: 'hidden',
-  },
-  rankProgressBarFill: {
-    height: '100%',
-    borderRadius: BorderRadius.full,
   },
   modeSwitcherContainer: {
     marginBottom: Spacing.md,

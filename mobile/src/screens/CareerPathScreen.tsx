@@ -246,10 +246,15 @@ const styles = StyleSheet.create({
   bottomBar: {
     paddingHorizontal: Spacing.md,
     paddingTop: Spacing.sm,
-    paddingBottom: Platform.OS === 'android' ? 26 : Spacing.md,
+    paddingBottom: Platform.OS === 'android' ? 44 : Spacing.md,
     borderTopWidth: 1,
     borderTopColor: Colors.border,
     backgroundColor: Colors.surface,
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
   },
   guessBtn: {
     backgroundColor: Colors.primary,
@@ -257,6 +262,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: 12,
     alignItems: 'center',
+    marginBottom: Platform.OS === 'android' ? 4 : 0,
   },
   guessBtnText: {
     ...Typography.bodyBold,

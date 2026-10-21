@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { useDailyCountdown } from '../hooks/useDailyCountdown';
 import { Colors } from '../../../theme/colors';
 import { Spacing, BorderRadius } from '../../../theme/spacing';
@@ -54,6 +54,8 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: Colors.border,
     padding: Spacing.md,
+    paddingBottom: Platform.OS === 'android' ? 44 : Spacing.md,
+    elevation: 8,
   },
   contentRow: {
     flexDirection: 'row',
