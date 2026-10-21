@@ -14,7 +14,8 @@
       "adaptiveIcon": {
         "backgroundColor": "#0D1117"
       },
-      "package": "com.penalty.hub"
+      "package": "com.penalty.hub",
+      "usesCleartextTraffic": true
     },
     "web": {
       "favicon": "./src/assets/favicon.png"

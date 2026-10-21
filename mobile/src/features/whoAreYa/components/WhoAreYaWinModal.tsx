@@ -236,7 +236,18 @@ export const WhoAreYaWinModal: React.FC<IWhoAreYaWinModalProps> = React.memo(
             <Text style={styles.title}>{isWon ? 'TEBRİKLER!' : 'MAALESEF BİLEMEDİNİZ'}</Text>
 
             {displayImage ? (
-              <Image source={{ uri: displayImage }} style={styles.image} resizeMode="cover" />
+              <Image
+                source={{
+                  uri: displayImage,
+                  headers: {
+                    'User-Agent':
+                      'Mozilla/5.0 (Linux; Android 13; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
+                    Accept: 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+                  },
+                }}
+                style={styles.image}
+                resizeMode="cover"
+              />
             ) : null}
 
             <Text style={styles.playerName}>{displayName}</Text>

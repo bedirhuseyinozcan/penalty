@@ -39,7 +39,14 @@ export const BlurredImageHero = React.memo<IBlurredImageHeroProps>(
           {imageUrl && !imageError ? (
             <Image
               key={imageUrl}
-              source={{ uri: imageUrl }}
+              source={{
+                uri: imageUrl,
+                headers: {
+                  'User-Agent':
+                    'Mozilla/5.0 (Linux; Android 13; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
+                  Accept: 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+                },
+              }}
               style={[
                 styles.image,
                 Platform.OS === 'web' && blurRadius > 0
@@ -54,7 +61,10 @@ export const BlurredImageHero = React.memo<IBlurredImageHeroProps>(
               resizeMode="cover"
               onLoad={() => setIsLoaded(true)}
               onLoadEnd={() => setIsLoaded(true)}
-              onError={() => setImageError(true)}
+              onError={(e) => {
+                console.warn('BlurredImageHero image load failed for:', imageUrl, e?.nativeEvent);
+                setImageError(true);
+              }}
             />
           ) : (
             <View style={styles.placeholderContainer}>

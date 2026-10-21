@@ -155,7 +155,14 @@ export const ClubLogoScreen: React.FC<IClubLogoScreenProps> = React.memo(
 
             <View style={styles.crestCircle}>
               <Image
-                source={{ uri: logoUrl }}
+                source={{
+                  uri: logoUrl,
+                  headers: {
+                    'User-Agent':
+                      'Mozilla/5.0 (Linux; Android 13; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
+                    Accept: 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+                  },
+                }}
                 style={[
                   styles.crestImage,
                   !isRevealed && {
