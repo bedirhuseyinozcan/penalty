@@ -21,10 +21,18 @@ function createSeededRandom(seedStr: string): () => number {
   };
 }
 
+const BAD_CLUBS = new Set(['Without Club', 'Unknown', 'Career break', 'Retired']);
+
 export function doesPlayerMatchBingoTile(player: ILightPlayer, tile: IBingoTile): boolean {
   switch (tile.type) {
-    case 'club':
-      return (player.club || '').toLowerCase().trim() === tile.value.toLowerCase().trim();
+    case 'club': {
+      const target = tile.value.toLowerCase().trim();
+      if ((player.club || '').toLowerCase().trim() === target) return true;
+      if (player.clubs && Array.isArray(player.clubs)) {
+        return player.clubs.some((c) => (c || '').toLowerCase().trim() === target);
+      }
+      return false;
+    }
     case 'nationality':
       return (player.nationality || '').toLowerCase().trim() === tile.value.toLowerCase().trim();
     case 'positionGroup':
@@ -43,6 +51,8 @@ export function doesPlayerMatchBingoTile(player: ILightPlayer, tile: IBingoTile)
     }
     case 'league':
       return player.league === tile.value;
+    case 'trophy':
+      return (player.trophies || []).includes(tile.value);
     default:
       return false;
   }
@@ -69,7 +79,15 @@ export function generateBingoSetup(
   const natCounts = new Map<string, number>();
 
   for (const p of pool) {
-    if (p.club) clubCounts.set(p.club, (clubCounts.get(p.club) || 0) + 1);
+    if (p.clubs && Array.isArray(p.clubs)) {
+      for (const c of p.clubs) {
+        if (c && !BAD_CLUBS.has(c)) {
+          clubCounts.set(c, (clubCounts.get(c) || 0) + 1);
+        }
+      }
+    } else if (p.club && !BAD_CLUBS.has(p.club)) {
+      clubCounts.set(p.club, (clubCounts.get(p.club) || 0) + 1);
+    }
     if (p.nationality) natCounts.set(p.nationality, (natCounts.get(p.nationality) || 0) + 1);
   }
 
@@ -163,6 +181,61 @@ export function generateBingoSetup(
       emoji: '👕',
     },
   ];
+  const candidateTrophyTiles: Omit<IBingoTile, 'index' | 'isMatched' | 'matchedPlayer'>[] = [
+    {
+      id: 'trophy_ucl',
+      type: 'trophy',
+      value: 'ucl',
+      title: 'Şampiyonlar Ligi',
+      subtitle: 'UCL Şampiyonu',
+      emoji: '⭐',
+    },
+    {
+      id: 'trophy_world_cup',
+      type: 'trophy',
+      value: 'world_cup',
+      title: 'Dünya Kupası',
+      subtitle: 'Kupa Sahibi',
+      emoji: '🏆',
+    },
+    {
+      id: 'trophy_league_champion',
+      type: 'trophy',
+      value: 'league_champion',
+      title: 'Lig Şampiyonu',
+      subtitle: 'Kupa Kaldırmış',
+      emoji: '🥇',
+    },
+    {
+      id: 'trophy_golden_boot',
+      type: 'trophy',
+      value: 'golden_boot',
+      title: 'Gol Kralı',
+      subtitle: 'Altın Ayakkabı',
+      emoji: '👟',
+    },
+    {
+      id: 'trophy_ballon_dor',
+      type: 'trophy',
+      value: 'ballon_dor',
+      title: "Ballon d'Or",
+      subtitle: 'Yılın Yıldızı',
+      emoji: '🌟',
+    },
+  ];
+
+  const validTrophyTiles = candidateTrophyTiles.filter((t) => {
+    let count = 0;
+    for (const p of pool) {
+      if ((p.trophies || []).includes(t.value)) {
+        count++;
+        if (count >= 2) return true;
+      }
+    }
+    return false;
+  });
+
+  rawTiles.push(...validTrophyTiles);
 
   const shuffledTiles = shuffle(rawTiles).slice(0, BINGO_GRID_SIZE);
   const tiles: IBingoTile[] = shuffledTiles.map((t, idx) => ({

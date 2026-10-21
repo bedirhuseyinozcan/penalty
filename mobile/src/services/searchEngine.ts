@@ -13,6 +13,8 @@ export interface ILightPlayer {
   league: string;
   age?: number;
   shirtNumber?: number;
+  clubs?: string[];
+  trophies?: string[];
 }
 
 export interface IClubSearchItem {
@@ -39,7 +41,12 @@ class SearchEngineService {
       const cached = appStorage.getString(StorageKeys.SEARCH_INDEX_CACHE);
       if (cached) {
         try {
-          rawList = JSON.parse(cached);
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].clubs && parsed[0].trophies) {
+            rawList = parsed;
+          } else {
+            rawList = defaultPlayersData as ILightPlayer[];
+          }
         } catch {
           rawList = defaultPlayersData as ILightPlayer[];
         }

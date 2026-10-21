@@ -1,6 +1,12 @@
 import { ILightPlayer } from '../../services/searchEngine';
 
-export type GridCriterionType = 'club' | 'nationality' | 'positionGroup' | 'league' | 'ageGroup';
+export type GridCriterionType =
+  | 'club'
+  | 'nationality'
+  | 'positionGroup'
+  | 'league'
+  | 'ageGroup'
+  | 'trophy';
 
 export interface IGridCriterion {
   id: string;

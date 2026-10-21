@@ -79,12 +79,8 @@ export const BingoCurrentPlayerCard: React.FC<IBingoCurrentPlayerCardProps> = Re
                 <Text style={styles.playerName} numberOfLines={1}>
                   {player.name}
                 </Text>
-                <Text style={styles.playerDetails} numberOfLines={1}>
-                  🛡️ {player.club || 'Kulüp'} • 🌍 {player.nationality}
-                </Text>
-                <Text style={styles.playerMeta} numberOfLines={1}>
-                  ⚽ Mevki: {player.position} • 🎂 Yaş: {player.age ?? '?'}
-                  {player.shirtNumber ? ` • 👕 #${player.shirtNumber}` : ''}
+                <Text style={styles.playerInstruction} numberOfLines={1}>
+                  Uygun kutuya yerleştir veya pas geç
                 </Text>
               </View>
 
@@ -210,19 +206,14 @@ const styles = StyleSheet.create({
   playerName: {
     ...Typography.bodyBold,
     color: Colors.textPrimary,
-    fontSize: 14,
+    fontSize: 16,
+    letterSpacing: 0.2,
   },
-  playerDetails: {
-    ...Typography.caption,
-    color: Colors.textSecondary,
-    fontSize: 11,
-    marginTop: 1,
-  },
-  playerMeta: {
+  playerInstruction: {
     ...Typography.caption,
     color: Colors.textMuted,
-    fontSize: 10,
-    marginTop: 1,
+    fontSize: 11,
+    marginTop: 2,
   },
   skipBtn: {
     backgroundColor: Colors.surfaceLight,

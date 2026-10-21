@@ -8,7 +8,8 @@ export type BingoCategoryType =
   | 'ageOver30'
   | 'shirt1to11'
   | 'shirt20Plus'
-  | 'league';
+  | 'league'
+  | 'trophy';
 
 export interface IBingoTile {
   index: number; 

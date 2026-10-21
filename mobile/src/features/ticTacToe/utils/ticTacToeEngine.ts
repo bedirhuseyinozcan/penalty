@@ -36,8 +36,14 @@ export function getPlayerPositionGroup(pos: string): 'GK' | 'DEF' | 'MID' | 'FWD
 
 export function doesPlayerMatchCriterion(player: ILightPlayer, criterion: IGridCriterion): boolean {
   switch (criterion.type) {
-    case 'club':
-      return (player.club || '').toLowerCase().trim() === criterion.value.toLowerCase().trim();
+    case 'club': {
+      const target = criterion.value.toLowerCase().trim();
+      if ((player.club || '').toLowerCase().trim() === target) return true;
+      if (player.clubs && Array.isArray(player.clubs)) {
+        return player.clubs.some((c) => (c || '').toLowerCase().trim() === target);
+      }
+      return false;
+    }
     case 'nationality':
       return (player.nationality || '').toLowerCase().trim() === criterion.value.toLowerCase().trim();
     case 'league':
@@ -50,6 +56,8 @@ export function doesPlayerMatchCriterion(player: ILightPlayer, criterion: IGridC
       if (criterion.value === 'o30') return age >= 30;
       return age >= 25 && age <= 29;
     }
+    case 'trophy':
+      return (player.trophies || []).includes(criterion.value);
     default:
       return false;
   }
@@ -69,6 +77,8 @@ export function getMatchingPlayersForCell(
   );
 }
 
+const BAD_CLUBS = new Set(['Without Club', 'Unknown', 'Career break', 'Retired']);
+
 export function generateTicTacToeBoard(
   seedKey: string,
   leagueMode: 'global' | 'super_lig'
@@ -77,19 +87,26 @@ export function generateTicTacToeBoard(
   const pool = searchEngine.getPlayersByLeagueMode(leagueMode);
   const safePool = pool.length >= 30 ? pool : searchEngine.getPlayersByLeagueMode();
 
-  // 1. Sütun adayları: En çok oyuncusu olan kulüpler
   const clubCounts = new Map<string, number>();
   const natCounts = new Map<string, number>();
 
   for (const p of safePool) {
-    if (p.club) clubCounts.set(p.club, (clubCounts.get(p.club) || 0) + 1);
+    if (p.clubs && Array.isArray(p.clubs)) {
+      for (const c of p.clubs) {
+        if (c && !BAD_CLUBS.has(c)) {
+          clubCounts.set(c, (clubCounts.get(c) || 0) + 1);
+        }
+      }
+    } else if (p.club && !BAD_CLUBS.has(p.club)) {
+      clubCounts.set(p.club, (clubCounts.get(p.club) || 0) + 1);
+    }
     if (p.nationality) natCounts.set(p.nationality, (natCounts.get(p.nationality) || 0) + 1);
   }
 
   const topClubs = Array.from(clubCounts.entries())
     .filter(([_, count]) => count >= 8)
     .sort((a, b) => b[1] - a[1])
-    .slice(0, 14)
+    .slice(0, 18)
     .map(([name]) => name);
 
   const topNats = Array.from(natCounts.entries())
@@ -99,7 +116,7 @@ export function generateTicTacToeBoard(
     .map(([nat]) => nat);
 
   const colCandidates: IGridCriterion[] = topClubs.map((clubName) => ({
-    id: `club_${clubName}`,
+    id: `col_club_${clubName}`,
     type: 'club',
     value: clubName,
     label: clubName,
@@ -107,7 +124,7 @@ export function generateTicTacToeBoard(
     badgeText: '🛡️',
   }));
 
-  const rowCandidates: IGridCriterion[] = [
+  const positionCandidates: IGridCriterion[] = [
     {
       id: 'pos_FWD',
       type: 'positionGroup',
@@ -132,6 +149,18 @@ export function generateTicTacToeBoard(
       subLabel: 'Mevki',
       badgeText: '🧱',
     },
+  ];
+
+  const rowCandidates: IGridCriterion[] = [
+    ...topClubs.map((clubName) => ({
+      id: `row_club_${clubName}`,
+      type: 'club' as const,
+      value: clubName,
+      label: clubName,
+      subLabel: 'Kulüp',
+      badgeText: '🛡️',
+    })),
+    ...positionCandidates,
     {
       id: 'age_u24',
       type: 'ageGroup',
@@ -148,20 +177,52 @@ export function generateTicTacToeBoard(
       subLabel: 'Tecrübeli',
       badgeText: '👑',
     },
-    ...topNats.slice(0, 6).map((nat) => ({
-      id: `nat_${nat}`,
+    ...topNats.slice(0, 8).map((nat) => ({
+      id: `row_nat_${nat}`,
       type: 'nationality' as const,
       value: nat,
       label: nat,
       subLabel: 'Uyruk',
       badgeText: '🌍',
     })),
+    {
+      id: 'row_trophy_ucl',
+      type: 'trophy',
+      value: 'ucl',
+      label: 'Şampiyonlar Ligi',
+      subLabel: 'UCL Şampiyonu',
+      badgeText: '⭐',
+    },
+    {
+      id: 'row_trophy_world_cup',
+      type: 'trophy',
+      value: 'world_cup',
+      label: 'Dünya Kupası',
+      subLabel: 'Kupa Sahibi',
+      badgeText: '🏆',
+    },
+    {
+      id: 'row_trophy_league_champion',
+      type: 'trophy',
+      value: 'league_champion',
+      label: 'Lig Şampiyonu',
+      subLabel: 'Kupa Kaldırmış',
+      badgeText: '🥇',
+    },
+    {
+      id: 'row_trophy_golden_boot',
+      type: 'trophy',
+      value: 'golden_boot',
+      label: 'Gol Kralı',
+      subLabel: 'Altın Ayakkabı',
+      badgeText: '👟',
+    },
   ];
 
   if (leagueMode === 'global') {
     ['premier_league', 'la_liga', 'serie_a', 'bundesliga'].forEach((lg) => {
       colCandidates.push({
-        id: `league_${lg}`,
+        id: `col_league_${lg}`,
         type: 'league',
         value: lg,
         label: LEAGUE_LABELS[lg] || lg,
@@ -182,18 +243,25 @@ export function generateTicTacToeBoard(
     }
     return copy;
   };
-
-  for (let attempt = 0; attempt < 40; attempt++) {
+  for (let attempt = 0; attempt < 100; attempt++) {
     const cShuffled = shuffle(colCandidates);
-    const rShuffled = shuffle(rowCandidates);
-
-    if (cShuffled.length < 3 || rShuffled.length < 3) break;
+    if (cShuffled.length < 3) break;
 
     const testCols: [IGridCriterion, IGridCriterion, IGridCriterion] = [
       cShuffled[0],
       cShuffled[1],
       cShuffled[2],
     ];
+    const colClubValues = new Set(
+      testCols.filter((c) => c.type === 'club').map((c) => c.value.toLowerCase())
+    );
+    const availableRows = rowCandidates.filter(
+      (r) => r.type !== 'club' || !colClubValues.has(r.value.toLowerCase())
+    );
+
+    const rShuffled = shuffle(availableRows);
+    if (rShuffled.length < 3) continue;
+
     const testRows: [IGridCriterion, IGridCriterion, IGridCriterion] = [
       rShuffled[0],
       rShuffled[1],
@@ -223,7 +291,7 @@ export function generateTicTacToeBoard(
     const fallbackClubs = topClubs.slice(0, 3);
     selectedCols = [
       {
-        id: `club_${fallbackClubs[0] || 'Galatasaray'}`,
+        id: `col_club_${fallbackClubs[0] || 'Galatasaray'}`,
         type: 'club',
         value: fallbackClubs[0] || 'Galatasaray',
         label: fallbackClubs[0] || 'Galatasaray',
@@ -231,7 +299,7 @@ export function generateTicTacToeBoard(
         badgeText: '🛡️',
       },
       {
-        id: `club_${fallbackClubs[1] || 'Fenerbahçe'}`,
+        id: `col_club_${fallbackClubs[1] || 'Fenerbahçe'}`,
         type: 'club',
         value: fallbackClubs[1] || 'Fenerbahçe',
         label: fallbackClubs[1] || 'Fenerbahçe',
@@ -239,7 +307,7 @@ export function generateTicTacToeBoard(
         badgeText: '🛡️',
       },
       {
-        id: `club_${fallbackClubs[2] || 'Beşiktaş'}`,
+        id: `col_club_${fallbackClubs[2] || 'Beşiktaş'}`,
         type: 'club',
         value: fallbackClubs[2] || 'Beşiktaş',
         label: fallbackClubs[2] || 'Beşiktaş',
@@ -248,9 +316,9 @@ export function generateTicTacToeBoard(
       },
     ];
     selectedRows = [
-      rowCandidates[0], 
-      rowCandidates[1], 
-      rowCandidates[2],
+      positionCandidates[0],
+      positionCandidates[1],
+      positionCandidates[2],
     ];
   }
 
