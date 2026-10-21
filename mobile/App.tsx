@@ -5,6 +5,8 @@ import { WhoAreYaScreen } from './src/screens/WhoAreYaScreen';
 import { CareerPathScreen } from './src/screens/CareerPathScreen';
 import { ClubLogoScreen } from './src/screens/ClubLogoScreen';
 import { ContextinhoScreen } from './src/screens/ContextinhoScreen';
+import { TicTacToeScreen } from './src/screens/TicTacToeScreen';
+import { FootballBingoScreen } from './src/screens/FootballBingoScreen';
 import { LevelMapScreen } from './src/screens/LevelMapScreen';
 import { GameModeType } from './src/api/dailyApi';
 import { searchEngine } from './src/services/searchEngine';
@@ -89,7 +91,9 @@ function App() {
       screen === 'whoAreYa' ||
       screen === 'careerPath' ||
       screen === 'clubLogo' ||
-      screen === 'contextinho'
+      screen === 'contextinho' ||
+      screen === 'ticTacToe' ||
+      screen === 'footballBingo'
     ) {
       setSelectedLevel(undefined);
       setIsReplayMode(false);
@@ -162,6 +166,24 @@ function App() {
           )}
           {currentScreen === 'contextinho' && (
             <ContextinhoScreen
+              isDaily={isDailySelected}
+              initialLevel={selectedLevel}
+              isReplay={isReplayMode}
+              onBack={handleBackFromGame}
+              onOpenMap={handleOpenMapFromGame}
+            />
+          )}
+          {currentScreen === 'ticTacToe' && (
+            <TicTacToeScreen
+              isDaily={isDailySelected}
+              initialLevel={selectedLevel}
+              isReplay={isReplayMode}
+              onBack={handleBackFromGame}
+              onOpenMap={handleOpenMapFromGame}
+            />
+          )}
+          {currentScreen === 'footballBingo' && (
+            <FootballBingoScreen
               isDaily={isDailySelected}
               initialLevel={selectedLevel}
               isReplay={isReplayMode}

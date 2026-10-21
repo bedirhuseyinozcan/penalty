@@ -12,6 +12,8 @@ const GAME_META: Record<GameModeType, { title: string; emoji: string }> = {
   careerPath: { title: 'Transfer Rotası', emoji: '🧭' },
   clubLogo: { title: 'Arma Avcısı', emoji: '🛡️' },
   contextinho: { title: 'Sıcak Temas', emoji: '🔥' },
+  ticTacToe: { title: 'Tiki-Taka (3x3)', emoji: '🎯' },
+  footballBingo: { title: 'Futbol Bingo (4x4)', emoji: '🔢' },
 };
 
 interface IUseLevelMapProps {

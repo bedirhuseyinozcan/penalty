@@ -19,7 +19,15 @@ import { Colors } from '../theme/colors';
 import { Spacing, BorderRadius } from '../theme/spacing';
 import { Typography } from '../theme/typography';
 
-export type AppScreenType = 'home' | 'whoAreYa' | 'careerPath' | 'clubLogo' | 'contextinho' | 'levelMap';
+export type AppScreenType =
+  | 'home'
+  | 'whoAreYa'
+  | 'careerPath'
+  | 'clubLogo'
+  | 'contextinho'
+  | 'ticTacToe'
+  | 'footballBingo'
+  | 'levelMap';
 
 interface IHomeScreenProps {
   onNavigate: (
@@ -47,6 +55,8 @@ export const HomeScreen: React.FC<IHomeScreenProps> = React.memo(({ onNavigate }
   const isCareerDailyCompleted = isDailyCompleted(`${todayDate}_careerPath_${selectedLeagueMode}`);
   const isClubLogoDailyCompleted = isDailyCompleted(`${todayDate}_clubLogo_${selectedLeagueMode}`);
   const isContextinhoDailyCompleted = isDailyCompleted(`${todayDate}_contextinho_${selectedLeagueMode}`);
+  const isTicTacToeDailyCompleted = isDailyCompleted(`${todayDate}_ticTacToe_${selectedLeagueMode}`);
+  const isBingoDailyCompleted = isDailyCompleted(`${todayDate}_footballBingo_${selectedLeagueMode}`);
 
   const handleSelectMode = useCallback(
     (mode: LeagueMode) => {
@@ -179,6 +189,24 @@ export const HomeScreen: React.FC<IHomeScreenProps> = React.memo(({ onNavigate }
           dailyBtnText={isContextinhoDailyCompleted ? '✅ Günün Sorusu (Çözüldü)' : '📅 Günün Sorusu'}
           onPressDaily={() => onNavigate('contextinho', true, 'contextinho')}
           onPressCareer={() => onNavigate('levelMap', false, 'contextinho')}
+        />
+
+        <HomeGameCard
+          emoji="🎯"
+          title="Tiki-Taka (3x3)"
+          subtitle="Kriter kesişimlerine (Kulüp × Mevki/Uyruk) uyan futbolcuları bul"
+          dailyBtnText={isTicTacToeDailyCompleted ? '✅ Günün Sorusu (Çözüldü)' : '📅 Günün Sorusu'}
+          onPressDaily={() => onNavigate('ticTacToe', true, 'ticTacToe')}
+          onPressCareer={() => onNavigate('levelMap', false, 'ticTacToe')}
+        />
+
+        <HomeGameCard
+          emoji="🔢"
+          title="Futbol Bingo (4x4)"
+          subtitle="42 kişilik desteden gelen futbolcuları doğru kriter kutularına yerleştir"
+          dailyBtnText={isBingoDailyCompleted ? '✅ Günün Sorusu (Çözüldü)' : '📅 Günün Sorusu'}
+          onPressDaily={() => onNavigate('footballBingo', true, 'footballBingo')}
+          onPressCareer={() => onNavigate('levelMap', false, 'footballBingo')}
         />
       </ScrollView>
 

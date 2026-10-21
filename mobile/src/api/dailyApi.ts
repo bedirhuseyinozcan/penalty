@@ -1,6 +1,12 @@
 import { apiClient } from './client';
 
-export type GameModeType = 'whoAreYa' | 'careerPath' | 'clubLogo' | 'contextinho';
+export type GameModeType =
+  | 'whoAreYa'
+  | 'careerPath'
+  | 'clubLogo'
+  | 'contextinho'
+  | 'ticTacToe'
+  | 'footballBingo';
 
 export interface IDailyChallengeData {
   id: string;

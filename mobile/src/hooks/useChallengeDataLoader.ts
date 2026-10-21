@@ -64,6 +64,11 @@ export const useChallengeDataLoader = ({
   const alreadyCompleted = isDaily && isDailyCompleted(dailyKey);
 
   const loadData = useCallback(async () => {
+    if (gameMode === 'ticTacToe' || gameMode === 'footballBingo') {
+      setIsLoading(false);
+      return;
+    }
+
     if (!isDaily) {
       const cached = levelCacheService.getLevel(currentLevel, gameMode, selectedLeagueMode);
       if (cached) {
