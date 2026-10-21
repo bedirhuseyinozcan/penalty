@@ -1,0 +1,2292 @@
+KESİLEN VE TAMAMLANAN DOSYALAR (PART 2):
+==================================================
+
+
+==============================
+DOSYA: mobile\src\screens\ClubLogoScreen.tsx
+==============================
+
+import React, { useState, useEffect, useMemo } from 'react';
+import {
+  SafeAreaView,
+  View,
+  Text,
+  Image,
+  TouchableOpacity,
+  ScrollView,
+  StyleSheet,
+  ActivityIndicator,
+  Platform,
+} from 'react-native';
+import { useClubLogoGame } from '../features/clubLogo/hooks/useClubLogoGame';
+import { OfflineClubSearchModal } from '../features/clubLogo/components/OfflineClubSearchModal';
+import { WhoAreYaWinModal } from '../features/whoAreYa/components/WhoAreYaWinModal';
+import { HintWithAdButton } from '../features/monetization/components/HintWithAdButton';
+import { DailyHeaderCard } from '../features/daily/components/DailyHeaderCard';
+import { DailyCompletedBanner } from '../features/daily/components/DailyCompletedBanner';
+import { GameNavbar } from '../components/common/GameNavbar';
+import { useChallengeDataLoader } from '../hooks/useChallengeDataLoader';
+import { searchEngine } from '../services/searchEngine';
+import { Colors } from '../theme/colors';
+import { Spacing, BorderRadius } from '../theme/spacing';
+import { Typography } from '../theme/typography';
+
+const LEAGUE_LABELS: Record<string, string> = {
+  super_lig: 'Süper Lig',
+  premier_league: 'Premier League',
+  la_liga: 'La Liga',
+  serie_a: 'Serie A',
+  bundesliga: 'Bundesliga',
+  ligue_1: 'Ligue 1',
+};
+
+interface IClubLogoScreenProps {
+  isDaily?: boolean;
+  initialLevel?: number;
+  isReplay?: boolean;
+  onBack: () => void;
+  onOpenMap?: () => void;
+}
+
+export const ClubLogoScreen: React.FC<IClubLogoScreenProps> = React.memo(
+  ({ isDaily = false, initialLevel, isReplay = false, onBack, onOpenMap }) => {
+    const {
+      isLoading,
+      challengeData,
+      currentLevel,
+      isCurrentReplay,
+      dailyKey,
+      alreadyCompleted,
+      selectedLeagueMode,
+      goToNextLevel,
+    } = useChallengeDataLoader({
+      gameMode: 'clubLogo',
+      isDaily,
+      initialLevel,
+      isReplay,
+    });
+
+    const [hintUnlocked, setHintUnlocked] = useState(false);
+    const [isResultModalVisible, setIsResultModalVisible] = useState(false);
+
+    const targetClubName = challengeData?.playerClub || 'Fenerbahçe';
+    const targetClubInfo = useMemo(
+      () => searchEngine.getClubByName(targetClubName),
+      [targetClubName]
+    );
+
+    const logoUrl =
+      challengeData?.imageUrl ||
+      targetClubInfo?.logoUrl ||
+      'https://tmssl.akamaized.net/images/wappen/head/36.png';
+
+    const starPlayerHint = useMemo(() => {
+      if (challengeData?.hints && challengeData.hints.length > 0) {
+        return `İpucu Açıldı: ${challengeData.hints[0]}`;
+      }
+      if (targetClubInfo?.starPlayer) {
+        return `İpucu Açıldı: Kadrodaki Yıldız — ${targetClubInfo.starPlayer}`;
+      }
+      if (challengeData?.playerName) {
+        return `İpucu Açıldı: Kadrodaki Yıldız — ${challengeData.playerName}`;
+      }
+      return 'İpucu Açıldı: Ligin köklü ekiplerinden biri';
+    }, [challengeData, targetClubInfo]);
+
+    const {
+      guesses,
+      gameStatus,
+      isSearchModalVisible,
+      attemptsLeft,
+      maxAttempts,
+      openSearch,
+      closeSearch,
+      submitClubGuess,
+      resetGame,
+    } = useClubLogoGame({
+      targetClubName,
+      isDaily,
+      isReplay: isCurrentReplay,
+      dailyKey,
+      leagueModeKey: selectedLeagueMode,
+    });
+
+    useEffect(() => {
+      if (gameStatus !== 'playing') {
+        setIsResultModalVisible(true);
+      }
+    }, [gameStatus]);
+
+    if (isLoading) {
+      return (
+        <SafeAreaView style={styles.centerContainer}>
+          <ActivityIndicator size="large" color={Colors.primary} />
+          <Text style={styles.loadingText}>Kulüp arması hazırlanıyor...</Text>
+        </SafeAreaView>
+      );
+    }
+
+    const navTitle = isDaily ? 'Günün Arması' : `Seviye ${currentLevel}`;
+    const isRevealed = gameStatus !== 'playing';
+    const blurRadius = isRevealed
+      ? 0
+      : Math.max(4, (maxAttempts - guesses.length) * 5);
+    const clarityPercent = isRevealed
+      ? 100
+      : Math.min(90, Math.round(((guesses.length + 1) / maxAttempts) * 85));
+
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <GameNavbar
+          title={navTitle}
+          isReplay={isCurrentReplay && !isDaily}
+          attemptsLeft={attemptsLeft}
+          maxAttempts={maxAttempts}
+          onBack={onBack}
+          onOpenMap={onOpenMap}
+          showMapButton={!isDaily}
+        />
+
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          {isDaily && (
+            <DailyHeaderCard
+              title="Arma Avcısı"
+              leagueLabel={selectedLeagueMode === 'super_lig' ? 'Süper Lig' : 'Global 5 Lig'}
+              isCompleted={alreadyCompleted}
+            />
+          )}
+
+          <View style={styles.heroCard}>
+            <View style={styles.clarityBadge}>
+              <Text style={styles.clarityText}>🔍 Netlik: %{clarityPercent}</Text>
+            </View>
+
+            <View style={styles.crestCircle}>
+              <Image
+                source={{
+                  uri: logoUrl,
+                  headers: {
+                    'User-Agent':
+                      'Mozilla/5.0 (Linux; Android 13; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
+                    Accept: 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+                  },
+                }}
+                style={[
+                  styles.crestImage,
+                  !isRevealed && {
+                    transform: [{ scale: 1 + (maxAttempts - guesses.length) * 0.08 }],
+                  },
+                ]}
+                blurRadius={blurRadius}
+                resizeMode="contain"
+              />
+            </View>
+
+            <Text style={styles.heroCaption}>
+              {isRevealed
+                ? `🛡️ ${targetClubName}`
+                : 'Her yanlış tahminde kulüp arması biraz daha netleşir!'}
+            </Text>
+          </View>
+
+          <View style={styles.hintContainer}>
+            <HintWithAdButton
+              hintTitle="Kadrodaki Yıldız Oyuncu İpucu"
+              isUnlocked={hintUnlocked}
+              unlockedText={starPlayerHint}
+              onHintUnlocked={() => setHintUnlocked(true)}
+            />
+          </View>
+
+          <View style={styles.historySection}>
+            <Text style={styles.sectionTitle}>Tahminlerin ({guesses.length}/{maxAttempts})</Text>
+            {guesses.length === 0 ? (
+              <View style={styles.emptyBox}>
+                <Text style={styles.emptyText}>
+                  Henüz tahmin yapmadın. İlk kulüp tahminini seç!
+                </Text>
+              </View>
+            ) : (
+              guesses.map((g, idx) => (
+                <View
+                  key={`${g.club.name}_${idx}`}
+                  style={[
+                    styles.guessRow,
+                    g.isCorrect ? styles.guessRowCorrect : styles.guessRowWrong,
+                  ]}
+                >
+                  <View style={styles.guessMain}>
+                    <Text style={styles.guessClubName}>
+                      {g.isCorrect ? '✅ ' : '❌ '}
+                      {g.club.name}
+                    </Text>
+                    <Text style={styles.guessSub}>
+                      {LEAGUE_LABELS[g.club.league] || g.club.league}
+                    </Text>
+                  </View>
+                  <View
+                    style={[
+                      styles.leaguePill,
+                      g.isSameLeague ? styles.pillSuccess : styles.pillWrong,
+                    ]}
+                  >
+                    <Text style={styles.pillText}>
+                      {g.isSameLeague ? 'Aynı Lig ✓' : 'Farklı Lig ✕'}
+                    </Text>
+                  </View>
+                </View>
+              ))
+            )}
+          </View>
+        </ScrollView>
+
+        {gameStatus === 'playing' ? (
+          <View style={styles.bottomBar}>
+            <TouchableOpacity
+              style={styles.guessBtn}
+              activeOpacity={0.7}
+              onPress={openSearch}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            >
+              <Text style={styles.guessBtnText}>🛡️ Kulüp Tahmin Et</Text>
+            </TouchableOpacity>
+          </View>
+        ) : isDaily ? (
+          <DailyCompletedBanner
+            status={gameStatus}
+            attemptsUsed={guesses.length}
+            maxAttempts={maxAttempts}
+            onOpenResultModal={() => setIsResultModalVisible(true)}
+          />
+        ) : null}
+
+        <OfflineClubSearchModal
+          visible={isSearchModalVisible}
+          onClose={closeSearch}
+          onSelectClub={submitClubGuess}
+        />
+
+        <WhoAreYaWinModal
+          visible={isResultModalVisible}
+          status={gameStatus === 'lost' ? 'lost' : 'won'}
+          playerName={targetClubName}
+          playerClub={`Yıldız: ${challengeData?.playerName || targetClubInfo?.starPlayer || ''}`}
+          finalImageUrl={logoUrl}
+          rewardCoins={isCurrentReplay ? 0 : isDaily ? 30 : 20}
+          attemptsUsed={guesses.length}
+          maxAttempts={maxAttempts}
+          leagueLabel={selectedLeagueMode === 'super_lig' ? 'Süper Lig' : 'Global 5 Lig'}
+          isDaily={isDaily}
+          onOpenMap={!isDaily ? onOpenMap : undefined}
+          onNextLevel={() => {
+            setIsResultModalVisible(false);
+            setHintUnlocked(false);
+            if (isDaily) {
+              onBack();
+            } else {
+              resetGame();
+              goToNextLevel();
+            }
+          }}
+          onClose={() => setIsResultModalVisible(false)}
+        />
+      </SafeAreaView>
+    );
+  }
+);
+
+ClubLogoScreen.displayName = 'ClubLogoScreen';
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+  centerContainer: {
+    flex: 1,
+    backgroundColor: Colors.background,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingText: {
+    ...Typography.body,
+    color: Colors.textSecondary,
+    marginTop: Spacing.md,
+  },
+  scrollContent: {
+    paddingBottom: Spacing.xl,
+  },
+  heroCard: {
+    margin: Spacing.md,
+    padding: Spacing.lg,
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    alignItems: 'center',
+  },
+  clarityBadge: {
+    backgroundColor: Colors.surfaceLight,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: BorderRadius.full,
+    marginBottom: Spacing.md,
+  },
+  clarityText: {
+    color: Colors.primary,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  crestCircle: {
+    width: 148,
+    height: 148,
+    borderRadius: 74,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderWidth: 2,
+    borderColor: Colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+    marginBottom: Spacing.md,
+  },
+  crestImage: {
+    width: 108,
+    height: 108,
+  },
+  heroCaption: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+  },
+  hintContainer: {
+    paddingHorizontal: Spacing.md,
+    marginBottom: Spacing.sm,
+  },
+  historySection: {
+    paddingHorizontal: Spacing.md,
+    marginTop: Spacing.xs,
+  },
+  sectionTitle: {
+    ...Typography.bodyBold,
+    color: Colors.textPrimary,
+    marginBottom: Spacing.sm,
+  },
+  emptyBox: {
+    backgroundColor: Colors.surface,
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    alignItems: 'center',
+  },
+  emptyText: {
+    color: Colors.textSecondary,
+    fontSize: 13,
+    textAlign: 'center',
+  },
+  guessRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
+    marginBottom: Spacing.sm,
+    borderWidth: 1,
+  },
+  guessRowCorrect: {
+    backgroundColor: 'rgba(16, 185, 129, 0.14)',
+    borderColor: Colors.primary,
+  },
+  guessRowWrong: {
+    backgroundColor: Colors.surface,
+    borderColor: Colors.border,
+  },
+  guessMain: {
+    flex: 1,
+  },
+  guessClubName: {
+    ...Typography.bodyBold,
+    color: Colors.textPrimary,
+    fontSize: 15,
+  },
+  guessSub: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+    marginTop: 2,
+  },
+  leaguePill: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: BorderRadius.full,
+  },
+  pillSuccess: {
+    backgroundColor: 'rgba(16, 185, 129, 0.2)',
+  },
+  pillWrong: {
+    backgroundColor: 'rgba(239, 68, 68, 0.2)',
+  },
+  pillText: {
+    color: Colors.textPrimary,
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  bottomBar: {
+    paddingHorizontal: Spacing.md,
+    paddingTop: Spacing.sm,
+    paddingBottom: Platform.OS === 'android' ? 26 : Spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: Colors.border,
+    backgroundColor: Colors.surface,
+  },
+  guessBtn: {
+    backgroundColor: Colors.primary,
+    minHeight: 52,
+    justifyContent: 'center',
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  guessBtnText: {
+    ...Typography.bodyBold,
+    color: Colors.background,
+    fontSize: 16,
+    fontWeight: '800',
+  },
+});
+
+
+==============================
+DOSYA: mobile\src\screens\FootballBingoScreen.tsx
+==============================
+
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  SafeAreaView,
+  ActivityIndicator,
+  ScrollView,
+  Platform,
+} from 'react-native';
+import { GameNavbar } from '../components/common/GameNavbar';
+import { DailyHeaderCard } from '../features/daily/components/DailyHeaderCard';
+import { DailyCompletedBanner } from '../features/daily/components/DailyCompletedBanner';
+import { BingoCurrentPlayerCard } from '../features/footballBingo/components/BingoCurrentPlayerCard';
+import { BingoGrid } from '../features/footballBingo/components/BingoGrid';
+import { useBingoGame } from '../features/footballBingo/hooks/useBingoGame';
+import { HintWithAdButton } from '../features/monetization/components/HintWithAdButton';
+import { WhoAreYaWinModal } from '../features/whoAreYa/components/WhoAreYaWinModal';
+import { useChallengeDataLoader } from '../hooks/useChallengeDataLoader';
+import { getAuthoritativeUtcDate } from '../services/authoritativeTime';
+import { Colors } from '../theme/colors';
+import { Spacing } from '../theme/spacing';
+import { Typography } from '../theme/typography';
+
+interface IFootballBingoScreenProps {
+  isDaily?: boolean;
+  initialLevel?: number;
+  isReplay?: boolean;
+  onBack: () => void;
+  onOpenMap?: () => void;
+}
+
+export const FootballBingoScreen: React.FC<IFootballBingoScreenProps> = React.memo(
+  ({ isDaily = false, initialLevel, isReplay = false, onBack, onOpenMap }) => {
+    const {
+      isLoading,
+      currentLevel,
+      isCurrentReplay,
+      dailyKey,
+      alreadyCompleted,
+      selectedLeagueMode,
+      goToNextLevel,
+    } = useChallengeDataLoader({
+      gameMode: 'footballBingo',
+      initialLevel,
+      isDaily,
+      isReplay,
+    });
+
+    const [isResultModalVisible, setIsResultModalVisible] = useState(false);
+    const [hintUnlocked, setHintUnlocked] = useState(false);
+    const [hintText, setHintText] = useState('');
+
+    const todayDate = useMemo(() => getAuthoritativeUtcDate(), []);
+    const seedKey = useMemo(() => {
+      return isDaily
+        ? `${todayDate}_footballBingo_${selectedLeagueMode}`
+        : `level_${currentLevel}_footballBingo_${selectedLeagueMode}`;
+    }, [isDaily, todayDate, selectedLeagueMode, currentLevel]);
+
+    const {
+      tiles,
+      currentPlayer,
+      totalDeckSize,
+      playersLeftInDeck,
+      matchedCount,
+      totalTilesCount,
+      wrongFlashTileIndex,
+      feedbackBanner,
+      gameStatus,
+      canRevive,
+      handleSelectTile,
+      handleSkipPlayer,
+      autoMatchOneTileHint,
+      reviveGame,
+      finalizeLoss,
+      resetGame,
+    } = useBingoGame({
+      seedKey,
+      leagueMode: selectedLeagueMode,
+      isDaily,
+      isReplay: isCurrentReplay,
+      dailyKey,
+    });
+
+    useEffect(() => {
+      if (gameStatus !== 'playing') {
+        setIsResultModalVisible(true);
+      }
+    }, [gameStatus]);
+
+    const handleUnlockHint = useCallback(() => {
+      setHintUnlocked(true);
+      const text = autoMatchOneTileHint();
+      setHintText(text);
+    }, [autoMatchOneTileHint]);
+
+    if (isLoading) {
+      return (
+        <SafeAreaView style={styles.centerContainer}>
+          <ActivityIndicator size="large" color={Colors.primary} />
+          <Text style={styles.loadingText}>Bingo Tahtası & Deste Hazırlanıyor...</Text>
+        </SafeAreaView>
+      );
+    }
+
+    const navTitle = isDaily ? 'Futbol Bingo (4x4)' : `Seviye ${currentLevel}`;
+
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <GameNavbar
+          title={navTitle}
+          isReplay={isCurrentReplay && !isDaily}
+          attemptsLeft={playersLeftInDeck}
+          maxAttempts={totalDeckSize}
+          onBack={onBack}
+          onOpenMap={onOpenMap}
+          showMapButton={!isDaily}
+        />
+
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+          {isDaily && (
+            <DailyHeaderCard
+              title="Futbol Bingo (4x4)"
+              leagueLabel={selectedLeagueMode === 'super_lig' ? 'Süper Lig' : 'Global 5 Lig'}
+              isCompleted={alreadyCompleted}
+            />
+          )}
+
+          <BingoCurrentPlayerCard
+            player={currentPlayer}
+            playersLeftInDeck={playersLeftInDeck}
+            totalDeckSize={totalDeckSize}
+            matchedCount={matchedCount}
+            totalTilesCount={totalTilesCount}
+            feedbackBanner={feedbackBanner}
+            onSkip={handleSkipPlayer}
+            disabled={gameStatus !== 'playing'}
+          />
+
+          <BingoGrid
+            tiles={tiles}
+            wrongFlashTileIndex={wrongFlashTileIndex}
+            onSelectTile={handleSelectTile}
+            disabled={gameStatus !== 'playing'}
+          />
+
+          <View style={styles.hintContainer}>
+            <HintWithAdButton
+              hintTitle="Otomatik Kutu İpucu"
+              isUnlocked={hintUnlocked}
+              unlockedText={hintText}
+              onHintUnlocked={handleUnlockHint}
+            />
+          </View>
+
+          {isDaily && gameStatus !== 'playing' && (
+            <DailyCompletedBanner
+              status={gameStatus}
+              attemptsUsed={totalDeckSize - playersLeftInDeck}
+              maxAttempts={totalDeckSize}
+              onOpenResultModal={() => setIsResultModalVisible(true)}
+            />
+          )}
+        </ScrollView>
+
+        <WhoAreYaWinModal
+          visible={isResultModalVisible}
+          status={gameStatus === 'lost' ? 'lost' : 'won'}
+          playerName="Futbol Bingo (4x4)"
+          playerClub={`${matchedCount}/${totalTilesCount} Kutu Tamamlandı`}
+          rewardCoins={isCurrentReplay ? 0 : isDaily ? 40 : 25}
+          attemptsUsed={totalDeckSize - playersLeftInDeck}
+          maxAttempts={totalDeckSize}
+          leagueLabel={selectedLeagueMode === 'super_lig' ? 'Süper Lig' : 'Global 5 Lig'}
+          isDaily={isDaily}
+          onRevive={
+            canRevive
+              ? () => {
+                  setIsResultModalVisible(false);
+                  reviveGame();
+                }
+              : undefined
+          }
+          onOpenMap={!isDaily ? onOpenMap : undefined}
+          onNextLevel={() => {
+            setIsResultModalVisible(false);
+            setHintUnlocked(false);
+            setHintText('');
+            if (isDaily) {
+              onBack();
+            } else {
+              resetGame();
+              goToNextLevel();
+            }
+          }}
+          onClose={() => {
+            setIsResultModalVisible(false);
+            if (gameStatus === 'lost') {
+              finalizeLoss();
+            }
+          }}
+        />
+      </SafeAreaView>
+    );
+  }
+);
+
+FootballBingoScreen.displayName = 'FootballBingoScreen';
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+  scroll: {
+    paddingBottom: Platform.OS === 'android' ? 36 : Spacing.xl,
+  },
+  centerContainer: {
+    flex: 1,
+    backgroundColor: Colors.background,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingText: {
+    ...Typography.body,
+    color: Colors.textSecondary,
+    marginTop: Spacing.md,
+  },
+  hintContainer: {
+    paddingHorizontal: Spacing.md,
+    marginTop: Spacing.xs,
+  },
+});
+
+
+==============================
+DOSYA: mobile\src\screens\TicTacToeScreen.tsx
+==============================
+
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  SafeAreaView,
+  ActivityIndicator,
+  ScrollView,
+  Platform,
+} from 'react-native';
+import { GameNavbar } from '../components/common/GameNavbar';
+import { DailyHeaderCard } from '../features/daily/components/DailyHeaderCard';
+import { DailyCompletedBanner } from '../features/daily/components/DailyCompletedBanner';
+import { TicTacToeBoard } from '../features/ticTacToe/components/TicTacToeBoard';
+import { useTicTacToeGame } from '../features/ticTacToe/hooks/useTicTacToeGame';
+import { OfflinePlayerSearchModal } from '../features/search/components/OfflinePlayerSearchModal';
+import { HintWithAdButton } from '../features/monetization/components/HintWithAdButton';
+import { WhoAreYaWinModal } from '../features/whoAreYa/components/WhoAreYaWinModal';
+import { useChallengeDataLoader } from '../hooks/useChallengeDataLoader';
+import { getAuthoritativeUtcDate } from '../services/authoritativeTime';
+import { Colors } from '../theme/colors';
+import { Spacing, BorderRadius } from '../theme/spacing';
+import { Typography } from '../theme/typography';
+
+interface ITicTacToeScreenProps {
+  isDaily?: boolean;
+  initialLevel?: number;
+  isReplay?: boolean;
+  onBack: () => void;
+  onOpenMap?: () => void;
+}
+
+export const TicTacToeScreen: React.FC<ITicTacToeScreenProps> = React.memo(
+  ({ isDaily = false, initialLevel, isReplay = false, onBack, onOpenMap }) => {
+    const {
+      isLoading,
+      currentLevel,
+      isCurrentReplay,
+      dailyKey,
+      alreadyCompleted,
+      selectedLeagueMode,
+      goToNextLevel,
+    } = useChallengeDataLoader({
+      gameMode: 'ticTacToe',
+      initialLevel,
+      isDaily,
+      isReplay,
+    });
+
+    const [isResultModalVisible, setIsResultModalVisible] = useState(false);
+    const [hintUnlocked, setHintUnlocked] = useState(false);
+    const [hintText, setHintText] = useState('');
+
+    const todayDate = useMemo(() => getAuthoritativeUtcDate(), []);
+    const seedKey = useMemo(() => {
+      return isDaily
+        ? `${todayDate}_ticTacToe_${selectedLeagueMode}`
+        : `level_${currentLevel}_ticTacToe_${selectedLeagueMode}`;
+    }, [isDaily, todayDate, selectedLeagueMode, currentLevel]);
+
+    const {
+      rows,
+      cols,
+      cells,
+      filledCount,
+      selectedCellIndex,
+      gameStatus,
+      attemptsLeft,
+      maxAttempts,
+      canRevive,
+      isSearchModalVisible,
+      lastFeedback,
+      handleSelectCell,
+      closeSearch,
+      submitCellGuess,
+      revealRandomCellWithHint,
+      reviveGame,
+      finalizeLoss,
+      resetGame,
+    } = useTicTacToeGame({
+      seedKey,
+      leagueMode: selectedLeagueMode,
+      isDaily,
+      isReplay: isCurrentReplay,
+      dailyKey,
+    });
+
+    useEffect(() => {
+      if (gameStatus !== 'playing') {
+        setIsResultModalVisible(true);
+      }
+    }, [gameStatus]);
+
+    const handleUnlockHint = useCallback(() => {
+      setHintUnlocked(true);
+      const text = revealRandomCellWithHint();
+      setHintText(text);
+    }, [revealRandomCellWithHint]);
+
+    if (isLoading) {
+      return (
+        <SafeAreaView style={styles.centerContainer}>
+          <ActivityIndicator size="large" color={Colors.primary} />
+          <Text style={styles.loadingText}>Tiki-Taka Hazırlanıyor...</Text>
+        </SafeAreaView>
+      );
+    }
+
+    const navTitle = isDaily ? 'Tiki-Taka (3x3)' : `Seviye ${currentLevel}`;
+
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <GameNavbar
+          title={navTitle}
+          isReplay={isCurrentReplay && !isDaily}
+          attemptsLeft={attemptsLeft}
+          maxAttempts={maxAttempts}
+          onBack={onBack}
+          onOpenMap={onOpenMap}
+          showMapButton={!isDaily}
+        />
+
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+          {isDaily && (
+            <DailyHeaderCard
+              title="Tiki-Taka (3x3)"
+              leagueLabel={selectedLeagueMode === 'super_lig' ? 'Süper Lig' : 'Global 5 Lig'}
+              isCompleted={alreadyCompleted}
+            />
+          )}
+
+          <View style={styles.metaRow}>
+            <View style={styles.progressPill}>
+              <Text style={styles.progressText}>
+                Doldurulan: <Text style={styles.progressHighlight}>{filledCount}/9</Text>
+              </Text>
+            </View>
+            <Text style={styles.rulesHint}>Hücreye bas, kriterlere uyan futbolcuyu ara!</Text>
+          </View>
+
+          {lastFeedback && (
+            <View style={styles.feedbackBanner}>
+              <Text style={styles.feedbackBannerText}>{lastFeedback}</Text>
+            </View>
+          )}
+
+          <TicTacToeBoard
+            rows={rows}
+            cols={cols}
+            cells={cells}
+            selectedCellIndex={selectedCellIndex}
+            onSelectCell={handleSelectCell}
+            disabled={gameStatus !== 'playing'}
+          />
+
+          <View style={styles.hintContainer}>
+            <HintWithAdButton
+              hintTitle="Rastgele Bir Kutu İpucu"
+              isUnlocked={hintUnlocked}
+              unlockedText={hintText}
+              onHintUnlocked={handleUnlockHint}
+            />
+          </View>
+
+          {isDaily && gameStatus !== 'playing' && (
+            <DailyCompletedBanner
+              status={gameStatus}
+              attemptsUsed={maxAttempts - attemptsLeft}
+              maxAttempts={maxAttempts}
+              onOpenResultModal={() => setIsResultModalVisible(true)}
+            />
+          )}
+        </ScrollView>
+
+        <OfflinePlayerSearchModal
+          visible={isSearchModalVisible}
+          onClose={closeSearch}
+          onSelectPlayer={submitCellGuess}
+        />
+
+        <WhoAreYaWinModal
+          visible={isResultModalVisible}
+          status={gameStatus === 'lost' ? 'lost' : 'won'}
+          playerName="Tiki-Taka (3x3)"
+          playerClub={`${filledCount}/9 Hücre Tamamlandı`}
+          rewardCoins={isCurrentReplay ? 0 : isDaily ? 35 : 25}
+          attemptsUsed={maxAttempts - attemptsLeft}
+          maxAttempts={maxAttempts}
+          leagueLabel={selectedLeagueMode === 'super_lig' ? 'Süper Lig' : 'Global 5 Lig'}
+          isDaily={isDaily}
+          onRevive={
+            canRevive
+              ? () => {
+                  setIsResultModalVisible(false);
+                  reviveGame();
+                }
+              : undefined
+          }
+          onOpenMap={!isDaily ? onOpenMap : undefined}
+          onNextLevel={() => {
+            setIsResultModalVisible(false);
+            setHintUnlocked(false);
+            setHintText('');
+            if (isDaily) {
+              onBack();
+            } else {
+              resetGame();
+              goToNextLevel();
+            }
+          }}
+          onClose={() => {
+            setIsResultModalVisible(false);
+            if (gameStatus === 'lost') {
+              finalizeLoss();
+            }
+          }}
+        />
+      </SafeAreaView>
+    );
+  }
+);
+
+TicTacToeScreen.displayName = 'TicTacToeScreen';
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+  scroll: {
+    paddingBottom: Platform.OS === 'android' ? 36 : Spacing.xl,
+  },
+  centerContainer: {
+    flex: 1,
+    backgroundColor: Colors.background,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingText: {
+    ...Typography.body,
+    color: Colors.textSecondary,
+    marginTop: Spacing.md,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.md,
+    marginTop: Spacing.sm,
+    marginBottom: Spacing.xs,
+  },
+  progressPill: {
+    backgroundColor: Colors.surface,
+    paddingVertical: 3,
+    paddingHorizontal: Spacing.sm,
+    borderRadius: BorderRadius.sm,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  progressText: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+  },
+  progressHighlight: {
+    color: Colors.primary,
+    fontWeight: '700',
+  },
+  rulesHint: {
+    ...Typography.caption,
+    color: Colors.textMuted,
+    fontSize: 10,
+  },
+  feedbackBanner: {
+    backgroundColor: Colors.surfaceLight,
+    paddingVertical: 5,
+    paddingHorizontal: Spacing.md,
+    marginHorizontal: Spacing.md,
+    borderRadius: BorderRadius.md,
+    marginBottom: Spacing.xs,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  feedbackBannerText: {
+    ...Typography.captionBold,
+    color: Colors.textPrimary,
+    textAlign: 'center',
+    fontSize: 11,
+  },
+  hintContainer: {
+    paddingHorizontal: Spacing.md,
+    marginTop: Spacing.xs,
+  },
+});
+
+
+==============================
+DOSYA: mobile\src\screens\HomeScreen.tsx
+==============================
+
+import React, { useState, useMemo, useCallback } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  SafeAreaView,
+  StatusBar,
+  TouchableOpacity,
+  Platform,
+} from 'react-native';
+import { GameModeType } from '../api/dailyApi';
+import { useGameStore } from '../stores/useGameStore';
+import { useSettingsStore, LeagueMode } from '../stores/useSettingsStore';
+import { getRankByXp } from '../features/stats/utils/rankUtils';
+import { getAuthoritativeUtcDate } from '../services/authoritativeTime';
+import { PlayerStatsModal } from '../features/stats/components/PlayerStatsModal';
+import { ScoutShopModal } from '../features/shop/components/ScoutShopModal';
+import { getCosmeticById } from '../features/shop/catalog';
+import { HomeGameCard } from '../features/home/components/HomeGameCard';
+import { Colors } from '../theme/colors';
+import { Spacing, BorderRadius } from '../theme/spacing';
+import { Typography } from '../theme/typography';
+
+export type AppScreenType =
+  | 'home'
+  | 'whoAreYa'
+  | 'careerPath'
+  | 'clubLogo'
+  | 'contextinho'
+  | 'ticTacToe'
+  | 'footballBingo'
+  | 'levelMap';
+
+interface IHomeScreenProps {
+  onNavigate: (
+    screen: AppScreenType,
+    isDaily?: boolean,
+    gameMode?: GameModeType
+  ) => void;
+}
+
+export const HomeScreen: React.FC<IHomeScreenProps> = React.memo(({ onNavigate }) => {
+  const coins = useGameStore((s) => s.coins);
+  const xp = useGameStore((s) => s.xp);
+  const currentStreak = useGameStore((s) => s.currentStreak);
+  const isDailyCompleted = useGameStore((s) => s.isDailyCompleted);
+  const selectedLeagueMode = useSettingsStore((s) => s.selectedLeagueMode);
+  const setLeagueMode = useSettingsStore((s) => s.setLeagueMode);
+
+  const [isStatsModalVisible, setIsStatsModalVisible] = useState(false);
+  const [isShopModalVisible, setIsShopModalVisible] = useState(false);
+
+  const equippedCosmeticId = useGameStore((s) => s.equippedCosmeticId);
+  const equippedCosmetic = useMemo(
+    () => getCosmeticById(equippedCosmeticId),
+    [equippedCosmeticId]
+  );
+
+  const theme = equippedCosmetic.themeConfig;
+  const isSuperLig = selectedLeagueMode === 'super_lig';
+
+  const isLightPrimary =
+    theme.primaryColor === '#FBBF24' ||
+    theme.primaryColor === '#FFFFFF' ||
+    theme.primaryColor === '#F4F4F5' ||
+    theme.primaryColor === '#EAB308';
+
+  const rankInfo = useMemo(() => getRankByXp(xp), [xp]);
+  const todayDate = useMemo(() => getAuthoritativeUtcDate(), []);
+  const isWhoAreYaDailyCompleted = isDailyCompleted(`${todayDate}_whoAreYa_${selectedLeagueMode}`);
+  const isCareerDailyCompleted = isDailyCompleted(`${todayDate}_careerPath_${selectedLeagueMode}`);
+  const isClubLogoDailyCompleted = isDailyCompleted(`${todayDate}_clubLogo_${selectedLeagueMode}`);
+  const isContextinhoDailyCompleted = isDailyCompleted(`${todayDate}_contextinho_${selectedLeagueMode}`);
+  const isTicTacToeDailyCompleted = isDailyCompleted(`${todayDate}_ticTacToe_${selectedLeagueMode}`);
+  const isBingoDailyCompleted = isDailyCompleted(`${todayDate}_footballBingo_${selectedLeagueMode}`);
+
+  const handleSelectMode = useCallback(
+    (mode: LeagueMode) => {
+      setLeagueMode(mode);
+    },
+    [setLeagueMode]
+  );
+
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar barStyle="light-content" backgroundColor={Colors.background} />
+      <View
+        style={[styles.ambientGlow, { backgroundColor: theme.accentGlow }]}
+        pointerEvents="none"
+      />
+
+      <ScrollView contentContainerStyle={styles.container}>
+        <View style={styles.header}>
+          <View>
+            <View style={styles.brandRow}>
+              <Text style={[styles.brandTitle, { color: theme.primaryColor }]}>PENALTY</Text>
+              <View style={[styles.themeMiniPill, { backgroundColor: theme.accentGlow }]}>
+                <Text style={[styles.themeMiniPillText, { color: theme.primaryColor }]}>
+                  {theme.teamBadgeEmojis} {equippedCosmetic.titleBadge}
+                </Text>
+              </View>
+            </View>
+            <Text style={styles.brandSubtitle}>
+              Futbol Oyun Portalı • {theme.stadiumName}
+            </Text>
+          </View>
+
+          <View style={styles.currencyRow}>
+            <TouchableOpacity
+              style={[styles.currencyBadge, styles.streakBadge]}
+              activeOpacity={0.8}
+              onPress={() => setIsStatsModalVisible(true)}
+              hitSlop={{ top: 10, bottom: 10, left: 6, right: 6 }}
+            >
+              <Text style={styles.streakText}>🔥 {currentStreak}</Text>
+            </TouchableOpacity>
+
+            <View style={styles.currencyBadge}>
+              <Text style={styles.currencyText}>🪙 {coins}</Text>
+            </View>
+
+            <TouchableOpacity
+              style={[
+                styles.currencyBadge,
+                styles.shopBtn,
+                { borderColor: theme.primaryColor },
+              ]}
+              activeOpacity={0.8}
+              onPress={() => setIsShopModalVisible(true)}
+              hitSlop={{ top: 10, bottom: 10, left: 6, right: 6 }}
+            >
+              <Text style={[styles.shopBtnText, { color: theme.primaryColor }]}>🛍️ Dükkan</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.currencyBadge, styles.statsBtn]}
+              activeOpacity={0.8}
+              onPress={() => setIsStatsModalVisible(true)}
+              hitSlop={{ top: 10, bottom: 10, left: 6, right: 6 }}
+            >
+              <Text style={styles.statsIconText}>📊</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <View
+          style={[
+            styles.fanAtmosphereCard,
+            {
+              borderColor: theme.cardBorder,
+              borderLeftWidth: 4,
+              borderLeftColor: theme.primaryColor,
+            },
+          ]}
+        >
+          <View style={styles.fanAtmosphereTop}>
+            <View style={[styles.fanBadgePill, { backgroundColor: theme.accentGlow }]}>
+              <View style={[styles.pulseDot, { backgroundColor: theme.primaryColor }]} />
+              <Text style={[styles.fanBadgePillText, { color: theme.primaryColor }]}>
+                {theme.fanBannerTitle}
+              </Text>
+            </View>
+
+            <Text style={styles.fanStadiumText}>{theme.stadiumName}</Text>
+          </View>
+
+          <Text style={styles.fanChantText}>{theme.anthemChant}</Text>
+        </View>
+        <TouchableOpacity
+          style={[
+            styles.rankCard,
+            {
+              borderColor: theme.primaryColor,
+              shadowColor: theme.primaryColor,
+            },
+          ]}
+          activeOpacity={0.85}
+          onPress={() => setIsStatsModalVisible(true)}
+        >
+          <View style={styles.rankHeader}>
+            <View style={styles.rankTitleCol}>
+              <View
+                style={[
+                  styles.equippedAvatarCircle,
+                  {
+                    borderColor: theme.primaryColor,
+                    shadowColor: theme.primaryColor,
+                  },
+                ]}
+              >
+                <Text style={styles.equippedAvatarEmoji}>{equippedCosmetic.avatarEmoji}</Text>
+              </View>
+
+              <View style={{ flex: 1 }}>
+                <View style={styles.rankBadgeRow}>
+                  <Text style={styles.rankTitle}>{rankInfo.title}</Text>
+                  <View
+                    style={[
+                      styles.cosmeticTitlePill,
+                      { backgroundColor: equippedCosmetic.themeGlowColor },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.cosmeticTitleText,
+                        { color: theme.primaryColor },
+                      ]}
+                    >
+                      {equippedCosmetic.titleBadge}
+                    </Text>
+                  </View>
+                </View>
+                <Text style={styles.rankSub}>
+                  {rankInfo.tier === 4
+                    ? 'Zirve Rütbe • Efsane Direktör'
+                    : `Sonraki Rütbeye ${rankInfo.xpNeededForNext} XP kaldı`}
+                </Text>
+              </View>
+            </View>
+            <Text style={[styles.rankPercentText, { color: theme.primaryColor }]}>
+              %{rankInfo.currentProgressInTier}
+            </Text>
+          </View>
+          <View style={styles.rankProgressBarBg}>
+            <View
+              style={[
+                styles.rankProgressBarFill,
+                {
+                  width: `${rankInfo.currentProgressInTier}%`,
+                  backgroundColor: theme.primaryColor,
+                },
+              ]}
+            />
+          </View>
+        </TouchableOpacity>
+        <View style={styles.modeSwitcherContainer}>
+          <Text style={styles.sectionTitle}>Lig Modu Seçimi</Text>
+          <View style={styles.tabContainer}>
+            <TouchableOpacity
+              style={[
+                styles.tabBtn,
+                isSuperLig && { backgroundColor: theme.primaryColor },
+              ]}
+              activeOpacity={0.8}
+              onPress={() => handleSelectMode('super_lig')}
+            >
+              <Text
+                style={[
+                  styles.tabText,
+                  isSuperLig && {
+                    color: isLightPrimary ? '#0B0E14' : '#FFFFFF',
+                    fontWeight: '900',
+                  },
+                ]}
+              >
+                🇹🇷 Süper Lig
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.tabBtn,
+                !isSuperLig && { backgroundColor: theme.primaryColor },
+              ]}
+              activeOpacity={0.8}
+              onPress={() => handleSelectMode('global')}
+            >
+              <Text
+                style={[
+                  styles.tabText,
+                  !isSuperLig && {
+                    color: isLightPrimary ? '#0B0E14' : '#FFFFFF',
+                    fontWeight: '900',
+                  },
+                ]}
+              >
+                🌍 5 Büyük Lig (Global)
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+        <HomeGameCard
+          emoji="🕵️‍♂️"
+          title="Kim Bu Yıldız?"
+          subtitle="Bulanık fotoğraftan ve ipuçlarından futbolcuyu tahmin et"
+          dailyBtnText={isWhoAreYaDailyCompleted ? '✅ Günün Sorusu (Çözüldü)' : '📅 Günün Sorusu'}
+          themePrimaryColor={theme.primaryColor}
+          themeBorderColor={theme.cardBorder}
+          onPressDaily={() => onNavigate('whoAreYa', true, 'whoAreYa')}
+          onPressCareer={() => onNavigate('levelMap', false, 'whoAreYa')}
+        />
+
+        <HomeGameCard
+          emoji="🧭"
+          title="Transfer Rotası"
+          subtitle="Kariyerinde oynadığı kulüpleri takip ederek yıldızı bul"
+          dailyBtnText={isCareerDailyCompleted ? '✅ Günün Sorusu (Çözüldü)' : '📅 Günün Sorusu'}
+          themePrimaryColor={theme.primaryColor}
+          themeBorderColor={theme.cardBorder}
+          onPressDaily={() => onNavigate('careerPath', true, 'careerPath')}
+          onPressCareer={() => onNavigate('levelMap', false, 'careerPath')}
+        />
+
+        <HomeGameCard
+          emoji="🛡️"
+          title="Arma Avcısı"
+          subtitle="Gizlenmiş ve bulanıklaştırılmış kulüp armasından takımı bul"
+          dailyBtnText={isClubLogoDailyCompleted ? '✅ Günün Sorusu (Çözüldü)' : '📅 Günün Sorusu'}
+          themePrimaryColor={theme.primaryColor}
+          themeBorderColor={theme.cardBorder}
+          onPressDaily={() => onNavigate('clubLogo', true, 'clubLogo')}
+          onPressCareer={() => onNavigate('levelMap', false, 'clubLogo')}
+        />
+
+        <HomeGameCard
+          emoji="🔥"
+          title="Sıcak Temas"
+          subtitle="Sıcak-soğuk benzerlik sinyallerini takip ederek #1 numaralı yıldızı bul"
+          dailyBtnText={isContextinhoDailyCompleted ? '✅ Günün Sorusu (Çözüldü)' : '📅 Günün Sorusu'}
+          themePrimaryColor={theme.primaryColor}
+          themeBorderColor={theme.cardBorder}
+          onPressDaily={() => onNavigate('contextinho', true, 'contextinho')}
+          onPressCareer={() => onNavigate('levelMap', false, 'contextinho')}
+        />
+
+        <HomeGameCard
+          emoji="🎯"
+          title="Tiki-Taka (3x3)"
+          subtitle="Kriter kesişimlerine (Kulüp × Mevki/Uyruk) uyan futbolcuları bul"
+          dailyBtnText={isTicTacToeDailyCompleted ? '✅ Günün Sorusu (Çözüldü)' : '📅 Günün Sorusu'}
+          themePrimaryColor={theme.primaryColor}
+          themeBorderColor={theme.cardBorder}
+          onPressDaily={() => onNavigate('ticTacToe', true, 'ticTacToe')}
+          onPressCareer={() => onNavigate('levelMap', false, 'ticTacToe')}
+        />
+
+        <HomeGameCard
+          emoji="🔢"
+          title="Futbol Bingo (4x4)"
+          subtitle="42 kişilik desteden gelen futbolcuları doğru kriter kutularına yerleştir"
+          dailyBtnText={isBingoDailyCompleted ? '✅ Günün Sorusu (Çözüldü)' : '📅 Günün Sorusu'}
+          themePrimaryColor={theme.primaryColor}
+          themeBorderColor={theme.cardBorder}
+          onPressDaily={() => onNavigate('footballBingo', true, 'footballBingo')}
+          onPressCareer={() => onNavigate('levelMap', false, 'footballBingo')}
+        />
+      </ScrollView>
+
+      <PlayerStatsModal
+        visible={isStatsModalVisible}
+        onClose={() => setIsStatsModalVisible(false)}
+      />
+
+      <ScoutShopModal
+        visible={isShopModalVisible}
+        onClose={() => setIsShopModalVisible(false)}
+      />
+    </SafeAreaView>
+  );
+});
+
+HomeScreen.displayName = 'HomeScreen';
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: Colors.background,
+    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 24) + Spacing.xs : 0,
+  },
+  ambientGlow: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 320,
+    opacity: 0.65,
+    borderBottomLeftRadius: 100,
+    borderBottomRightRadius: 100,
+  },
+  container: {
+    padding: Spacing.md,
+    paddingBottom: Spacing.xxl,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: Spacing.sm,
+  },
+  brandRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+  },
+  brandTitle: {
+    ...Typography.h1,
+    fontWeight: '900',
+    letterSpacing: 1.2,
+    fontSize: 24,
+  },
+  themeMiniPill: {
+    paddingVertical: 2,
+    paddingHorizontal: 6,
+    borderRadius: BorderRadius.xs,
+  },
+  themeMiniPillText: {
+    fontSize: 9,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+  },
+  brandSubtitle: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+    fontSize: 11,
+    marginTop: 1,
+  },
+  currencyRow: {
+    flexDirection: 'row',
+    gap: Spacing.xs,
+  },
+  currencyBadge: {
+    backgroundColor: Colors.surface,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
+    minHeight: 34,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: BorderRadius.full,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  streakBadge: {
+    borderColor: Colors.warning,
+    backgroundColor: 'rgba(245, 158, 11, 0.15)',
+  },
+  streakText: {
+    ...Typography.bodyBold,
+    color: Colors.warning,
+    fontSize: 13,
+  },
+  currencyText: {
+    ...Typography.bodyBold,
+    color: Colors.accent,
+    fontSize: 13,
+  },
+  statsBtn: {
+    borderColor: Colors.secondary,
+    backgroundColor: 'rgba(59, 130, 246, 0.15)',
+  },
+  statsIconText: {
+    fontSize: 14,
+  },
+  shopBtn: {
+    backgroundColor: 'rgba(234, 179, 8, 0.15)',
+  },
+  shopBtnText: {
+    ...Typography.bodyBold,
+    fontSize: 12,
+  },
+  fanAtmosphereCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.md,
+    paddingVertical: Spacing.xs + 2,
+    paddingHorizontal: Spacing.sm,
+    marginBottom: Spacing.sm,
+    borderWidth: 1,
+  },
+  fanAtmosphereTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 2,
+  },
+  fanBadgePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 2,
+    paddingHorizontal: 6,
+    borderRadius: BorderRadius.xs,
+    gap: 4,
+  },
+  pulseDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  fanBadgePillText: {
+    fontSize: 9,
+    fontWeight: '900',
+    letterSpacing: 0.6,
+  },
+  fanStadiumText: {
+    ...Typography.caption,
+    color: Colors.textMuted,
+    fontSize: 10,
+  },
+  fanChantText: {
+    ...Typography.captionBold,
+    color: Colors.textPrimary,
+    fontSize: 11,
+    fontStyle: 'italic',
+  },
+  equippedAvatarCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 2.5,
+    backgroundColor: Colors.surfaceLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.6,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  equippedAvatarEmoji: {
+    fontSize: 22,
+  },
+  rankBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+  },
+  cosmeticTitlePill: {
+    paddingVertical: 1,
+    paddingHorizontal: 6,
+    borderRadius: BorderRadius.xs,
+  },
+  cosmeticTitleText: {
+    fontSize: 9,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+  },
+  rankCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.md,
+    borderWidth: 1.5,
+    marginBottom: Spacing.md,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  rankHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.sm,
+  },
+  rankTitleCol: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    flex: 1,
+  },
+  rankTitle: {
+    ...Typography.bodyBold,
+    color: Colors.textPrimary,
+    fontSize: 14,
+  },
+  rankSub: {
+    ...Typography.caption,
+    color: Colors.textMuted,
+    fontSize: 11,
+  },
+  rankPercentText: {
+    ...Typography.captionBold,
+    fontSize: 13,
+  },
+  rankProgressBarBg: {
+    height: 6,
+    backgroundColor: Colors.surfaceLight,
+    borderRadius: BorderRadius.full,
+    overflow: 'hidden',
+  },
+  rankProgressBarFill: {
+    height: '100%',
+    borderRadius: BorderRadius.full,
+  },
+  modeSwitcherContainer: {
+    marginBottom: Spacing.md,
+  },
+  sectionTitle: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+    marginBottom: Spacing.xs,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.lg,
+    padding: 4,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  tabBtn: {
+    flex: 1,
+    minHeight: 42,
+    justifyContent: 'center',
+    paddingVertical: Spacing.sm,
+    alignItems: 'center',
+    borderRadius: BorderRadius.md,
+  },
+  tabText: {
+    ...Typography.bodyBold,
+    color: Colors.textSecondary,
+  },
+});
+
+
+==============================
+DOSYA: mobile\src\screens\LevelMapScreen.tsx
+==============================
+
+import React from 'react';
+import { View, StyleSheet, ScrollView, SafeAreaView, StatusBar } from 'react-native';
+import { useLevelMap } from '../features/levelMap/hooks/useLevelMap';
+import { LevelMapNavbar } from '../features/levelMap/components/LevelMapNavbar';
+import { LevelMapHeader } from '../features/levelMap/components/LevelMapHeader';
+import { LevelGridCard } from '../features/levelMap/components/LevelGridCard';
+import { LevelReplayModal } from '../features/levelMap/components/LevelReplayModal';
+import { LevelLockedModal } from '../features/levelMap/components/LevelLockedModal';
+import { GameModeType } from '../api/dailyApi';
+import { Colors } from '../theme/colors';
+import { Spacing } from '../theme/spacing';
+
+interface ILevelMapScreenProps {
+  gameMode: GameModeType;
+  onSelectLevel: (levelNumber: number, isReplay: boolean) => void;
+  onBack: () => void;
+}
+
+export const LevelMapScreen: React.FC<ILevelMapScreenProps> = React.memo(
+  ({ gameMode, onSelectLevel, onBack }) => {
+    const {
+      coins,
+      xp,
+      unlockedLevel,
+      completedCount,
+      progressPercent,
+      levels,
+      gameTitle,
+      gameEmoji,
+      leagueLabel,
+      replayConfirmLevel,
+      lockedAlertLevel,
+      handleLevelPress,
+      confirmReplay,
+      cancelReplay,
+      dismissLockedAlert,
+    } = useLevelMap({ gameMode, onSelectLevel });
+
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar barStyle="light-content" backgroundColor={Colors.background} />
+
+        <LevelMapNavbar coins={coins} xp={xp} onBack={onBack} />
+
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <LevelMapHeader
+            gameEmoji={gameEmoji}
+            gameTitle={gameTitle}
+            leagueLabel={leagueLabel}
+            completedCount={completedCount}
+            progressPercent={progressPercent}
+          />
+
+          <View style={styles.gridContainer}>
+            {levels.map((item) => (
+              <LevelGridCard
+                key={item.levelNumber}
+                item={item}
+                onPress={handleLevelPress}
+              />
+            ))}
+          </View>
+        </ScrollView>
+
+        <LevelReplayModal
+          levelNumber={replayConfirmLevel}
+          onConfirm={confirmReplay}
+          onCancel={cancelReplay}
+        />
+
+        <LevelLockedModal
+          lockedLevel={lockedAlertLevel}
+          unlockedLevel={unlockedLevel}
+          onDismiss={dismissLockedAlert}
+        />
+      </SafeAreaView>
+    );
+  }
+);
+
+LevelMapScreen.displayName = 'LevelMapScreen';
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+  scrollContent: {
+    padding: Spacing.md,
+    paddingBottom: Spacing.xxl,
+  },
+  gridContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.sm,
+    justifyContent: 'flex-start',
+  },
+});
+
+
+==============================
+DOSYA: mobile\src\stores\useGameStore.ts
+==============================
+
+import { create } from 'zustand';
+import { appStorage, StorageKeys } from '../storage/mmkv';
+import { getAuthoritativeUtcDate } from '../services/authoritativeTime';
+
+export interface IGameStats {
+  gamesPlayed: number;
+  gamesWon: number;
+  guessDistribution: Record<number, number>;
+}
+
+interface IGameStore {
+  coins: number;
+  xp: number;
+  unlockedLevels: Record<string, number>;
+  completedDailyDates: string[];
+  currentStreak: number;
+  maxStreak: number;
+  lastCompletedDate: string | null;
+  gamesPlayed: number;
+  gamesWon: number;
+  guessDistribution: Record<number, number>;
+  unlockedCosmetics: string[];
+  equippedCosmeticId: string;
+
+  addCoins: (amount: number) => void;
+  spendCoins: (amount: number) => boolean;
+  addXp: (amount: number) => void;
+  unlockNextLevel: (gameMode: string, leagueMode: string) => void;
+  getUnlockedLevel: (gameMode: string, leagueMode: string) => number;
+  markDailyCompleted: (
+    dailyKey: string,
+    isWon?: boolean,
+    dateStr?: string
+  ) => { streakBonusCoins: number; newStreak: number };
+  clearDailyCompleted: (dailyKey: string) => void;
+  isDailyCompleted: (dailyKey: string) => boolean;
+  recordGameResult: (isWon: boolean, attemptsUsed: number) => void;
+  unlockCosmetic: (id: string, cost: number) => boolean;
+  equipCosmetic: (id: string) => void;
+  isCosmeticUnlocked: (id: string) => boolean;
+}
+
+const loadInitialCoins = (): number => {
+  return appStorage.getNumber(StorageKeys.USER_COINS) ?? 100;
+};
+
+const loadInitialXp = (): number => {
+  return appStorage.getNumber(StorageKeys.USER_XP) ?? 0;
+};
+
+const loadInitialUnlockedCosmetics = (): string[] => {
+  const data = appStorage.getString(StorageKeys.UNLOCKED_COSMETICS);
+  if (data) {
+    try {
+      const parsed = JSON.parse(data);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    } catch {}
+  }
+  return ['avatar_default'];
+};
+
+const loadInitialEquippedCosmetic = (): string => {
+  return appStorage.getString(StorageKeys.EQUIPPED_COSMETIC_ID) || 'avatar_default';
+};
+
+const loadInitialLevels = (): Record<string, number> => {
+  const data = appStorage.getString(StorageKeys.UNLOCKED_LEVELS);
+  if (data) {
+    try {
+      return JSON.parse(data);
+    } catch {
+      return {};
+    }
+  }
+  return {};
+};
+
+const loadInitialStats = (): IGameStats => {
+  const data = appStorage.getString(StorageKeys.GAME_STATS);
+  if (data) {
+    try {
+      return JSON.parse(data);
+    } catch {}
+  }
+  return {
+    gamesPlayed: 0,
+    gamesWon: 0,
+    guessDistribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 },
+  };
+};
+
+const initialStats = loadInitialStats();
+
+export const useGameStore = create<IGameStore>((set, get) => ({
+  coins: loadInitialCoins(),
+  xp: loadInitialXp(),
+  unlockedLevels: loadInitialLevels(),
+  completedDailyDates: [],
+  currentStreak: appStorage.getNumber(StorageKeys.CURRENT_STREAK) ?? 0,
+  maxStreak: appStorage.getNumber(StorageKeys.MAX_STREAK) ?? 0,
+  lastCompletedDate: appStorage.getString(StorageKeys.LAST_COMPLETED_DATE) ?? null,
+  gamesPlayed: initialStats.gamesPlayed,
+  gamesWon: initialStats.gamesWon,
+  guessDistribution: initialStats.guessDistribution,
+  unlockedCosmetics: loadInitialUnlockedCosmetics(),
+  equippedCosmeticId: loadInitialEquippedCosmetic(),
+
+  addCoins: (amount: number) => {
+    set((state) => {
+      const next = state.coins + amount;
+      appStorage.set(StorageKeys.USER_COINS, next);
+      return { coins: next };
+    });
+  },
+
+  spendCoins: (amount: number) => {
+    const current = get().coins;
+    if (current < amount) return false;
+
+    set(() => {
+      const next = current - amount;
+      appStorage.set(StorageKeys.USER_COINS, next);
+      return { coins: next };
+    });
+    return true;
+  },
+
+  addXp: (amount: number) => {
+    set((state) => {
+      const next = state.xp + amount;
+      appStorage.set(StorageKeys.USER_XP, next);
+      return { xp: next };
+    });
+  },
+
+  unlockNextLevel: (gameMode: string, leagueMode: string) => {
+    set((state) => {
+      const key = `${gameMode}_${leagueMode}`;
+      const currentLevel = state.unlockedLevels[key] ?? 1;
+      const updatedLevels = {
+        ...state.unlockedLevels,
+        [key]: currentLevel + 1,
+      };
+      appStorage.set(StorageKeys.UNLOCKED_LEVELS, JSON.stringify(updatedLevels));
+      return { unlockedLevels: updatedLevels };
+    });
+  },
+
+  getUnlockedLevel: (gameMode: string, leagueMode: string) => {
+    const key = `${gameMode}_${leagueMode}`;
+    return get().unlockedLevels[key] ?? 1;
+  },
+
+  markDailyCompleted: (dailyKey: string, isWon: boolean = true, dateStr?: string) => {
+    const today = dateStr || getAuthoritativeUtcDate();
+    const state = get();
+    let streakBonusCoins = 0;
+    let newStreak = state.currentStreak;
+
+    if (!state.completedDailyDates.includes(dailyKey)) {
+      appStorage.set(`${StorageKeys.DAILY_COMPLETED_PREFIX}${dailyKey}`, true);
+    }
+
+    if (!isWon) {
+      newStreak = 0;
+      appStorage.set(StorageKeys.CURRENT_STREAK, 0);
+      appStorage.set(StorageKeys.LAST_COMPLETED_DATE, today);
+
+      set((s) => ({
+        completedDailyDates: s.completedDailyDates.includes(dailyKey)
+          ? s.completedDailyDates
+          : [...s.completedDailyDates, dailyKey],
+        currentStreak: 0,
+        lastCompletedDate: today,
+      }));
+
+      return { streakBonusCoins: 0, newStreak: 0 };
+    }
+
+    if (state.lastCompletedDate !== today) {
+      if (!state.lastCompletedDate) {
+        newStreak = 1;
+      } else {
+        const lastDate = new Date(state.lastCompletedDate);
+        const currDate = new Date(today);
+        const diffTime = currDate.getTime() - lastDate.getTime();
+        const diffDays = Math.round(diffTime / (1000 * 3600 * 24));
+
+        if (diffDays === 1) {
+          newStreak = state.currentStreak + 1;
+        } else if (diffDays > 1) {
+          newStreak = 1;
+        }
+      }
+
+      if (newStreak === 3) streakBonusCoins = 50;
+      else if (newStreak === 7) streakBonusCoins = 150;
+      else if (newStreak > 7 && newStreak % 7 === 0) streakBonusCoins = 250;
+
+      const newMax = Math.max(state.maxStreak, newStreak);
+
+      appStorage.set(StorageKeys.CURRENT_STREAK, newStreak);
+      appStorage.set(StorageKeys.MAX_STREAK, newMax);
+      appStorage.set(StorageKeys.LAST_COMPLETED_DATE, today);
+
+      if (streakBonusCoins > 0) {
+        state.addCoins(streakBonusCoins);
+      }
+
+      set((s) => ({
+        completedDailyDates: s.completedDailyDates.includes(dailyKey)
+          ? s.completedDailyDates
+          : [...s.completedDailyDates, dailyKey],
+        currentStreak: newStreak,
+        maxStreak: newMax,
+        lastCompletedDate: today,
+      }));
+    } else {
+      set((s) => ({
+        completedDailyDates: s.completedDailyDates.includes(dailyKey)
+          ? s.completedDailyDates
+          : [...s.completedDailyDates, dailyKey],
+      }));
+    }
+
+    return { streakBonusCoins, newStreak };
+  },
+
+  clearDailyCompleted: (dailyKey: string) => {
+    appStorage.delete(`${StorageKeys.DAILY_COMPLETED_PREFIX}${dailyKey}`);
+    set((s) => ({
+      completedDailyDates: s.completedDailyDates.filter((k) => k !== dailyKey),
+    }));
+  },
+
+  isDailyCompleted: (dailyKey: string) => {
+    if (get().completedDailyDates.includes(dailyKey)) return true;
+    return appStorage.getBoolean(`${StorageKeys.DAILY_COMPLETED_PREFIX}${dailyKey}`) ?? false;
+  },
+
+  recordGameResult: (isWon: boolean, attemptsUsed: number) => {
+    set((state) => {
+      const gamesPlayed = state.gamesPlayed + 1;
+      const gamesWon = isWon ? state.gamesWon + 1 : state.gamesWon;
+      const guessDistribution = { ...state.guessDistribution };
+
+      if (isWon && attemptsUsed > 0) {
+        guessDistribution[attemptsUsed] = (guessDistribution[attemptsUsed] || 0) + 1;
+      }
+
+      const nextStats: IGameStats = { gamesPlayed, gamesWon, guessDistribution };
+      appStorage.set(StorageKeys.GAME_STATS, JSON.stringify(nextStats));
+
+      return nextStats;
+    });
+  },
+
+  unlockCosmetic: (id: string, cost: number) => {
+    const { coins, unlockedCosmetics, spendCoins } = get();
+    if (unlockedCosmetics.includes(id)) {
+      get().equipCosmetic(id);
+      return true;
+    }
+    if (coins < cost) return false;
+
+    const spent = spendCoins(cost);
+    if (!spent) return false;
+
+    const nextList = [...unlockedCosmetics, id];
+    appStorage.set(StorageKeys.UNLOCKED_COSMETICS, JSON.stringify(nextList));
+    appStorage.set(StorageKeys.EQUIPPED_COSMETIC_ID, id);
+
+    set({
+      unlockedCosmetics: nextList,
+      equippedCosmeticId: id,
+    });
+    return true;
+  },
+
+  equipCosmetic: (id: string) => {
+    const { unlockedCosmetics } = get();
+    if (!unlockedCosmetics.includes(id) && id !== 'avatar_default') return;
+
+    appStorage.set(StorageKeys.EQUIPPED_COSMETIC_ID, id);
+    set({ equippedCosmeticId: id });
+  },
+
+  isCosmeticUnlocked: (id: string) => {
+    if (id === 'avatar_default') return true;
+    return get().unlockedCosmetics.includes(id);
+  },
+}));
+
+
+==============================
+DOSYA: mobile\App.tsx
+==============================
+
+import React, { useState, useEffect, Component, ErrorInfo, ReactNode } from 'react';
+import { View, StyleSheet, StatusBar, Text, TouchableOpacity, BackHandler } from 'react-native';
+import { HomeScreen, AppScreenType } from './src/screens/HomeScreen';
+import { WhoAreYaScreen } from './src/screens/WhoAreYaScreen';
+import { CareerPathScreen } from './src/screens/CareerPathScreen';
+import { ClubLogoScreen } from './src/screens/ClubLogoScreen';
+import { ContextinhoScreen } from './src/screens/ContextinhoScreen';
+import { TicTacToeScreen } from './src/screens/TicTacToeScreen';
+import { FootballBingoScreen } from './src/screens/FootballBingoScreen';
+import { LevelMapScreen } from './src/screens/LevelMapScreen';
+import { GameModeType } from './src/api/dailyApi';
+import { searchEngine } from './src/services/searchEngine';
+import { authoritativeTime } from './src/services/authoritativeTime';
+import { Colors } from './src/theme/colors';
+
+interface ErrorBoundaryProps {
+  children: ReactNode;
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  errorMessage: string;
+}
+
+class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false, errorMessage: '' };
+  }
+
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, errorMessage: error.message };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('App ErrorBoundary caught:', error, errorInfo);
+  }
+
+  handleReset = () => {
+    this.setState({ hasError: false, errorMessage: '' });
+  };
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorEmoji}>⚠️</Text>
+          <Text style={styles.errorTitle}>Beklenmeyen Bir Hata Oluştu</Text>
+          <Text style={styles.errorDetails}>{this.state.errorMessage}</Text>
+          <TouchableOpacity style={styles.resetBtn} onPress={this.handleReset}>
+            <Text style={styles.resetBtnText}>Yeniden Dene</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+function App() {
+  const [currentScreen, setCurrentScreen] = useState<AppScreenType>('home');
+  const [isDailySelected, setIsDailySelected] = useState<boolean>(false);
+  const [activeGameMode, setActiveGameMode] = useState<GameModeType>('whoAreYa');
+  const [selectedLevel, setSelectedLevel] = useState<number | undefined>(undefined);
+  const [isReplayMode, setIsReplayMode] = useState<boolean>(false);
+
+  useEffect(() => {
+    try {
+      searchEngine.initialize();
+      searchEngine.syncSearchIndexIfNeeded().catch((e) => {
+        console.warn('Search index background sync warning:', e);
+      });
+    } catch (e) {
+      console.warn('Search engine init warning:', e);
+    }
+    authoritativeTime.sync().catch((e) => {
+      console.warn('Authoritative time sync warning:', e);
+    });
+  }, []);
+
+  // Hardware Back Button handler for Android
+  useEffect(() => {
+    const onBackPress = () => {
+      if (currentScreen !== 'home') {
+        if (currentScreen === 'levelMap') {
+          setCurrentScreen('home');
+          return true;
+        } else {
+          // In active game screen
+          if (isDailySelected) {
+            setCurrentScreen('home');
+          } else {
+            setCurrentScreen('levelMap');
+          }
+          return true;
+        }
+      }
+      return false; // Exit app on home screen
+    };
+
+    const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => subscription.remove();
+  }, [currentScreen, isDailySelected]);
+
+  const handleNavigate = (
+    screen: AppScreenType,
+    isDaily = false,
+    gameMode?: GameModeType
+  ) => {
+    setIsDailySelected(isDaily);
+    if (gameMode) {
+      setActiveGameMode(gameMode);
+    }
+    if (
+      screen === 'whoAreYa' ||
+      screen === 'careerPath' ||
+      screen === 'clubLogo' ||
+      screen === 'contextinho' ||
+      screen === 'ticTacToe' ||
+      screen === 'footballBingo'
+    ) {
+      setSelectedLevel(undefined);
+      setIsReplayMode(false);
+    }
+    setCurrentScreen(screen);
+  };
+
+  const handleSelectLevelFromMap = (levelNumber: number, isReplay: boolean) => {
+    setSelectedLevel(levelNumber);
+    setIsReplayMode(isReplay);
+    setIsDailySelected(false);
+    setCurrentScreen(activeGameMode);
+  };
+
+  const handleOpenMapFromGame = () => {
+    setCurrentScreen('levelMap');
+  };
+
+  const handleBackFromGame = () => {
+    if (isDailySelected) {
+      setCurrentScreen('home');
+    } else {
+      setCurrentScreen('levelMap');
+    }
+  };
+
+  const handleBackToHome = () => {
+    setCurrentScreen('home');
+  };
+
+  return (
+    <ErrorBoundary>
+      <View style={styles.outerWrapper}>
+        <View style={styles.container}>
+          <StatusBar barStyle="light-content" backgroundColor={Colors.background} />
+          {currentScreen === 'home' && <HomeScreen onNavigate={handleNavigate} />}
+          {currentScreen === 'levelMap' && (
+            <LevelMapScreen
+              gameMode={activeGameMode}
+              onSelectLevel={handleSelectLevelFromMap}
+              onBack={handleBackToHome}
+            />
+          )}
+          {currentScreen === 'whoAreYa' && (
+            <WhoAreYaScreen
+              isDaily={isDailySelected}
+              initialLevel={selectedLevel}
+              isReplay={isReplayMode}
+              onBack={handleBackFromGame}
+              onOpenMap={handleOpenMapFromGame}
+            />
+          )}
+          {currentScreen === 'careerPath' && (
+            <CareerPathScreen
+              isDaily={isDailySelected}
+              initialLevel={selectedLevel}
+              isReplay={isReplayMode}
+              onBack={handleBackFromGame}
+              onOpenMap={handleOpenMapFromGame}
+            />
+          )}
+          {currentScreen === 'clubLogo' && (
+            <ClubLogoScreen
+              isDaily={isDailySelected}
+              initialLevel={selectedLevel}
+              isReplay={isReplayMode}
+              onBack={handleBackFromGame}
+              onOpenMap={handleOpenMapFromGame}
+            />
+          )}
+          {currentScreen === 'contextinho' && (
+            <ContextinhoScreen
+              isDaily={isDailySelected}
+              initialLevel={selectedLevel}
+              isReplay={isReplayMode}
+              onBack={handleBackFromGame}
+              onOpenMap={handleOpenMapFromGame}
+            />
+          )}
+          {currentScreen === 'ticTacToe' && (
+            <TicTacToeScreen
+              isDaily={isDailySelected}
+              initialLevel={selectedLevel}
+              isReplay={isReplayMode}
+              onBack={handleBackFromGame}
+              onOpenMap={handleOpenMapFromGame}
+            />
+          )}
+          {currentScreen === 'footballBingo' && (
+            <FootballBingoScreen
+              isDaily={isDailySelected}
+              initialLevel={selectedLevel}
+              isReplay={isReplayMode}
+              onBack={handleBackFromGame}
+              onOpenMap={handleOpenMapFromGame}
+            />
+          )}
+        </View>
+      </View>
+    </ErrorBoundary>
+  );
+}
+
+const styles = StyleSheet.create({
+  outerWrapper: {
+    flex: 1,
+    backgroundColor: '#050811',
+    alignItems: 'center',
+  },
+  container: {
+    flex: 1,
+    width: '100%',
+    maxWidth: 480,
+    backgroundColor: Colors.background,
+  },
+  errorContainer: {
+    flex: 1,
+    backgroundColor: Colors.background,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  errorEmoji: {
+    fontSize: 48,
+    marginBottom: 16,
+  },
+  errorTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: Colors.textPrimary,
+    marginBottom: 8,
+  },
+  errorDetails: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  resetBtn: {
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 12,
+  },
+  resetBtnText: {
+    color: '#0F172A',
+    fontWeight: '700',
+    fontSize: 15,
+  },
+});
+
+export default App;
+

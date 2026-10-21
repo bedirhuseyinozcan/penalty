@@ -27,6 +27,8 @@ export const GAME_MODES = {
   CAREER_PATH: 'careerPath',
   CLUB_LOGO: 'clubLogo',
   CONTEXTINHO: 'contextinho',
+  TIC_TAC_TOE: 'ticTacToe',
+  FOOTBALL_BINGO: 'footballBingo',
 } as const;
 
 export type GameMode = (typeof GAME_MODES)[keyof typeof GAME_MODES];

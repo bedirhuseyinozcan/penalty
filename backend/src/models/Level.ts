@@ -1,5 +1,5 @@
 import { Schema, model, Document, Types } from 'mongoose';
-import { GameMode, LeagueMode } from '../config/constants';
+import { GameMode, LeagueMode, GAME_MODES } from '../config/constants';
 
 export interface ILevel extends Document {
   levelNumber: number;
@@ -18,7 +18,7 @@ const LevelSchema = new Schema<ILevel>(
     gameMode: {
       type: String,
       required: true,
-      enum: ['whoAreYa', 'careerPath', 'clubLogo', 'contextinho'],
+      enum: Object.values(GAME_MODES),
       index: true,
     },
     leagueMode: { type: String, required: true, enum: ['global', 'super_lig'], index: true },

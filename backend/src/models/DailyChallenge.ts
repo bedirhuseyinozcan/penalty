@@ -1,5 +1,5 @@
 import { Schema, model, Document, Types } from 'mongoose';
-import { GameMode, LeagueMode } from '../config/constants';
+import { GameMode, LeagueMode, GAME_MODES } from '../config/constants';
 
 export interface IDailyChallenge extends Document {
   date: string;
@@ -24,7 +24,7 @@ const DailyChallengeSchema = new Schema<IDailyChallenge>(
     gameMode: {
       type: String,
       required: true,
-      enum: ['whoAreYa', 'careerPath', 'clubLogo', 'contextinho'],
+      enum: Object.values(GAME_MODES),
       index: true,
     },
     leagueMode: {

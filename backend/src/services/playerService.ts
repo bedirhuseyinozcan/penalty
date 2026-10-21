@@ -1,3 +1,5 @@
+import fs from 'fs';
+import path from 'path';
 import { PlayerModel, IPlayer } from '../models/Player';
 import { TOP_5_LEAGUES, SUPPORTED_LEAGUES, LeagueMode } from '../config/constants';
 import { AppError } from '../middlewares/errorHandler';
@@ -8,8 +10,13 @@ export interface ISearchIndexItem {
   nationality: string;
   position: string;
   club: string;
+  clubId?: string;
   clubLogoUrl?: string;
   league: string;
+  age?: number;
+  shirtNumber?: number;
+  clubs?: string[];
+  trophies?: string[];
 }
 
 export interface IGuessComparison {
@@ -35,6 +42,22 @@ export interface IGuessComparison {
 
 export class PlayerService {
   public async getSearchIndex(leagueMode?: LeagueMode): Promise<ISearchIndexItem[]> {
+    const jsonPath = path.resolve(__dirname, '../../data/search-index.json');
+    if (fs.existsSync(jsonPath)) {
+      try {
+        const fileContent = fs.readFileSync(jsonPath, 'utf8');
+        const items = JSON.parse(fileContent) as ISearchIndexItem[];
+        if (leagueMode === 'super_lig') {
+          return items.filter((p) => p.league === SUPPORTED_LEAGUES.SUPER_LIG);
+        } else if (leagueMode === 'global') {
+          return items.filter((p) => p.league !== SUPPORTED_LEAGUES.SUPER_LIG);
+        }
+        return items;
+      } catch (err) {
+        console.warn('⚠️ Could not load search-index.json from disk, falling back to database query:', err);
+      }
+    }
+
     const query: Record<string, unknown> = { isActive: true };
 
     if (leagueMode === 'super_lig') {
@@ -44,18 +67,39 @@ export class PlayerService {
     }
 
     const players = await PlayerModel.find(query)
-      .select('playerId name nationality position currentClub leagues')
+      .select('playerId name nationality position currentClub leagues age shirtNumber careerPath marketValueEur')
       .lean();
 
-    return players.map((p) => ({
-      id: p.playerId,
-      name: p.name,
-      nationality: p.nationality,
-      position: p.position,
-      club: p.currentClub.name,
-      clubLogoUrl: p.currentClub.logoUrl,
-      league: p.currentClub.league,
-    }));
+    const BAD_CLUB_NAMES = new Set(['Without Club', 'Unknown', 'Career break', 'Retired', 'Kulüp']);
+
+    return players.map((p) => {
+      const clubSet = new Set<string>();
+      if (p.currentClub?.name && !BAD_CLUB_NAMES.has(p.currentClub.name)) {
+        clubSet.add(p.currentClub.name.trim());
+      }
+      if (Array.isArray(p.careerPath)) {
+        for (const step of p.careerPath) {
+          const cName = step.clubName?.trim();
+          if (cName && !BAD_CLUB_NAMES.has(cName)) {
+            clubSet.add(cName);
+          }
+        }
+      }
+
+      return {
+        id: p.playerId,
+        name: p.name,
+        nationality: p.nationality,
+        position: p.position,
+        club: p.currentClub?.name || '',
+        clubId: p.currentClub?.id,
+        clubLogoUrl: p.currentClub?.logoUrl,
+        league: p.currentClub?.league || '',
+        age: p.age,
+        shirtNumber: p.shirtNumber,
+        clubs: Array.from(clubSet),
+      };
+    });
   }
 
   public async getPlayerById(playerId: string): Promise<IPlayer> {
