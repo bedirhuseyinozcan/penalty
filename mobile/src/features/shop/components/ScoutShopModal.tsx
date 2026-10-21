@@ -197,6 +197,15 @@ export const ScoutShopModal: React.FC<IScoutShopModalProps> = React.memo(({ visi
                 <Text style={styles.showcaseDesc} numberOfLines={2}>
                   {previewItem.description}
                 </Text>
+
+                <View style={styles.showcaseThemeDetails}>
+                  <Text style={[styles.showcaseStadiumText, { color: previewItem.themeConfig.primaryColor }]}>
+                    {previewItem.themeConfig.teamBadgeEmojis} {previewItem.themeConfig.stadiumName}
+                  </Text>
+                  <Text style={styles.showcaseChantText} numberOfLines={1}>
+                    {previewItem.themeConfig.anthemChant}
+                  </Text>
+                </View>
               </View>
             </View>
 
@@ -612,6 +621,23 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
     fontSize: 11,
     marginTop: 1,
+  },
+  showcaseThemeDetails: {
+    marginTop: 4,
+    paddingTop: 3,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.06)',
+  },
+  showcaseStadiumText: {
+    ...Typography.captionBold,
+    fontSize: 10,
+    fontWeight: '800',
+  },
+  showcaseChantText: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+    fontSize: 10,
+    fontStyle: 'italic',
   },
   showcaseActionRow: {
     marginTop: Spacing.xs + 2,

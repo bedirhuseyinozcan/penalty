@@ -1,5 +1,18 @@
 export type CosmeticCategory = 'scout' | 'fan_bundle';
 
+export interface IThemeConfig {
+  primaryColor: string;       
+  secondaryColor: string;     
+  accentGlow: string;       
+  cardBorder: string;         
+  headerGlow: string;         
+  stadiumName: string;        
+  tribuneName: string;       
+  anthemChant: string;        
+  teamBadgeEmojis: string;    
+  fanBannerTitle: string;     
+}
+
 export interface ICosmeticItem {
   id: string;
   name: string;
@@ -12,5 +25,6 @@ export interface ICosmeticItem {
   themeGlowColor: string;
   titleBadge: string;
   cost: number;
-  badgeText?: string; 
+  badgeText?: string;
+  themeConfig: IThemeConfig;
 }

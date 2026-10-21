@@ -1,22 +1,22 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   ScrollView,
   SafeAreaView,
   StatusBar,
+  TouchableOpacity,
 } from 'react-native';
+import { GameModeType } from '../api/dailyApi';
 import { useGameStore } from '../stores/useGameStore';
 import { useSettingsStore, LeagueMode } from '../stores/useSettingsStore';
-import { getAuthoritativeUtcDate } from '../services/authoritativeTime';
 import { getRankByXp } from '../features/stats/utils/rankUtils';
-import { HomeGameCard } from '../features/home/components/HomeGameCard';
+import { getAuthoritativeUtcDate } from '../services/authoritativeTime';
 import { PlayerStatsModal } from '../features/stats/components/PlayerStatsModal';
 import { ScoutShopModal } from '../features/shop/components/ScoutShopModal';
 import { getCosmeticById } from '../features/shop/catalog';
-import { GameModeType } from '../api/dailyApi';
+import { HomeGameCard } from '../features/home/components/HomeGameCard';
 import { Colors } from '../theme/colors';
 import { Spacing, BorderRadius } from '../theme/spacing';
 import { Typography } from '../theme/typography';
@@ -56,7 +56,14 @@ export const HomeScreen: React.FC<IHomeScreenProps> = React.memo(({ onNavigate }
     [equippedCosmeticId]
   );
 
+  const theme = equippedCosmetic.themeConfig;
   const isSuperLig = selectedLeagueMode === 'super_lig';
+
+  const isLightPrimary =
+    theme.primaryColor === '#FBBF24' ||
+    theme.primaryColor === '#FFFFFF' ||
+    theme.primaryColor === '#F4F4F5' ||
+    theme.primaryColor === '#EAB308';
 
   const rankInfo = useMemo(() => getRankByXp(xp), [xp]);
   const todayDate = useMemo(() => getAuthoritativeUtcDate(), []);
@@ -77,12 +84,27 @@ export const HomeScreen: React.FC<IHomeScreenProps> = React.memo(({ onNavigate }
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" backgroundColor={Colors.background} />
+      <View
+        style={[styles.ambientGlow, { backgroundColor: theme.accentGlow }]}
+        pointerEvents="none"
+      />
+
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.header}>
           <View>
-            <Text style={styles.brandTitle}>PENALTY</Text>
-            <Text style={styles.brandSubtitle}>Futbol Oyun Portalı</Text>
+            <View style={styles.brandRow}>
+              <Text style={[styles.brandTitle, { color: theme.primaryColor }]}>PENALTY</Text>
+              <View style={[styles.themeMiniPill, { backgroundColor: theme.accentGlow }]}>
+                <Text style={[styles.themeMiniPillText, { color: theme.primaryColor }]}>
+                  {theme.teamBadgeEmojis} {equippedCosmetic.titleBadge}
+                </Text>
+              </View>
+            </View>
+            <Text style={styles.brandSubtitle}>
+              Futbol Oyun Portalı • {theme.stadiumName}
+            </Text>
           </View>
+
           <View style={styles.currencyRow}>
             <TouchableOpacity
               style={[styles.currencyBadge, styles.streakBadge]}
@@ -97,11 +119,15 @@ export const HomeScreen: React.FC<IHomeScreenProps> = React.memo(({ onNavigate }
             </View>
 
             <TouchableOpacity
-              style={[styles.currencyBadge, styles.shopBtn]}
+              style={[
+                styles.currencyBadge,
+                styles.shopBtn,
+                { borderColor: theme.primaryColor },
+              ]}
               activeOpacity={0.8}
               onPress={() => setIsShopModalVisible(true)}
             >
-              <Text style={styles.shopBtnText}>🛍️ Dükkan</Text>
+              <Text style={[styles.shopBtnText, { color: theme.primaryColor }]}>🛍️ Dükkan</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -114,10 +140,36 @@ export const HomeScreen: React.FC<IHomeScreenProps> = React.memo(({ onNavigate }
           </View>
         </View>
 
+        <View
+          style={[
+            styles.fanAtmosphereCard,
+            {
+              borderColor: theme.cardBorder,
+              borderLeftWidth: 4,
+              borderLeftColor: theme.primaryColor,
+            },
+          ]}
+        >
+          <View style={styles.fanAtmosphereTop}>
+            <View style={[styles.fanBadgePill, { backgroundColor: theme.accentGlow }]}>
+              <View style={[styles.pulseDot, { backgroundColor: theme.primaryColor }]} />
+              <Text style={[styles.fanBadgePillText, { color: theme.primaryColor }]}>
+                {theme.fanBannerTitle}
+              </Text>
+            </View>
+
+            <Text style={styles.fanStadiumText}>{theme.stadiumName}</Text>
+          </View>
+
+          <Text style={styles.fanChantText}>{theme.anthemChant}</Text>
+        </View>
         <TouchableOpacity
           style={[
             styles.rankCard,
-            { borderColor: equippedCosmetic.frameBorderColor },
+            {
+              borderColor: theme.primaryColor,
+              shadowColor: theme.primaryColor,
+            },
           ]}
           activeOpacity={0.85}
           onPress={() => setIsStatsModalVisible(true)}
@@ -128,8 +180,8 @@ export const HomeScreen: React.FC<IHomeScreenProps> = React.memo(({ onNavigate }
                 style={[
                   styles.equippedAvatarCircle,
                   {
-                    borderColor: equippedCosmetic.frameBorderColor,
-                    shadowColor: equippedCosmetic.frameBorderColor,
+                    borderColor: theme.primaryColor,
+                    shadowColor: theme.primaryColor,
                   },
                 ]}
               >
@@ -148,12 +200,7 @@ export const HomeScreen: React.FC<IHomeScreenProps> = React.memo(({ onNavigate }
                     <Text
                       style={[
                         styles.cosmeticTitleText,
-                        {
-                          color:
-                            equippedCosmetic.frameBorderColor === '#FFFFFF'
-                              ? '#FBBF24'
-                              : equippedCosmetic.frameBorderColor,
-                        },
+                        { color: theme.primaryColor },
                       ]}
                     >
                       {equippedCosmetic.titleBadge}
@@ -167,48 +214,75 @@ export const HomeScreen: React.FC<IHomeScreenProps> = React.memo(({ onNavigate }
                 </Text>
               </View>
             </View>
-            <Text style={styles.rankPercentText}>%{rankInfo.currentProgressInTier}</Text>
+            <Text style={[styles.rankPercentText, { color: theme.primaryColor }]}>
+              %{rankInfo.currentProgressInTier}
+            </Text>
           </View>
           <View style={styles.rankProgressBarBg}>
             <View
               style={[
                 styles.rankProgressBarFill,
-                { width: `${rankInfo.currentProgressInTier}%` },
+                {
+                  width: `${rankInfo.currentProgressInTier}%`,
+                  backgroundColor: theme.primaryColor,
+                },
               ]}
             />
           </View>
         </TouchableOpacity>
-
         <View style={styles.modeSwitcherContainer}>
           <Text style={styles.sectionTitle}>Lig Modu Seçimi</Text>
           <View style={styles.tabContainer}>
             <TouchableOpacity
-              style={[styles.tabBtn, isSuperLig && styles.activeTabBtn]}
+              style={[
+                styles.tabBtn,
+                isSuperLig && { backgroundColor: theme.primaryColor },
+              ]}
               activeOpacity={0.8}
               onPress={() => handleSelectMode('super_lig')}
             >
-              <Text style={[styles.tabText, isSuperLig && styles.activeTabText]}>
+              <Text
+                style={[
+                  styles.tabText,
+                  isSuperLig && {
+                    color: isLightPrimary ? '#0B0E14' : '#FFFFFF',
+                    fontWeight: '900',
+                  },
+                ]}
+              >
                 🇹🇷 Süper Lig
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.tabBtn, !isSuperLig && styles.activeTabBtn]}
+              style={[
+                styles.tabBtn,
+                !isSuperLig && { backgroundColor: theme.primaryColor },
+              ]}
               activeOpacity={0.8}
               onPress={() => handleSelectMode('global')}
             >
-              <Text style={[styles.tabText, !isSuperLig && styles.activeTabText]}>
+              <Text
+                style={[
+                  styles.tabText,
+                  !isSuperLig && {
+                    color: isLightPrimary ? '#0B0E14' : '#FFFFFF',
+                    fontWeight: '900',
+                  },
+                ]}
+              >
                 🌍 5 Büyük Lig (Global)
               </Text>
             </TouchableOpacity>
           </View>
         </View>
-
         <HomeGameCard
           emoji="🕵️‍♂️"
           title="Kim Bu Yıldız?"
           subtitle="Bulanık fotoğraftan ve ipuçlarından futbolcuyu tahmin et"
           dailyBtnText={isWhoAreYaDailyCompleted ? '✅ Günün Sorusu (Çözüldü)' : '📅 Günün Sorusu'}
+          themePrimaryColor={theme.primaryColor}
+          themeBorderColor={theme.cardBorder}
           onPressDaily={() => onNavigate('whoAreYa', true, 'whoAreYa')}
           onPressCareer={() => onNavigate('levelMap', false, 'whoAreYa')}
         />
@@ -218,6 +292,8 @@ export const HomeScreen: React.FC<IHomeScreenProps> = React.memo(({ onNavigate }
           title="Transfer Rotası"
           subtitle="Kariyerinde oynadığı kulüpleri takip ederek yıldızı bul"
           dailyBtnText={isCareerDailyCompleted ? '✅ Günün Sorusu (Çözüldü)' : '📅 Günün Sorusu'}
+          themePrimaryColor={theme.primaryColor}
+          themeBorderColor={theme.cardBorder}
           onPressDaily={() => onNavigate('careerPath', true, 'careerPath')}
           onPressCareer={() => onNavigate('levelMap', false, 'careerPath')}
         />
@@ -227,6 +303,8 @@ export const HomeScreen: React.FC<IHomeScreenProps> = React.memo(({ onNavigate }
           title="Arma Avcısı"
           subtitle="Gizlenmiş ve bulanıklaştırılmış kulüp armasından takımı bul"
           dailyBtnText={isClubLogoDailyCompleted ? '✅ Günün Sorusu (Çözüldü)' : '📅 Günün Sorusu'}
+          themePrimaryColor={theme.primaryColor}
+          themeBorderColor={theme.cardBorder}
           onPressDaily={() => onNavigate('clubLogo', true, 'clubLogo')}
           onPressCareer={() => onNavigate('levelMap', false, 'clubLogo')}
         />
@@ -236,6 +314,8 @@ export const HomeScreen: React.FC<IHomeScreenProps> = React.memo(({ onNavigate }
           title="Sıcak Temas"
           subtitle="Sıcak-soğuk benzerlik sinyallerini takip ederek #1 numaralı yıldızı bul"
           dailyBtnText={isContextinhoDailyCompleted ? '✅ Günün Sorusu (Çözüldü)' : '📅 Günün Sorusu'}
+          themePrimaryColor={theme.primaryColor}
+          themeBorderColor={theme.cardBorder}
           onPressDaily={() => onNavigate('contextinho', true, 'contextinho')}
           onPressCareer={() => onNavigate('levelMap', false, 'contextinho')}
         />
@@ -245,6 +325,8 @@ export const HomeScreen: React.FC<IHomeScreenProps> = React.memo(({ onNavigate }
           title="Tiki-Taka (3x3)"
           subtitle="Kriter kesişimlerine (Kulüp × Mevki/Uyruk) uyan futbolcuları bul"
           dailyBtnText={isTicTacToeDailyCompleted ? '✅ Günün Sorusu (Çözüldü)' : '📅 Günün Sorusu'}
+          themePrimaryColor={theme.primaryColor}
+          themeBorderColor={theme.cardBorder}
           onPressDaily={() => onNavigate('ticTacToe', true, 'ticTacToe')}
           onPressCareer={() => onNavigate('levelMap', false, 'ticTacToe')}
         />
@@ -254,6 +336,8 @@ export const HomeScreen: React.FC<IHomeScreenProps> = React.memo(({ onNavigate }
           title="Futbol Bingo (4x4)"
           subtitle="42 kişilik desteden gelen futbolcuları doğru kriter kutularına yerleştir"
           dailyBtnText={isBingoDailyCompleted ? '✅ Günün Sorusu (Çözüldü)' : '📅 Günün Sorusu'}
+          themePrimaryColor={theme.primaryColor}
+          themeBorderColor={theme.cardBorder}
           onPressDaily={() => onNavigate('footballBingo', true, 'footballBingo')}
           onPressCareer={() => onNavigate('levelMap', false, 'footballBingo')}
         />
@@ -279,6 +363,16 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
+  ambientGlow: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 320,
+    opacity: 0.65,
+    borderBottomLeftRadius: 100,
+    borderBottomRightRadius: 100,
+  },
   container: {
     padding: Spacing.md,
     paddingBottom: Spacing.xxl,
@@ -287,17 +381,34 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.sm,
+  },
+  brandRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
   },
   brandTitle: {
     ...Typography.h1,
-    color: Colors.primary,
     fontWeight: '900',
-    letterSpacing: 1,
+    letterSpacing: 1.2,
+    fontSize: 24,
+  },
+  themeMiniPill: {
+    paddingVertical: 2,
+    paddingHorizontal: 6,
+    borderRadius: BorderRadius.xs,
+  },
+  themeMiniPillText: {
+    fontSize: 9,
+    fontWeight: '800',
+    textTransform: 'uppercase',
   },
   brandSubtitle: {
     ...Typography.caption,
     color: Colors.textSecondary,
+    fontSize: 11,
+    marginTop: 1,
   },
   currencyRow: {
     flexDirection: 'row',
@@ -325,14 +436,6 @@ const styles = StyleSheet.create({
     color: Colors.accent,
     fontSize: 13,
   },
-  xpBadge: {
-    borderColor: Colors.primary,
-  },
-  xpText: {
-    ...Typography.bodyBold,
-    color: Colors.primary,
-    fontSize: 13,
-  },
   statsBtn: {
     borderColor: Colors.secondary,
     backgroundColor: 'rgba(59, 130, 246, 0.15)',
@@ -341,13 +444,54 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   shopBtn: {
-    borderColor: Colors.accent,
     backgroundColor: 'rgba(234, 179, 8, 0.15)',
   },
   shopBtnText: {
     ...Typography.bodyBold,
-    color: Colors.accent,
     fontSize: 12,
+  },
+  fanAtmosphereCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.md,
+    paddingVertical: Spacing.xs + 2,
+    paddingHorizontal: Spacing.sm,
+    marginBottom: Spacing.sm,
+    borderWidth: 1,
+  },
+  fanAtmosphereTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 2,
+  },
+  fanBadgePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 2,
+    paddingHorizontal: 6,
+    borderRadius: BorderRadius.xs,
+    gap: 4,
+  },
+  pulseDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  fanBadgePillText: {
+    fontSize: 9,
+    fontWeight: '900',
+    letterSpacing: 0.6,
+  },
+  fanStadiumText: {
+    ...Typography.caption,
+    color: Colors.textMuted,
+    fontSize: 10,
+  },
+  fanChantText: {
+    ...Typography.captionBold,
+    color: Colors.textPrimary,
+    fontSize: 11,
+    fontStyle: 'italic',
   },
   equippedAvatarCircle: {
     width: 44,
@@ -384,9 +528,12 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surface,
     borderRadius: BorderRadius.lg,
     padding: Spacing.md,
-    borderWidth: 1,
-    borderColor: 'rgba(59, 130, 246, 0.25)',
-    marginBottom: Spacing.lg,
+    borderWidth: 1.5,
+    marginBottom: Spacing.md,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 5,
   },
   rankHeader: {
     flexDirection: 'row',
@@ -400,9 +547,6 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
     flex: 1,
   },
-  rankBadgeEmoji: {
-    fontSize: 26,
-  },
   rankTitle: {
     ...Typography.bodyBold,
     color: Colors.textPrimary,
@@ -415,7 +559,6 @@ const styles = StyleSheet.create({
   },
   rankPercentText: {
     ...Typography.captionBold,
-    color: Colors.primary,
     fontSize: 13,
   },
   rankProgressBarBg: {
@@ -426,16 +569,15 @@ const styles = StyleSheet.create({
   },
   rankProgressBarFill: {
     height: '100%',
-    backgroundColor: Colors.primary,
     borderRadius: BorderRadius.full,
   },
   modeSwitcherContainer: {
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.md,
   },
   sectionTitle: {
     ...Typography.caption,
     color: Colors.textSecondary,
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.xs,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
   },
@@ -453,14 +595,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: BorderRadius.md,
   },
-  activeTabBtn: {
-    backgroundColor: Colors.primary,
-  },
   tabText: {
     ...Typography.bodyBold,
     color: Colors.textSecondary,
-  },
-  activeTabText: {
-    color: Colors.background,
   },
 });

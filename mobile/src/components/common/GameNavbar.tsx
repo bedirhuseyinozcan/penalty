@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Colors } from '../../theme/colors';
 import { Spacing, BorderRadius } from '../../theme/spacing';
 import { Typography } from '../../theme/typography';
+import { useGameStore } from '../../stores/useGameStore';
+import { getCosmeticById } from '../../features/shop/catalog';
 
 interface IGameNavbarProps {
   title: string;
@@ -24,10 +26,17 @@ export const GameNavbar: React.FC<IGameNavbarProps> = React.memo(
     onOpenMap,
     showMapButton = false,
   }) => {
+    const equippedCosmeticId = useGameStore((s) => s.equippedCosmeticId);
+    const equippedCosmetic = useMemo(
+      () => getCosmeticById(equippedCosmeticId),
+      [equippedCosmeticId]
+    );
+    const theme = equippedCosmetic.themeConfig;
+
     return (
-      <View style={styles.navbar}>
+      <View style={[styles.navbar, { borderBottomColor: theme.cardBorder }]}>
         <TouchableOpacity onPress={onBack} style={styles.backBtn} activeOpacity={0.8}>
-          <Text style={styles.backBtnText}>‹ Geri</Text>
+          <Text style={[styles.backBtnText, { color: theme.primaryColor }]}>‹ Geri</Text>
         </TouchableOpacity>
 
         <View style={styles.navTitleContainer}>
@@ -46,8 +55,28 @@ export const GameNavbar: React.FC<IGameNavbarProps> = React.memo(
             </TouchableOpacity>
           ) : null}
 
-          <View style={styles.attemptsBadge}>
-            <Text style={styles.attemptsText}>
+          <View
+            style={[
+              styles.navAvatarBadge,
+              {
+                borderColor: theme.primaryColor,
+                backgroundColor: theme.accentGlow,
+              },
+            ]}
+          >
+            <Text style={styles.navAvatarText}>{equippedCosmetic.avatarEmoji}</Text>
+          </View>
+
+          <View
+            style={[
+              styles.attemptsBadge,
+              {
+                borderColor: theme.primaryColor,
+                backgroundColor: theme.accentGlow,
+              },
+            ]}
+          >
+            <Text style={[styles.attemptsText, { color: theme.primaryColor }]}>
               {attemptsLeft}/{maxAttempts}
             </Text>
           </View>
@@ -102,7 +131,7 @@ const styles = StyleSheet.create({
   navRightRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
+    gap: Spacing.xs + 2,
   },
   mapHeaderBtn: {
     backgroundColor: Colors.surfaceLight,
@@ -116,6 +145,17 @@ const styles = StyleSheet.create({
     ...Typography.caption,
     color: Colors.textPrimary,
     fontWeight: '700',
+  },
+  navAvatarBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  navAvatarText: {
+    fontSize: 14,
   },
   attemptsBadge: {
     backgroundColor: Colors.surfaceLight,

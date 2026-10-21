@@ -10,6 +10,8 @@ interface IHomeGameCardProps {
   subtitle: string;
   dailyBtnText?: string;
   careerBtnText?: string;
+  themePrimaryColor?: string;
+  themeBorderColor?: string;
   onPressDaily: () => void;
   onPressCareer: () => void;
 }
@@ -21,11 +23,32 @@ export const HomeGameCard: React.FC<IHomeGameCardProps> = React.memo(
     subtitle,
     dailyBtnText = '📅 Günün Sorusu',
     careerBtnText = '🗺️ Seviyeler & Kariyer',
+    themePrimaryColor,
+    themeBorderColor,
     onPressDaily,
     onPressCareer,
   }) => {
+    const isLightPrimary =
+      themePrimaryColor === '#FBBF24' ||
+      themePrimaryColor === '#FFFFFF' ||
+      themePrimaryColor === '#F4F4F5' ||
+      themePrimaryColor === '#EAB308';
+
+    const careerTextColor = isLightPrimary ? '#0B0E14' : '#FFFFFF';
+
     return (
-      <View style={styles.gameCard}>
+      <View
+        style={[
+          styles.gameCard,
+          themeBorderColor
+            ? {
+                borderColor: themeBorderColor,
+                borderLeftWidth: 4,
+                borderLeftColor: themePrimaryColor || themeBorderColor,
+              }
+            : null,
+        ]}
+      >
         <View style={styles.cardHeader}>
           <Text style={styles.cardEmoji}>{emoji}</Text>
           <View style={styles.cardTitleCol}>
@@ -36,19 +59,36 @@ export const HomeGameCard: React.FC<IHomeGameCardProps> = React.memo(
 
         <View style={styles.btnRow}>
           <TouchableOpacity
-            style={[styles.gameActionBtn, styles.dailyBtn]}
+            style={[
+              styles.gameActionBtn,
+              styles.dailyBtn,
+              themeBorderColor ? { borderColor: themeBorderColor } : null,
+            ]}
             activeOpacity={0.8}
             onPress={onPressDaily}
           >
-            <Text style={styles.dailyBtnText}>{dailyBtnText}</Text>
+            <Text
+              style={[
+                styles.dailyBtnText,
+                themePrimaryColor ? { color: themePrimaryColor } : null,
+              ]}
+            >
+              {dailyBtnText}
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.gameActionBtn, styles.careerBtn]}
+            style={[
+              styles.gameActionBtn,
+              styles.careerBtn,
+              themePrimaryColor ? { backgroundColor: themePrimaryColor } : null,
+            ]}
             activeOpacity={0.8}
             onPress={onPressCareer}
           >
-            <Text style={styles.careerBtnText}>{careerBtnText}</Text>
+            <Text style={[styles.careerBtnText, { color: careerTextColor }]}>
+              {careerBtnText}
+            </Text>
           </TouchableOpacity>
         </View>
       </View>

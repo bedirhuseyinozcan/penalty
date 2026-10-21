@@ -55,7 +55,10 @@ export const PlayerStatsModal: React.FC<IPlayerStatsModalProps> = React.memo(
               <View
                 style={[
                   styles.rankModalCard,
-                  { borderColor: equippedCosmetic.frameBorderColor },
+                  {
+                    borderColor: equippedCosmetic.themeConfig.primaryColor,
+                    shadowColor: equippedCosmetic.themeConfig.primaryColor,
+                  },
                 ]}
               >
                 <View style={styles.rankModalHeader}>
@@ -63,8 +66,8 @@ export const PlayerStatsModal: React.FC<IPlayerStatsModalProps> = React.memo(
                     style={[
                       styles.avatarBox,
                       {
-                        borderColor: equippedCosmetic.frameBorderColor,
-                        shadowColor: equippedCosmetic.frameBorderColor,
+                        borderColor: equippedCosmetic.themeConfig.primaryColor,
+                        shadowColor: equippedCosmetic.themeConfig.primaryColor,
                       },
                     ]}
                   >
@@ -83,12 +86,7 @@ export const PlayerStatsModal: React.FC<IPlayerStatsModalProps> = React.memo(
                         <Text
                           style={[
                             styles.titlePillText,
-                            {
-                              color:
-                                equippedCosmetic.frameBorderColor === '#FFFFFF'
-                                  ? '#FBBF24'
-                                  : equippedCosmetic.frameBorderColor,
-                            },
+                            { color: equippedCosmetic.themeConfig.primaryColor },
                           ]}
                         >
                           {equippedCosmetic.titleBadge}
@@ -102,24 +100,60 @@ export const PlayerStatsModal: React.FC<IPlayerStatsModalProps> = React.memo(
                         : `Sonraki Rütbeye ${rankInfo.xpNeededForNext} XP`}
                     </Text>
                   </View>
-                  <Text style={styles.rankModalPercent}>%{rankInfo.currentProgressInTier}</Text>
+                  <Text style={[styles.rankModalPercent, { color: equippedCosmetic.themeConfig.primaryColor }]}>
+                    %{rankInfo.currentProgressInTier}
+                  </Text>
                 </View>
+                <View
+                  style={[
+                    styles.statsAtmospherePill,
+                    {
+                      borderColor: equippedCosmetic.themeConfig.cardBorder,
+                      backgroundColor: equippedCosmetic.themeConfig.accentGlow,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.statsAtmosphereText,
+                      { color: equippedCosmetic.themeConfig.primaryColor },
+                    ]}
+                  >
+                    {equippedCosmetic.themeConfig.teamBadgeEmojis}{' '}
+                    {equippedCosmetic.themeConfig.stadiumName}
+                  </Text>
+                  <Text style={styles.statsChantText}>
+                    {equippedCosmetic.themeConfig.anthemChant}
+                  </Text>
+                </View>
+
                 <View style={styles.rankProgressBarBg}>
                   <View
                     style={[
                       styles.rankProgressBarFill,
-                      { width: `${rankInfo.currentProgressInTier}%` },
+                      {
+                        width: `${rankInfo.currentProgressInTier}%`,
+                        backgroundColor: equippedCosmetic.themeConfig.primaryColor,
+                      },
                     ]}
                   />
                 </View>
 
                 <TouchableOpacity
-                  style={styles.shopShortcutBtn}
+                  style={[
+                    styles.shopShortcutBtn,
+                    { borderColor: equippedCosmetic.themeConfig.primaryColor },
+                  ]}
                   activeOpacity={0.8}
                   onPress={() => setIsShopModalVisible(true)}
                 >
-                  <Text style={styles.shopShortcutBtnText}>
-                    🛍️ Scout & Taraftar Dükkanı • Çerçeve Değiştir
+                  <Text
+                    style={[
+                      styles.shopShortcutBtnText,
+                      { color: equippedCosmetic.themeConfig.primaryColor },
+                    ]}
+                  >
+                    🛍️ Scout & Taraftar Dükkanı • Tema & Çerçeve Değiştir
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -290,6 +324,24 @@ const styles = StyleSheet.create({
     fontSize: 9,
     fontWeight: '800',
     textTransform: 'uppercase',
+  },
+  statsAtmospherePill: {
+    borderWidth: 1,
+    borderRadius: BorderRadius.sm,
+    paddingVertical: 5,
+    paddingHorizontal: Spacing.sm,
+    marginBottom: Spacing.sm,
+  },
+  statsAtmosphereText: {
+    ...Typography.captionBold,
+    fontSize: 11,
+    marginBottom: 2,
+  },
+  statsChantText: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+    fontSize: 10,
+    fontStyle: 'italic',
   },
   shopShortcutBtn: {
     backgroundColor: 'rgba(234, 179, 8, 0.12)',
