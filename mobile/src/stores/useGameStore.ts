@@ -38,6 +38,7 @@ interface IGameStore {
   unlockCosmetic: (id: string, cost: number) => boolean;
   equipCosmetic: (id: string) => void;
   isCosmeticUnlocked: (id: string) => boolean;
+  hydrateFromStorage: () => void;
 }
 
 const loadInitialCoins = (): number => {
@@ -288,5 +289,22 @@ export const useGameStore = create<IGameStore>((set, get) => ({
   isCosmeticUnlocked: (id: string) => {
     if (id === 'avatar_default') return true;
     return get().unlockedCosmetics.includes(id);
+  },
+
+  hydrateFromStorage: () => {
+    const freshStats = loadInitialStats();
+    set({
+      coins: loadInitialCoins(),
+      xp: loadInitialXp(),
+      unlockedLevels: loadInitialLevels(),
+      currentStreak: appStorage.getNumber(StorageKeys.CURRENT_STREAK) ?? 0,
+      maxStreak: appStorage.getNumber(StorageKeys.MAX_STREAK) ?? 0,
+      lastCompletedDate: appStorage.getString(StorageKeys.LAST_COMPLETED_DATE) ?? null,
+      gamesPlayed: freshStats.gamesPlayed,
+      gamesWon: freshStats.gamesWon,
+      guessDistribution: freshStats.guessDistribution,
+      unlockedCosmetics: loadInitialUnlockedCosmetics(),
+      equippedCosmeticId: loadInitialEquippedCosmetic(),
+    });
   },
 }));

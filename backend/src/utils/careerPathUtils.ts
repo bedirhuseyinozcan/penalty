@@ -49,6 +49,7 @@ export function fixAndOrderCareerPath(
       },
     ];
   }
+
   const validYears = rawPath
     .map((s) => s.startYear)
     .filter((y) => typeof y === 'number' && y > 1980);
@@ -57,11 +58,40 @@ export function fixAndOrderCareerPath(
     rawPath.length > 1 && distinctYears.size === 1 && distinctYears.has(2020);
 
   if (validYears.length > 0 && !isLegacyKaggleDefault) {
-    const cleaned = rawPath.map((s) => ({ ...s }));
+    const cleaned = rawPath
+      .map((s) => ({ ...s }))
+      .sort((a, b) => (a.startYear || 2020) - (b.startYear || 2020));
+
+    if (
+      cleaned.length > 1 &&
+      currentClubName &&
+      isCurrentClub(cleaned[0].clubName, currentClubName) &&
+      !isCurrentClub(cleaned[cleaned.length - 1].clubName, currentClubName)
+    ) {
+      const firstStep = cleaned.shift()!;
+      const lastYear = cleaned[cleaned.length - 1].endYear || cleaned[cleaned.length - 1].startYear || 2025;
+      firstStep.startYear = Math.max(2024, lastYear);
+      delete firstStep.endYear;
+      cleaned.push(firstStep);
+    }
+
     const last = cleaned[cleaned.length - 1];
     if (last) {
-      delete last.endYear;
+      if (currentClubName && !isCurrentClub(last.clubName, currentClubName)) {
+        if (!last.endYear) {
+          last.endYear = Math.max(last.startYear, 2025);
+        }
+        cleaned.push({
+          clubName: currentClubName,
+          startYear: 2025,
+          apps: 0,
+          goals: 0,
+        });
+      } else {
+        delete last.endYear;
+      }
     }
+
     return cleaned;
   }
 

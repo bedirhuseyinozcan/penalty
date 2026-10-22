@@ -11,6 +11,9 @@ import { LevelMapScreen } from './src/screens/LevelMapScreen';
 import { GameModeType } from './src/api/dailyApi';
 import { searchEngine } from './src/services/searchEngine';
 import { authoritativeTime } from './src/services/authoritativeTime';
+import { appStorage, StorageKeys } from './src/storage/mmkv';
+import { useGameStore } from './src/stores/useGameStore';
+import { useSettingsStore } from './src/stores/useSettingsStore';
 import { Colors } from './src/theme/colors';
 
 interface ErrorBoundaryProps {
@@ -65,17 +68,35 @@ function App() {
   const [isReplayMode, setIsReplayMode] = useState<boolean>(false);
 
   useEffect(() => {
-    try {
-      searchEngine.initialize();
-      searchEngine.syncSearchIndexIfNeeded().catch((e) => {
-        console.warn('Search index background sync warning:', e);
+    const bootstrap = async () => {
+      try {
+        await appStorage.hydrateFromDisk();
+        useGameStore.getState().hydrateFromStorage();
+        useSettingsStore.setState({
+          selectedLeagueMode:
+            appStorage.getString(StorageKeys.SELECTED_LEAGUE_MODE) === 'global'
+              ? 'global'
+              : 'super_lig',
+        });
+      } catch (e) {
+        console.warn('Storage hydration warning:', e);
+      }
+
+      try {
+        searchEngine.initialize();
+        searchEngine.syncSearchIndexIfNeeded().catch((e) => {
+          console.warn('Search index background sync warning:', e);
+        });
+      } catch (e) {
+        console.warn('Search engine init warning:', e);
+      }
+
+      authoritativeTime.sync().catch((e) => {
+        console.warn('Authoritative time sync warning:', e);
       });
-    } catch (e) {
-      console.warn('Search engine init warning:', e);
-    }
-    authoritativeTime.sync().catch((e) => {
-      console.warn('Authoritative time sync warning:', e);
-    });
+    };
+
+    bootstrap();
   }, []);
 
   // Hardware Back Button handler for Android

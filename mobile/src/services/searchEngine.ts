@@ -18,6 +18,14 @@ export interface ILightPlayer {
   logoUrl?: string;
   logo?: string;
   clubs?: string[];
+  careerPath?: Array<{
+    clubName: string;
+    clubLogoUrl?: string;
+    startYear: number;
+    endYear?: number;
+    apps?: number;
+    goals?: number;
+  }>;
   trophies?: string[];
 }
 

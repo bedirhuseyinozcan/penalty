@@ -76,7 +76,9 @@ class LevelCacheService {
         const p = players[(levelNumber - 1 + offset) % poolSize];
 
         const careerSteps =
-          p.clubs && p.clubs.length > 0
+          p.careerPath && p.careerPath.length > 0
+            ? p.careerPath
+            : p.clubs && p.clubs.length > 0
             ? p.clubs.map((cName, idx) => ({
                 clubName: cName,
                 startYear: 2018 + idx * 2,

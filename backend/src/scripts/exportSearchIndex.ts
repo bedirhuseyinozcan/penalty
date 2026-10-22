@@ -3,6 +3,7 @@ import path from 'path';
 import mongoose from 'mongoose';
 import { PlayerModel } from '../models/Player';
 import { connectDatabase } from '../config/db';
+import { fixAndOrderCareerPath } from '../utils/careerPathUtils';
 
 const BAD_CLUB_NAMES = new Set(['Without Club', 'Unknown', 'Career break', 'Retired', 'Kulüp']);
 
@@ -46,17 +47,31 @@ function inferPlayerTrophies(player: any, allClubs: string[]): string[] {
 
   if (
     totalGoals >= 50 ||
-    ['mauro icardi', 'erling haaland', 'victor osimhen', 'edin džeko', 'kylian mbappé', 'harry kane', 'robert lewandowski'].some(
-      (star) => nameLower.includes(star)
-    )
+    [
+      'mauro icardi',
+      'erling haaland',
+      'victor osimhen',
+      'edin džeko',
+      'kylian mbappé',
+      'harry kane',
+      'robert lewandowski',
+    ].some((star) => nameLower.includes(star))
   ) {
     trophies.add('golden_boot');
   }
 
   if (
-    ['rodri', 'vinicius', 'bellingham', 'mbappé', 'haaland', 'messi', 'ronaldo', 'benzema', 'modric'].some(
-      (star) => nameLower.includes(star)
-    ) ||
+    [
+      'rodri',
+      'vinicius',
+      'bellingham',
+      'mbappé',
+      'haaland',
+      'messi',
+      'ronaldo',
+      'benzema',
+      'modric',
+    ].some((star) => nameLower.includes(star)) ||
     mv >= 85000000
   ) {
     trophies.add('ballon_dor');
@@ -68,7 +83,7 @@ function inferPlayerTrophies(player: any, allClubs: string[]): string[] {
 export async function exportSearchIndex(): Promise<void> {
   await connectDatabase();
 
-  console.log('📦 Generating lightweight search index with career clubs & trophies...');
+  console.log('📦 Generating lightweight search index with chronological careerPath & trophies...');
 
   const players = await PlayerModel.find({ isActive: true })
     .sort({ marketValueEur: -1 })
@@ -78,32 +93,50 @@ export async function exportSearchIndex(): Promise<void> {
     .lean();
 
   const lightList = players.map((p) => {
+    const currentClubName = p.currentClub?.name?.trim() || '';
+
+    const orderedCareer = fixAndOrderCareerPath(
+      p.careerPath,
+      currentClubName,
+      p.age
+    );
+
     const clubSet = new Set<string>();
-    if (p.currentClub?.name && !BAD_CLUB_NAMES.has(p.currentClub.name)) {
-      clubSet.add(p.currentClub.name.trim());
-    }
-    if (Array.isArray(p.careerPath)) {
-      for (const step of p.careerPath) {
-        const cName = step.clubName?.trim();
-        if (cName && !BAD_CLUB_NAMES.has(cName)) {
-          clubSet.add(cName);
-        }
+    for (const step of orderedCareer) {
+      const cName = step.clubName?.trim();
+      if (cName && !BAD_CLUB_NAMES.has(cName)) {
+        clubSet.add(cName);
       }
+    }
+    if (currentClubName && !BAD_CLUB_NAMES.has(currentClubName)) {
+      clubSet.add(currentClubName);
     }
 
     const clubs = Array.from(clubSet);
     const trophies = inferPlayerTrophies(p, clubs);
-    const cleanClubId = p.currentClub?.id ? String(p.currentClub.id).replace(/^club_/, '') : undefined;
+    const cleanClubId = p.currentClub?.id
+      ? String(p.currentClub.id).replace(/^club_/, '')
+      : undefined;
     const clubLogo =
       p.currentClub?.logoUrl ||
-      (cleanClubId ? `https://tmssl.akamaized.net/images/wappen/head/${cleanClubId}.png` : undefined);
+      (cleanClubId
+        ? `https://tmssl.akamaized.net/images/wappen/head/${cleanClubId}.png`
+        : undefined);
+
+    const compactCareerPath = orderedCareer.map((s) => ({
+      clubName: s.clubName,
+      startYear: s.startYear,
+      ...(s.endYear !== undefined ? { endYear: s.endYear } : {}),
+      ...(s.apps ? { apps: s.apps } : {}),
+      ...(s.goals ? { goals: s.goals } : {}),
+    }));
 
     return {
       id: p.playerId,
       name: p.name,
       nationality: p.nationality,
       position: p.position,
-      club: p.currentClub?.name || '',
+      club: currentClubName,
       clubId: cleanClubId,
       league: p.currentClub?.league,
       age: p.age,
@@ -111,6 +144,7 @@ export async function exportSearchIndex(): Promise<void> {
       imageUrl: p.originalImageUrl || undefined,
       logoUrl: clubLogo,
       clubs,
+      careerPath: compactCareerPath,
       ...(trophies.length > 0 ? { trophies } : {}),
     };
   });
