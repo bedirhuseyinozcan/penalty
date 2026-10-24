@@ -6,8 +6,10 @@ import {
   TextInput,
   FlatList,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   StyleSheet,
-  SafeAreaView,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { searchEngine, IClubSearchItem } from '../../../services/searchEngine';
 import { useSettingsStore } from '../../../stores/useSettingsStore';
@@ -18,7 +20,7 @@ import { Typography } from '../../../theme/typography';
 
 const LEAGUE_LABELS: Record<string, string> = {
   super_lig: '🇹🇷 Süper Lig',
-  premier_league: '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Premier League',
+  premier_league: '🏴 Premier League',
   la_liga: '🇪🇸 La Liga',
   serie_a: '🇮🇹 Serie A',
   bundesliga: '🇩🇪 Bundesliga',
@@ -37,6 +39,9 @@ export const OfflineClubSearchModal: React.FC<IOfflineClubSearchModalProps> = Re
     const selectedLeagueMode = useSettingsStore((s) => s.selectedLeagueMode);
 
     const results = useMemo(() => {
+      if (!query || query.trim().length < 2) {
+        return [];
+      }
       return searchEngine.searchClubs(query, selectedLeagueMode);
     }, [query, selectedLeagueMode]);
 
@@ -79,13 +84,27 @@ export const OfflineClubSearchModal: React.FC<IOfflineClubSearchModalProps> = Re
     );
 
     return (
-      <Modal visible={visible} animationType="slide" transparent onRequestClose={handleClose}>
-        <SafeAreaView style={styles.overlay}>
+      <Modal
+        visible={visible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={handleClose}
+      >
+        <KeyboardAvoidingView
+          style={styles.overlay}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+          <TouchableWithoutFeedback onPress={handleClose}>
+            <View style={styles.topPeekArea} />
+          </TouchableWithoutFeedback>
+
           <View style={styles.sheet}>
+            <View style={styles.dragHandle} />
+
             <View style={styles.headerRow}>
-              <Text style={styles.title}>🛡️ Kulüp Seçin</Text>
+              <Text style={styles.title}>🛡️ Kulüp Tahmin Et</Text>
               <TouchableOpacity style={styles.closeBtn} onPress={handleClose}>
-                <Text style={styles.closeText}>✕</Text>
+                <Text style={styles.closeText}>Kapat ✕</Text>
               </TouchableOpacity>
             </View>
 
@@ -115,12 +134,16 @@ export const OfflineClubSearchModal: React.FC<IOfflineClubSearchModalProps> = Re
               contentContainerStyle={styles.listContent}
               ListEmptyComponent={
                 <View style={styles.emptyBox}>
-                  <Text style={styles.emptyText}>Eşleşen kulüp bulunamadı.</Text>
+                  <Text style={styles.emptyText}>
+                    {query.trim().length >= 2
+                      ? 'Eşleşen kulüp bulunamadı.'
+                      : 'Yukarıdaki armaya bakarak en az 2 harf yazın...'}
+                  </Text>
                 </View>
               }
             />
           </View>
-        </SafeAreaView>
+        </KeyboardAvoidingView>
       </Modal>
     );
   }
@@ -131,40 +154,53 @@ OfflineClubSearchModal.displayName = 'OfflineClubSearchModal';
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.85)',
+    backgroundColor: 'rgba(5, 8, 17, 0.28)',
     justifyContent: 'flex-end',
   },
+  topPeekArea: {
+    flex: 1,
+  },
   sheet: {
-    height: '82%',
+    height: '55%',
     backgroundColor: Colors.background,
-    borderTopLeftRadius: BorderRadius.lg,
-    borderTopRightRadius: BorderRadius.lg,
-    padding: Spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: Colors.border,
+    borderTopLeftRadius: BorderRadius.lg + 6,
+    borderTopRightRadius: BorderRadius.lg + 6,
+    paddingHorizontal: Spacing.md,
+    paddingTop: Spacing.xs,
+    borderTopWidth: 1.5,
+    borderTopColor: Colors.primary,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -6 },
+    shadowOpacity: 0.45,
+    shadowRadius: 12,
+    elevation: 16,
+  },
+  dragHandle: {
+    width: 42,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: Colors.border,
+    alignSelf: 'center',
+    marginVertical: 6,
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.sm,
   },
   title: {
-    ...Typography.h2,
+    ...Typography.h3,
     color: Colors.textPrimary,
   },
   closeBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: Colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
   },
   closeText: {
-    color: Colors.textSecondary,
-    fontSize: 16,
-    fontWeight: '700',
+    ...Typography.bodyBold,
+    color: Colors.primary,
+    fontSize: 14,
   },
   searchBox: {
     flexDirection: 'row',
@@ -174,22 +210,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     borderWidth: 1,
     borderColor: Colors.border,
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.sm,
   },
   searchIcon: {
-    fontSize: 16,
+    fontSize: 15,
     marginRight: Spacing.sm,
   },
   input: {
     flex: 1,
-    paddingVertical: 12,
+    paddingVertical: 11,
     color: Colors.textPrimary,
     fontSize: 15,
   },
   clearText: {
     color: Colors.primary,
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   listContent: {
     paddingBottom: Spacing.xl,
@@ -198,23 +234,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: Colors.surface,
-    padding: Spacing.md,
+    padding: Spacing.sm + 2,
     borderRadius: BorderRadius.md,
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.xs + 2,
     borderWidth: 1,
     borderColor: Colors.border,
   },
   shieldBadge: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: Colors.surfaceLight,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: Spacing.md,
+    marginRight: Spacing.sm,
   },
   shieldEmoji: {
-    fontSize: 18,
+    fontSize: 16,
   },
   infoCol: {
     flex: 1,
@@ -222,17 +258,17 @@ const styles = StyleSheet.create({
   clubName: {
     ...Typography.bodyBold,
     color: Colors.textPrimary,
-    fontSize: 15,
+    fontSize: 14,
   },
   leagueText: {
     ...Typography.caption,
     color: Colors.textSecondary,
-    marginTop: 2,
+    marginTop: 1,
   },
   selectPill: {
     backgroundColor: 'rgba(16, 185, 129, 0.15)',
     paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingVertical: 5,
     borderRadius: BorderRadius.full,
     borderWidth: 1,
     borderColor: Colors.primary,
@@ -243,11 +279,12 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   emptyBox: {
-    paddingVertical: Spacing.xl,
+    paddingVertical: Spacing.lg,
     alignItems: 'center',
   },
   emptyText: {
     color: Colors.textSecondary,
-    fontSize: 14,
+    fontSize: 13,
+    textAlign: 'center',
   },
 });

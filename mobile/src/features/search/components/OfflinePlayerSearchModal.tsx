@@ -5,9 +5,9 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   FlatList,
   StyleSheet,
-  SafeAreaView,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
@@ -39,6 +39,11 @@ export const OfflinePlayerSearchModal: React.FC<IOfflinePlayerSearchModalProps> 
       [clearSearch, onSelectPlayer, onClose]
     );
 
+    const handleClose = useCallback(() => {
+      clearSearch();
+      onClose();
+    }, [clearSearch, onClose]);
+
     const renderItem = useCallback(
       ({ item }: { item: ILightPlayer }) => (
         <PlayerSearchItem player={item} onSelect={handleSelect} />
@@ -49,25 +54,34 @@ export const OfflinePlayerSearchModal: React.FC<IOfflinePlayerSearchModalProps> 
     const keyExtractor = useCallback((item: ILightPlayer) => item.id, []);
 
     return (
-      <Modal visible={visible} animationType="slide" transparent={false} onRequestClose={onClose}>
-        <SafeAreaView style={styles.safeArea}>
-          <KeyboardAvoidingView
-            style={styles.container}
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          >
-           
+      <Modal
+        visible={visible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={handleClose}
+      >
+        <KeyboardAvoidingView
+          style={styles.overlay}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+          <TouchableWithoutFeedback onPress={handleClose}>
+            <View style={styles.topPeekArea} />
+          </TouchableWithoutFeedback>
+
+          <View style={styles.sheet}>
+            <View style={styles.dragHandle} />
+
             <View style={styles.header}>
-              <Text style={styles.title}>Oyuncu Ara</Text>
-              <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-                <Text style={styles.closeText}>Kapat</Text>
+              <Text style={styles.title}>🔍 Oyuncu Ara</Text>
+              <TouchableOpacity onPress={handleClose} style={styles.closeBtn}>
+                <Text style={styles.closeText}>Kapat ✕</Text>
               </TouchableOpacity>
             </View>
 
-          
             <View style={styles.inputContainer}>
               <TextInput
                 style={styles.input}
-                placeholder="Örn: Mauro Icardi, Bellingham..."
+                placeholder="Örn: Mauro Icardi, Bellingham, Ronaldo..."
                 placeholderTextColor={Colors.textMuted}
                 value={query}
                 onChangeText={handleQueryChange}
@@ -75,29 +89,33 @@ export const OfflinePlayerSearchModal: React.FC<IOfflinePlayerSearchModalProps> 
                 autoCorrect={false}
                 clearButtonMode="while-editing"
               />
+              {query.length > 0 && (
+                <TouchableOpacity onPress={clearSearch} style={styles.clearBtn}>
+                  <Text style={styles.clearBtnText}>Temizle</Text>
+                </TouchableOpacity>
+              )}
             </View>
 
-            
             <FlatList
               data={results}
               renderItem={renderItem}
               keyExtractor={keyExtractor}
               keyboardShouldPersistTaps="handled"
-              initialNumToRender={10}
-              maxToRenderPerBatch={10}
+              initialNumToRender={8}
+              maxToRenderPerBatch={8}
               windowSize={5}
               ListEmptyComponent={
                 <View style={styles.emptyContainer}>
                   <Text style={styles.emptyText}>
                     {query.trim().length >= 2
                       ? 'Eşleşen oyuncu bulunamadı.'
-                      : 'En az 2 harf yazarak çevrimdışı arama yapabilirsiniz.'}
+                      : 'Yukarıdaki görsele bakarak en az 2 harf yazın...'}
                   </Text>
                 </View>
               }
             />
-          </KeyboardAvoidingView>
-        </SafeAreaView>
+          </View>
+        </KeyboardAvoidingView>
       </Modal>
     );
   }
@@ -106,53 +124,91 @@ export const OfflinePlayerSearchModal: React.FC<IOfflinePlayerSearchModalProps> 
 OfflinePlayerSearchModal.displayName = 'OfflinePlayerSearchModal';
 
 const styles = StyleSheet.create({
-  safeArea: {
+  overlay: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: 'rgba(5, 8, 17, 0.28)',
+    justifyContent: 'flex-end',
   },
-  container: {
+  topPeekArea: {
     flex: 1,
+  },
+  sheet: {
+    height: '55%',
+    backgroundColor: Colors.background,
+    borderTopLeftRadius: BorderRadius.lg + 6,
+    borderTopRightRadius: BorderRadius.lg + 6,
+    borderTopWidth: 1.5,
+    borderTopColor: Colors.primary,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -6 },
+    shadowOpacity: 0.45,
+    shadowRadius: 12,
+    elevation: 16,
+  },
+  dragHandle: {
+    width: 42,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: Colors.border,
+    alignSelf: 'center',
+    marginTop: 8,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.md,
+    paddingVertical: Spacing.sm,
     borderBottomWidth: 1,
     borderBottomColor: Colors.border,
   },
   title: {
-    ...Typography.h2,
+    ...Typography.h3,
     color: Colors.textPrimary,
   },
   closeBtn: {
-    padding: Spacing.xs,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
   },
   closeText: {
     ...Typography.bodyBold,
     color: Colors.primary,
+    fontSize: 14,
   },
   inputContainer: {
-    padding: Spacing.md,
-  },
-  input: {
-    backgroundColor: Colors.surface,
-    color: Colors.textPrimary,
+    flexDirection: 'row',
+    alignItems: 'center',
+    margin: Spacing.sm,
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.md,
+    backgroundColor: Colors.surface,
     borderRadius: BorderRadius.md,
     borderWidth: 1,
     borderColor: Colors.border,
-    fontSize: 16,
+  },
+  input: {
+    flex: 1,
+    color: Colors.textPrimary,
+    paddingVertical: 11,
+    fontSize: 15,
+  },
+  clearBtn: {
+    marginLeft: Spacing.xs,
+    paddingVertical: 4,
+    paddingHorizontal: 6,
+  },
+  clearBtnText: {
+    color: Colors.primary,
+    fontSize: 12,
+    fontWeight: '700',
   },
   emptyContainer: {
-    padding: Spacing.xl,
+    padding: Spacing.lg,
     alignItems: 'center',
   },
   emptyText: {
-    ...Typography.body,
+    ...Typography.caption,
     color: Colors.textSecondary,
     textAlign: 'center',
+    fontSize: 13,
   },
 });
