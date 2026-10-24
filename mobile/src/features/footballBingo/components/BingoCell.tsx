@@ -1,6 +1,7 @@
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
 import { IBingoTile } from '../types';
+import { ClubLogo } from '../../../components/common/ClubLogo';
 import { Colors } from '../../../theme/colors';
 import { BorderRadius } from '../../../theme/spacing';
 import { Typography } from '../../../theme/typography';
@@ -29,7 +30,15 @@ export const BingoCell: React.FC<IBingoCellProps> = React.memo(
       >
         {isMatched && matchedPlayer ? (
           <View style={styles.matchedContent}>
-            <Text style={styles.checkIcon}>✅</Text>
+            <View style={styles.matchedBadgeRow}>
+              <Text style={styles.checkIcon}>✅</Text>
+              <ClubLogo
+                logoUrl={matchedPlayer.logoUrl || matchedPlayer.logo}
+                clubName={matchedPlayer.club}
+                size={16}
+                fallbackEmoji=""
+              />
+            </View>
             <Text style={styles.matchedPlayerName} numberOfLines={2}>
               {matchedPlayer.name}
             </Text>
@@ -39,7 +48,16 @@ export const BingoCell: React.FC<IBingoCellProps> = React.memo(
           </View>
         ) : (
           <View style={styles.unmatchedContent}>
-            <Text style={styles.tileEmoji}>{emoji}</Text>
+            {tile.type === 'club' ? (
+              <ClubLogo
+                logoUrl={tile.logoUrl}
+                clubName={tile.value}
+                size={22}
+                fallbackEmoji={emoji}
+              />
+            ) : (
+              <Text style={styles.tileEmoji}>{emoji}</Text>
+            )}
             <Text style={styles.tileTitle} numberOfLines={2}>
               {title}
             </Text>
@@ -102,6 +120,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     width: '100%',
+  },
+  matchedBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    marginBottom: 2,
   },
   checkIcon: {
     fontSize: 12,

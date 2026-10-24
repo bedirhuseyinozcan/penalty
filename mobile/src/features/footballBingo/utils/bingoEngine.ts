@@ -108,14 +108,18 @@ export function generateBingoSetup(
   ).slice(0, 4);
 
   const rawTiles: Omit<IBingoTile, 'index' | 'isMatched' | 'matchedPlayer'>[] = [
-    ...topClubs.map((club) => ({
-      id: `club_${club}`,
-      type: 'club' as const,
-      value: club,
-      title: club,
-      subtitle: 'Kulüp',
-      emoji: '🛡️',
-    })),
+    ...topClubs.map((club) => {
+      const clubInfo = searchEngine.getClubByName(club);
+      return {
+        id: `club_${club}`,
+        type: 'club' as const,
+        value: club,
+        title: clubInfo?.name || club,
+        subtitle: 'Kulüp',
+        emoji: '🛡️',
+        logoUrl: clubInfo?.logoUrl,
+      };
+    }),
     ...topNats.map((nat) => ({
       id: `nat_${nat}`,
       type: 'nationality' as const,

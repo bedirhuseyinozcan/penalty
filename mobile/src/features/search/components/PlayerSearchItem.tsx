@@ -1,6 +1,7 @@
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
 import { ILightPlayer } from '../../../services/searchEngine';
+import { ClubLogo } from '../../../components/common/ClubLogo';
 import { Colors } from '../../../theme/colors';
 import { Spacing, BorderRadius } from '../../../theme/spacing';
 import { Typography } from '../../../theme/typography';
@@ -11,12 +12,22 @@ interface IPlayerSearchItemProps {
 }
 
 export const PlayerSearchItem = React.memo<IPlayerSearchItemProps>(({ player, onSelect }) => {
+  const logoUrl = player.logoUrl || player.logo;
+
   return (
     <TouchableOpacity
       style={styles.container}
       activeOpacity={0.7}
       onPress={() => onSelect(player)}
     >
+      <View style={styles.clubBadge}>
+        <ClubLogo
+          logoUrl={logoUrl}
+          clubName={player.club}
+          size={24}
+          fallbackEmoji="🛡️"
+        />
+      </View>
       <View style={styles.infoCol}>
         <Text style={styles.nameText} numberOfLines={1}>
           {player.name}
@@ -39,11 +50,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: Spacing.md,
+    paddingVertical: Spacing.sm + 4,
     paddingHorizontal: Spacing.md,
     backgroundColor: Colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: Colors.border,
+  },
+  clubBadge: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: Colors.surfaceLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: Spacing.sm,
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
   infoCol: {
     flex: 1,

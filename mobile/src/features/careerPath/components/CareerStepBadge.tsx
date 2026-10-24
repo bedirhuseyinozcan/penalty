@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { ICareerStepItem } from '../types';
+import { ClubLogo } from '../../../components/common/ClubLogo';
 import { Colors } from '../../../theme/colors';
 import { Spacing, BorderRadius } from '../../../theme/spacing';
 import { Typography } from '../../../theme/typography';
@@ -34,7 +35,17 @@ export const CareerStepBadge = React.memo<ICareerStepBadgeProps>(
 
         {/* Club Details Box */}
         <View style={styles.contentBox}>
-          <Text style={styles.clubName}>{step.clubName}</Text>
+          <View style={styles.clubTitleRow}>
+            <ClubLogo
+              logoUrl={step.clubLogoUrl}
+              clubName={step.clubName}
+              size={22}
+              fallbackEmoji="🛡️"
+            />
+            <Text style={styles.clubName} numberOfLines={1}>
+              {step.clubName}
+            </Text>
+          </View>
           {yearRange ? <Text style={styles.yearText}>{yearRange}</Text> : null}
           {step.apps != null && step.apps > 0 ? (
             <Text style={styles.statsText}>
@@ -94,9 +105,16 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
   },
+  clubTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs + 2,
+    marginBottom: 2,
+  },
   clubName: {
     ...Typography.bodyBold,
     color: Colors.textPrimary,
+    flex: 1,
   },
   yearText: {
     ...Typography.caption,

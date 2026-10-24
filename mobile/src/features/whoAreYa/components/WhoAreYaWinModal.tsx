@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import {
   Modal,
   View,
@@ -17,6 +17,7 @@ import { shareService } from '../../../services/shareService';
 import { useGameStore } from '../../../stores/useGameStore';
 import { useRewardedAd } from '../../monetization/hooks/useRewardedAd';
 import { hapticsService } from '../../../services/hapticsService';
+import { searchEngine } from '../../../services/searchEngine';
 
 interface IWhoAreYaWinModalProps {
   visible: boolean;
@@ -139,7 +140,20 @@ export const WhoAreYaWinModal: React.FC<IWhoAreYaWinModalProps> = React.memo(
     const isWon = activeData.status === 'won';
     const displayName = activeData.playerName;
     const displayClub = activeData.playerClub;
-    const displayImage = activeData.finalImageUrl;
+
+    const [imageError, setImageError] = useState(false);
+
+    useEffect(() => {
+      setImageError(false);
+    }, [visible, activeData.finalImageUrl, displayName]);
+
+    const displayImage = useMemo(() => {
+      if (activeData.finalImageUrl && typeof activeData.finalImageUrl === 'string' && activeData.finalImageUrl.startsWith('http')) {
+        return activeData.finalImageUrl;
+      }
+      return searchEngine.getPlayerPhoto(displayName);
+    }, [activeData.finalImageUrl, displayName]);
+
     const displayAttemptsUsed = activeData.attemptsUsed;
     const displayMaxAttempts = activeData.maxAttempts;
     const displayRewardCoins = activeData.rewardCoins;
@@ -235,7 +249,7 @@ export const WhoAreYaWinModal: React.FC<IWhoAreYaWinModalProps> = React.memo(
             <Text style={styles.titleIcon}>{isWon ? '🏆' : '💔'}</Text>
             <Text style={styles.title}>{isWon ? 'TEBRİKLER!' : 'MAALESEF BİLEMEDİNİZ'}</Text>
 
-            {displayImage ? (
+            {displayImage && !imageError ? (
               <Image
                 source={{
                   uri: displayImage,
@@ -248,8 +262,13 @@ export const WhoAreYaWinModal: React.FC<IWhoAreYaWinModalProps> = React.memo(
                 }}
                 style={styles.image}
                 resizeMode="cover"
+                onError={() => setImageError(true)}
               />
-            ) : null}
+            ) : (
+              <View style={styles.imageFallback}>
+                <Text style={styles.imageFallbackEmoji}>👤</Text>
+              </View>
+            )}
 
             <Text style={styles.playerName}>{displayName}</Text>
             <Text style={styles.clubName}>{displayClub}</Text>
@@ -377,6 +396,20 @@ const styles = StyleSheet.create({
     borderColor: Colors.primary,
     marginBottom: Spacing.sm,
     backgroundColor: Colors.surfaceLight,
+  },
+  imageFallback: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    borderWidth: 3,
+    borderColor: Colors.primary,
+    marginBottom: Spacing.sm,
+    backgroundColor: Colors.surfaceLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  imageFallbackEmoji: {
+    fontSize: 44,
   },
   playerName: {
     ...Typography.h3,

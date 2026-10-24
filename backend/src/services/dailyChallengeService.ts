@@ -123,6 +123,7 @@ export class DailyChallengeService {
       response.imageUrl = logoUrl;
       response.initialBlurImageUrl = logoUrl;
     } else if (gameMode === 'careerPath') {
+      response.imageUrl = player.originalImageUrl;
       response.careerPath = fixAndOrderCareerPath(
         player.careerPath,
         player.currentClub?.name,

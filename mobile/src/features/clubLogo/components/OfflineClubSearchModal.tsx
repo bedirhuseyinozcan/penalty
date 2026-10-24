@@ -14,6 +14,7 @@ import {
 import { searchEngine, IClubSearchItem } from '../../../services/searchEngine';
 import { useSettingsStore } from '../../../stores/useSettingsStore';
 import { hapticsService } from '../../../services/hapticsService';
+import { ClubLogo } from '../../../components/common/ClubLogo';
 import { Colors } from '../../../theme/colors';
 import { Spacing, BorderRadius } from '../../../theme/spacing';
 import { Typography } from '../../../theme/typography';
@@ -67,7 +68,12 @@ export const OfflineClubSearchModal: React.FC<IOfflineClubSearchModalProps> = Re
           onPress={() => handleSelect(item)}
         >
           <View style={styles.shieldBadge}>
-            <Text style={styles.shieldEmoji}>🛡️</Text>
+            <ClubLogo
+              logoUrl={item.logoUrl}
+              clubName={item.name}
+              size={24}
+              fallbackEmoji="🛡️"
+            />
           </View>
           <View style={styles.infoCol}>
             <Text style={styles.clubName}>{item.name}</Text>

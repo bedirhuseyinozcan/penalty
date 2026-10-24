@@ -38,6 +38,18 @@ export interface IClubSearchItem {
   playerCount: number;
 }
 
+function normalizeClubName(str: string): string {
+  return (str || '')
+    .toLowerCase()
+    .trim()
+    .replace(/ğ/g, 'g')
+    .replace(/ü/g, 'u')
+    .replace(/ş/g, 's')
+    .replace(/ı/g, 'i')
+    .replace(/ö/g, 'o')
+    .replace(/ç/g, 'c');
+}
+
 class SearchEngineService {
   private fuse: Fuse<ILightPlayer> | null = null;
   private clubFuse: Fuse<IClubSearchItem> | null = null;
@@ -213,9 +225,33 @@ class SearchEngineService {
     if (!this.isInitialized) this.initialize();
     if (!name) return undefined;
     const lower = name.toLowerCase().trim();
-    return this.clubs.find(
-      (c) => c.name.toLowerCase() === lower || c.name.toLowerCase().includes(lower) || lower.includes(c.name.toLowerCase())
+    const exact = this.clubs.find((c) => c.name.toLowerCase() === lower);
+    if (exact) return exact;
+
+    const norm = normalizeClubName(name);
+    const normMatch = this.clubs.find((c) => normalizeClubName(c.name) === norm);
+    if (normMatch) return normMatch;
+
+    return this.clubs.find((c) => {
+      const cNorm = normalizeClubName(c.name);
+      return cNorm.includes(norm) || norm.includes(cNorm);
+    });
+  }
+
+  public getClubLogo(clubName?: string): string | undefined {
+    if (!clubName) return undefined;
+    const direct = this.getClubByName(clubName);
+    if (direct?.logoUrl) return direct.logoUrl;
+
+    const norm = normalizeClubName(clubName);
+    const playerMatch = this.players.find(
+      (p) => normalizeClubName(p.club || '') === norm && (p.logoUrl || p.logo)
     );
+    if (playerMatch?.logoUrl || playerMatch?.logo) {
+      return playerMatch.logoUrl || playerMatch.logo;
+    }
+
+    return undefined;
   }
 
   public getPlayersByLeagueMode(leagueMode?: 'global' | 'super_lig'): ILightPlayer[] {
@@ -226,9 +262,54 @@ class SearchEngineService {
       : this.players.filter((p) => p.league !== 'super_lig');
   }
 
-  public getPlayerById(id: string): ILightPlayer | undefined {
+  public getPlayerById(id?: string): ILightPlayer | undefined {
     if (!this.isInitialized) this.initialize();
-    return this.players.find((p) => p.id === id);
+    if (!id) return undefined;
+    const cleanId = id.trim().toLowerCase();
+    const withoutPrefix = cleanId.replace(/^tmid_/, '');
+    return this.players.find((p) => {
+      const pClean = p.id.trim().toLowerCase();
+      return pClean === cleanId || pClean.replace(/^tmid_/, '') === withoutPrefix;
+    });
+  }
+
+  public getPlayerByName(name?: string): ILightPlayer | undefined {
+    if (!this.isInitialized) this.initialize();
+    if (!name) return undefined;
+    const lower = name.trim().toLowerCase();
+    const exact = this.players.find((p) => p.name.trim().toLowerCase() === lower);
+    if (exact) return exact;
+
+    const norm = normalizeClubName(name);
+    const normMatch = this.players.find((p) => normalizeClubName(p.name) === norm);
+    if (normMatch) return normMatch;
+
+    return this.players.find((p) => {
+      const pNorm = normalizeClubName(p.name);
+      return pNorm.includes(norm) || norm.includes(pNorm);
+    });
+  }
+
+  public getPlayerPhoto(playerOrIdOrName?: ILightPlayer | string): string | undefined {
+    if (!playerOrIdOrName) return undefined;
+    if (typeof playerOrIdOrName === 'object') {
+      if (playerOrIdOrName.imageUrl) return playerOrIdOrName.imageUrl;
+      if (playerOrIdOrName.img) return playerOrIdOrName.img;
+      const cleanId = playerOrIdOrName.id?.replace(/^tmid_/, '');
+      return cleanId ? `https://img.a.transfermarkt.technology/portrait/big/${cleanId}.jpg` : undefined;
+    }
+    const found = this.getPlayerById(playerOrIdOrName) || this.getPlayerByName(playerOrIdOrName);
+    if (found) {
+      if (found.imageUrl) return found.imageUrl;
+      if (found.img) return found.img;
+      const cleanId = found.id?.replace(/^tmid_/, '');
+      return cleanId ? `https://img.a.transfermarkt.technology/portrait/big/${cleanId}.jpg` : undefined;
+    }
+    const cleanId = String(playerOrIdOrName).replace(/^tmid_/, '');
+    if (/^\d+$/.test(cleanId)) {
+      return `https://img.a.transfermarkt.technology/portrait/big/${cleanId}.jpg`;
+    }
+    return undefined;
   }
 
   public getTotalPlayerCount(): number {

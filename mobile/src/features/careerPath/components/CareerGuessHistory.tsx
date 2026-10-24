@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 import { ICareerPathGuess } from '../types';
+import { ClubLogo } from '../../../components/common/ClubLogo';
 import { Colors } from '../../../theme/colors';
 import { Spacing, BorderRadius } from '../../../theme/spacing';
 import { Typography } from '../../../theme/typography';
@@ -37,10 +38,13 @@ const CareerGuessRow: React.FC<ICareerGuessRowProps> = React.memo(({ guess }) =>
         },
       ]}
     >
-      <Text style={styles.guessName}>
-        {guess.isCorrect ? '✅ ' : '❌ '}
-        {guess.playerName} ({guess.club})
-      </Text>
+      <View style={styles.guessRowContent}>
+        <Text style={styles.statusEmoji}>{guess.isCorrect ? '✅' : '❌'}</Text>
+        <ClubLogo clubName={guess.club} size={18} fallbackEmoji="🛡️" />
+        <Text style={styles.guessName} numberOfLines={1}>
+          {guess.playerName} ({guess.club})
+        </Text>
+      </View>
     </Animated.View>
   );
 });
@@ -92,8 +96,17 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(239, 68, 68, 0.1)',
     borderColor: '#EF4444',
   },
+  guessRowContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs + 2,
+  },
+  statusEmoji: {
+    fontSize: 14,
+  },
   guessName: {
     ...Typography.bodyBold,
     color: Colors.textPrimary,
+    flex: 1,
   },
 });

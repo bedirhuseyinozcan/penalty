@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { IGridCriterion, ITicTacToeCellState } from '../types';
 import { TicTacToeCell } from './TicTacToeCell';
+import { ClubLogo } from '../../../components/common/ClubLogo';
 import { Colors } from '../../../theme/colors';
 import { Spacing, BorderRadius } from '../../../theme/spacing';
 import { Typography } from '../../../theme/typography';
@@ -26,7 +27,16 @@ export const TicTacToeBoard: React.FC<ITicTacToeBoardProps> = React.memo(
           </View>
           {cols.map((col) => (
             <View key={col.id} style={styles.colHeader}>
-              <Text style={styles.headerEmoji}>{col.badgeText}</Text>
+              {col.type === 'club' ? (
+                <ClubLogo
+                  logoUrl={col.logoUrl}
+                  clubName={col.label || col.value}
+                  size={24}
+                  fallbackEmoji={col.badgeText}
+                />
+              ) : (
+                <Text style={styles.headerEmoji}>{col.badgeText}</Text>
+              )}
               <Text style={styles.headerTitle} numberOfLines={2}>
                 {col.label}
               </Text>
@@ -41,7 +51,16 @@ export const TicTacToeBoard: React.FC<ITicTacToeBoardProps> = React.memo(
           <View key={rowCrit.id} style={styles.gridRow}>
             {/* Left Row Header */}
             <View style={styles.rowHeader}>
-              <Text style={styles.headerEmoji}>{rowCrit.badgeText}</Text>
+              {rowCrit.type === 'club' ? (
+                <ClubLogo
+                  logoUrl={rowCrit.logoUrl}
+                  clubName={rowCrit.label || rowCrit.value}
+                  size={24}
+                  fallbackEmoji={rowCrit.badgeText}
+                />
+              ) : (
+                <Text style={styles.headerEmoji}>{rowCrit.badgeText}</Text>
+              )}
               <Text style={styles.headerTitle} numberOfLines={2}>
                 {rowCrit.label}
               </Text>

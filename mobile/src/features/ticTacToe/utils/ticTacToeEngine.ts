@@ -115,14 +115,18 @@ export function generateTicTacToeBoard(
     .slice(0, 12)
     .map(([nat]) => nat);
 
-  const colCandidates: IGridCriterion[] = topClubs.map((clubName) => ({
-    id: `col_club_${clubName}`,
-    type: 'club',
-    value: clubName,
-    label: clubName,
-    subLabel: 'Kulüp',
-    badgeText: '🛡️',
-  }));
+  const colCandidates: IGridCriterion[] = topClubs.map((clubName) => {
+    const clubInfo = searchEngine.getClubByName(clubName);
+    return {
+      id: `col_club_${clubName}`,
+      type: 'club',
+      value: clubName,
+      label: clubInfo?.name || clubName,
+      subLabel: 'Kulüp',
+      badgeText: '🛡️',
+      logoUrl: clubInfo?.logoUrl,
+    };
+  });
 
   const positionCandidates: IGridCriterion[] = [
     {
@@ -152,14 +156,18 @@ export function generateTicTacToeBoard(
   ];
 
   const rowCandidates: IGridCriterion[] = [
-    ...topClubs.map((clubName) => ({
-      id: `row_club_${clubName}`,
-      type: 'club' as const,
-      value: clubName,
-      label: clubName,
-      subLabel: 'Kulüp',
-      badgeText: '🛡️',
-    })),
+    ...topClubs.map((clubName) => {
+      const clubInfo = searchEngine.getClubByName(clubName);
+      return {
+        id: `row_club_${clubName}`,
+        type: 'club' as const,
+        value: clubName,
+        label: clubInfo?.name || clubName,
+        subLabel: 'Kulüp',
+        badgeText: '🛡️',
+        logoUrl: clubInfo?.logoUrl,
+      };
+    }),
     ...positionCandidates,
     {
       id: 'age_u24',

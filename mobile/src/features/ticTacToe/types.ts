@@ -15,6 +15,7 @@ export interface IGridCriterion {
   label: string;
   subLabel?: string;
   badgeText: string;
+  logoUrl?: string;
 }
 
 export interface ITicTacToeCellState {

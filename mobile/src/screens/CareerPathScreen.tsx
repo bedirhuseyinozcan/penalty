@@ -8,6 +8,7 @@ import {
   StyleSheet,
   ActivityIndicator,
   Platform,
+  Image,
 } from 'react-native';
 import { useCareerPathGame } from '../features/careerPath/hooks/useCareerPathGame';
 import { CareerTimeline } from '../features/careerPath/components/CareerTimeline';
@@ -56,10 +57,33 @@ export const CareerPathScreen: React.FC<ICareerPathScreenProps> = React.memo(
     const targetPlayerId = challengeData?.targetPlayerId ?? 'tmid_382528';
     const careerPath = challengeData?.careerPath ?? [];
 
-    const targetPlayerInfo = useMemo(
-      () => searchEngine.getPlayerById(targetPlayerId),
-      [targetPlayerId]
-    );
+    const targetPlayerInfo = useMemo(() => {
+      if (challengeData?.targetPlayerId) {
+        const found = searchEngine.getPlayerById(challengeData.targetPlayerId);
+        if (found) return found;
+      }
+      if (challengeData?.playerName) {
+        const foundByName = searchEngine.getPlayerByName(challengeData.playerName);
+        if (foundByName) return foundByName;
+      }
+      return searchEngine.getPlayerById(targetPlayerId);
+    }, [challengeData, targetPlayerId]);
+
+    const resolvedPlayerImage = useMemo(() => {
+      return (
+        challengeData?.imageUrl ||
+        targetPlayerInfo?.imageUrl ||
+        targetPlayerInfo?.img ||
+        searchEngine.getPlayerPhoto(targetPlayerInfo) ||
+        searchEngine.getPlayerPhoto(challengeData?.playerName) ||
+        (targetPlayerInfo?.id
+          ? `https://img.a.transfermarkt.technology/portrait/big/${targetPlayerInfo.id.replace(/^tmid_/, '')}.jpg`
+          : undefined) ||
+        (challengeData?.targetPlayerId
+          ? `https://img.a.transfermarkt.technology/portrait/big/${challengeData.targetPlayerId.replace(/^tmid_/, '')}.jpg`
+          : undefined)
+      );
+    }, [challengeData, targetPlayerInfo]);
 
     const dynamicHintText = useMemo(() => {
       if (targetPlayerInfo) {
@@ -128,6 +152,37 @@ export const CareerPathScreen: React.FC<ICareerPathScreenProps> = React.memo(
             />
           )}
 
+          {gameStatus !== 'playing' && (
+            <TouchableOpacity
+              style={styles.revealedHeroCard}
+              activeOpacity={0.85}
+              onPress={() => setIsResultModalVisible(true)}
+            >
+              {resolvedPlayerImage ? (
+                <Image
+                  source={{ uri: resolvedPlayerImage }}
+                  style={styles.revealedAvatar}
+                  resizeMode="cover"
+                />
+              ) : (
+                <View style={[styles.revealedAvatar, styles.revealedAvatarFallback]}>
+                  <Text style={styles.revealedEmoji}>👤</Text>
+                </View>
+              )}
+              <View style={styles.revealedCol}>
+                <Text style={styles.revealedBadge}>
+                  {gameStatus === 'won' ? '🎉 DOĞRU TAHMİN' : '💔 CEVAP'}
+                </Text>
+                <Text style={styles.revealedName} numberOfLines={1}>
+                  {challengeData?.playerName || targetPlayerInfo?.name || 'Yıldız Futbolcu'}
+                </Text>
+                <Text style={styles.revealedMeta} numberOfLines={1}>
+                  {challengeData?.playerClub || targetPlayerInfo?.club} • {targetPlayerInfo?.nationality || ''}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          )}
+
           <View style={styles.timelineHeader}>
             <Text style={styles.timelineTitle}>Oynadığı Kulüpler</Text>
             <Text style={styles.timelineSubtitle}>
@@ -180,7 +235,7 @@ export const CareerPathScreen: React.FC<ICareerPathScreenProps> = React.memo(
           status={gameStatus === 'lost' ? 'lost' : 'won'}
           playerName={challengeData?.playerName || targetPlayerInfo?.name || 'Yıldız Futbolcu'}
           playerClub={challengeData?.playerClub || targetPlayerInfo?.club || 'Süper Lig'}
-          finalImageUrl={challengeData?.imageUrl}
+          finalImageUrl={resolvedPlayerImage}
           rewardCoins={isCurrentReplay ? 0 : isDaily ? 30 : 20}
           attemptsUsed={guesses.length}
           maxAttempts={maxAttempts}
@@ -224,6 +279,59 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingBottom: Spacing.xl,
+  },
+  revealedHeroCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.surface,
+    borderRadius: 14,
+    marginHorizontal: Spacing.md,
+    marginTop: Spacing.sm,
+    padding: Spacing.sm,
+    borderWidth: 1.5,
+    borderColor: Colors.primary,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  revealedAvatar: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    borderWidth: 2,
+    borderColor: Colors.primary,
+    backgroundColor: Colors.surfaceLight,
+    marginRight: Spacing.sm + 2,
+  },
+  revealedAvatarFallback: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  revealedEmoji: {
+    fontSize: 28,
+  },
+  revealedCol: {
+    flex: 1,
+  },
+  revealedBadge: {
+    ...Typography.captionBold,
+    color: Colors.primary,
+    fontSize: 11,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  revealedName: {
+    ...Typography.h3,
+    color: Colors.textPrimary,
+    fontSize: 16,
+    marginTop: 1,
+  },
+  revealedMeta: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+    marginTop: 2,
   },
   timelineHeader: {
     paddingHorizontal: Spacing.md,

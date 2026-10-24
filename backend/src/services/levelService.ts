@@ -110,6 +110,7 @@ export class LevelService {
       response.initialBlurImageUrl = logoUrl;
       response.hints = [`Kadrodaki Yıldız: ${player.name} (${player.position})`];
     } else if (gameMode === 'careerPath') {
+      response.imageUrl = player.originalImageUrl;
       response.careerPath = fixAndOrderCareerPath(
         player.careerPath,
         player.currentClub?.name,
@@ -232,6 +233,7 @@ export class LevelService {
         item.initialBlurImageUrl = logoUrl;
         item.hints = [`Kadrodaki Yıldız: ${player.name} (${player.position})`];
       } else if (gameMode === 'careerPath') {
+        item.imageUrl = player.originalImageUrl;
         item.careerPath = fixAndOrderCareerPath(
           player.careerPath,
           player.currentClub?.name,

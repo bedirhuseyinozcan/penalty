@@ -19,6 +19,7 @@ export interface IBingoTile {
   title: string;
   subtitle: string;
   emoji: string;
+  logoUrl?: string;
   isMatched: boolean;
   matchedPlayer: ILightPlayer | null;
 }

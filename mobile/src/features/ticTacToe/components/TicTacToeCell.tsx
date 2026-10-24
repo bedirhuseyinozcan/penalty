@@ -1,6 +1,7 @@
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
 import { ITicTacToeCellState } from '../types';
+import { ClubLogo } from '../../../components/common/ClubLogo';
 import { Colors } from '../../../theme/colors';
 import { BorderRadius } from '../../../theme/spacing';
 import { Typography } from '../../../theme/typography';
@@ -29,7 +30,15 @@ export const TicTacToeCell: React.FC<ITicTacToeCellProps> = React.memo(
       >
         {isFilled && guessedPlayer ? (
           <View style={styles.filledContent}>
-            <Text style={styles.checkIcon}>✅</Text>
+            <View style={styles.filledBadgeRow}>
+              <Text style={styles.checkIcon}>✅</Text>
+              <ClubLogo
+                logoUrl={guessedPlayer.logoUrl || guessedPlayer.logo}
+                clubName={guessedPlayer.club}
+                size={16}
+                fallbackEmoji=""
+              />
+            </View>
             <Text style={styles.playerName} numberOfLines={2}>
               {guessedPlayer.name}
             </Text>
@@ -79,6 +88,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     width: '100%',
+  },
+  filledBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    marginBottom: 2,
   },
   checkIcon: {
     fontSize: 14,

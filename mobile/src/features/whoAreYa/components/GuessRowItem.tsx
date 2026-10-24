@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { IWhoAreYaGuess } from '../types';
 import { AnimatedAttributeTile } from './AnimatedAttributeTile';
+import { ClubLogo } from '../../../components/common/ClubLogo';
 import { Colors } from '../../../theme/colors';
 import { Spacing, BorderRadius } from '../../../theme/spacing';
 import { Typography } from '../../../theme/typography';
@@ -26,6 +27,12 @@ export const GuessRowItem = React.memo<IGuessRowItemProps>(({ guess, index }) =>
     <View style={styles.container}>
       <View style={styles.nameHeader}>
         <Text style={styles.indexText}>#{index + 1}</Text>
+        <ClubLogo
+          logoUrl={player.logoUrl || player.logo}
+          clubName={player.club}
+          size={18}
+          fallbackEmoji="🛡️"
+        />
         <Text style={styles.nameText} numberOfLines={1}>
           {player.name}
         </Text>
@@ -82,6 +89,7 @@ const styles = StyleSheet.create({
   nameHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: Spacing.xs,
     marginBottom: Spacing.xs,
   },
   indexText: {
