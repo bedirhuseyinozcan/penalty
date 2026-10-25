@@ -18,7 +18,11 @@ export const CareerStepBadge = React.memo<ICareerStepBadgeProps>(
     if (step.startYear && step.endYear) {
       yearRange = `${step.startYear} - ${step.endYear}`;
     } else if (isLast) {
-      yearRange = step.startYear ? `${step.startYear} - Günümüz` : 'Günümüz';
+      if (step.startYear && step.startYear <= 2023) {
+        yearRange = `${step.startYear} - ${step.startYear + 2}`;
+      } else {
+        yearRange = step.startYear ? `${step.startYear} - Günümüz` : 'Günümüz';
+      }
     } else if (step.startYear) {
       yearRange = `${step.startYear}`;
     }

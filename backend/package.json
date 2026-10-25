@@ -8,6 +8,7 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "pipeline:sync-live": "tsx src/scripts/syncLiveTransfermarktApi.ts",
+    "pipeline:sync-legends": "tsx src/scripts/syncLegends.ts",
     "pipeline:parse": "tsx src/scripts/parseKaggleData.ts",
     "pipeline:export-search": "tsx src/scripts/exportSearchIndex.ts",
     "pipeline:blur": "tsx src/scripts/generateBlurLevels.ts",

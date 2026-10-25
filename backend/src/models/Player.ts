@@ -32,6 +32,7 @@ export interface IPlayer extends Document {
   blurImages: string[];
   originalImageUrl?: string;
   isActive: boolean;
+  isLegend?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -84,6 +85,7 @@ const PlayerSchema = new Schema<IPlayer>(
     },
     originalImageUrl: { type: String, default: '' },
     isActive: { type: Boolean, default: true, index: true },
+    isLegend: { type: Boolean, default: false, index: true },
   },
   {
     timestamps: true,

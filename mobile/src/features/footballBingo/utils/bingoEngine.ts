@@ -1,6 +1,6 @@
 import { ILightPlayer, searchEngine } from '../../../services/searchEngine';
 import { IBingoBoardSetup, IBingoTile } from '../types';
-import { getPlayerPositionGroup } from '../../ticTacToe/utils/ticTacToeEngine';
+import { getPlayerPositionGroup, doesPlayerMatchLeague } from '../../ticTacToe/utils/ticTacToeEngine';
 
 export const BINGO_DECK_SIZE = 42;
 export const BINGO_GRID_SIZE = 16; // 4x4
@@ -50,7 +50,7 @@ export function doesPlayerMatchBingoTile(player: ILightPlayer, tile: IBingoTile)
       return num >= 20;
     }
     case 'league':
-      return player.league === tile.value;
+      return doesPlayerMatchLeague(player, tile.value);
     case 'trophy':
       return (player.trophies || []).includes(tile.value);
     default:

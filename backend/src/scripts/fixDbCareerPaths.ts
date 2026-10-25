@@ -9,7 +9,7 @@ async function fixDbCareerPaths() {
   await mongoose.connect(MONGODB_URI);
   console.log('✅ MongoDB connected.');
 
-  const players = await PlayerModel.find({}).lean();
+  const players = await PlayerModel.find({ isLegend: { $ne: true } }).lean();
   console.log(`📦 Found ${players.length} players. Updating career paths...`);
 
   let updatedCount = 0;

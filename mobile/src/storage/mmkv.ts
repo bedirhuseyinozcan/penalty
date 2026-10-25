@@ -172,7 +172,7 @@ export const StorageKeys = {
   UNLOCKED_LEVELS: 'penalty_unlocked_levels',
   UNLOCKED_COSMETICS: 'penalty_unlocked_cosmetics',
   EQUIPPED_COSMETIC_ID: 'penalty_equipped_cosmetic_id',
-  SEARCH_INDEX_CACHE: 'penalty_search_index_cache_v6_2627',
+  SEARCH_INDEX_CACHE: 'penalty_search_index_cache_v8_2627',
   SEARCH_INDEX_TIMESTAMP: 'penalty_search_index_timestamp',
   SELECTED_LEAGUE_MODE: 'penalty_selected_league_mode',
   SOUND_ENABLED: 'penalty_sound_enabled',

@@ -11,6 +11,7 @@ export interface ILightPlayer {
   club: string;
   clubId?: string;
   league: string;
+  leagues?: string[];
   age?: number;
   shirtNumber?: number;
   imageUrl?: string;
@@ -27,6 +28,7 @@ export interface ILightPlayer {
     goals?: number;
   }>;
   trophies?: string[];
+  isLegend?: boolean;
 }
 
 export interface IClubSearchItem {
@@ -63,19 +65,30 @@ class SearchEngineService {
       rawList = customData;
     } else {
       const cached = appStorage.getString(StorageKeys.SEARCH_INDEX_CACHE);
+      const bundledList = defaultPlayersData as ILightPlayer[];
       if (cached) {
         try {
           const parsed = JSON.parse(cached);
-          if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].clubs && parsed[0].trophies) {
+          if (
+            Array.isArray(parsed) &&
+            parsed.length >= bundledList.length &&
+            parsed.some((p: ILightPlayer) => p.isLegend && Array.isArray(p.leagues)) &&
+            parsed.some(
+              (p: ILightPlayer) =>
+                p.id === 'tmid_5855' &&
+                Array.isArray(p.trophies) &&
+                p.trophies.includes('world_cup')
+            )
+          ) {
             rawList = parsed;
           } else {
-            rawList = defaultPlayersData as ILightPlayer[];
+            rawList = bundledList;
           }
         } catch {
-          rawList = defaultPlayersData as ILightPlayer[];
+          rawList = bundledList;
         }
       } else {
-        rawList = defaultPlayersData as ILightPlayer[];
+        rawList = bundledList;
       }
     }
 
@@ -84,7 +97,10 @@ class SearchEngineService {
     const clubMap = new Map<string, IClubSearchItem>();
 
     for (const p of rawList) {
-      const key = `${p.name.toLowerCase().trim()}_${(p.club || '').toLowerCase().trim()}`;
+      const key =
+        p.isLegend && p.id
+          ? p.id
+          : `${p.name.toLowerCase().trim()}_${(p.club || '').toLowerCase().trim()}`;
       if (!seen.has(key)) {
         seen.add(key);
         uniquePlayers.push(p);
@@ -177,8 +193,17 @@ class SearchEngineService {
 
     const filtered = leagueMode
       ? leagueMode === 'super_lig'
-        ? rawResults.filter((p) => p.league === 'super_lig')
-        : rawResults.filter((p) => p.league !== 'super_lig')
+        ? rawResults.filter(
+            (p) =>
+              p.league === 'super_lig' ||
+              (Array.isArray(p.leagues) && p.leagues.includes('super_lig'))
+          )
+        : rawResults.filter(
+            (p) =>
+              p.league !== 'super_lig' ||
+              p.isLegend ||
+              (Array.isArray(p.leagues) && p.leagues.some((lg) => lg !== 'super_lig'))
+          )
       : rawResults;
 
     const seenInResults = new Set<string>();
@@ -221,19 +246,25 @@ class SearchEngineService {
     return filtered.slice(0, 15);
   }
 
-  public getClubByName(name?: string): IClubSearchItem | undefined {
+  public getClubByNameStrict(name?: string): IClubSearchItem | undefined {
     if (!this.isInitialized) this.initialize();
     if (!name) return undefined;
-    const lower = name.toLowerCase().trim();
-    const exact = this.clubs.find((c) => c.name.toLowerCase() === lower);
-    if (exact) return exact;
+    const norm = normalizeClubName(name);
+    return this.clubs.find((c) => normalizeClubName(c.name) === norm);
+  }
+
+  public getClubByName(name?: string): IClubSearchItem | undefined {
+    const strict = this.getClubByNameStrict(name);
+    if (strict) return strict;
+    if (!name) return undefined;
 
     const norm = normalizeClubName(name);
-    const normMatch = this.clubs.find((c) => normalizeClubName(c.name) === norm);
-    if (normMatch) return normMatch;
+    const AMBIGUOUS_PREFIXES = new Set(['inter', 'barcelona', 'atletico', 'sporting', 'real', 'milan', 'united', 'city']);
+    if (AMBIGUOUS_PREFIXES.has(norm)) return undefined;
 
     return this.clubs.find((c) => {
       const cNorm = normalizeClubName(c.name);
+      if (AMBIGUOUS_PREFIXES.has(cNorm)) return false;
       return cNorm.includes(norm) || norm.includes(cNorm);
     });
   }
@@ -258,8 +289,17 @@ class SearchEngineService {
     if (!this.isInitialized) this.initialize();
     if (!leagueMode) return this.players;
     return leagueMode === 'super_lig'
-      ? this.players.filter((p) => p.league === 'super_lig')
-      : this.players.filter((p) => p.league !== 'super_lig');
+      ? this.players.filter(
+          (p) =>
+            p.league === 'super_lig' ||
+            (Array.isArray(p.leagues) && p.leagues.includes('super_lig'))
+        )
+      : this.players.filter(
+          (p) =>
+            p.league !== 'super_lig' ||
+            p.isLegend ||
+            (Array.isArray(p.leagues) && p.leagues.some((lg) => lg !== 'super_lig'))
+        );
   }
 
   public getPlayerById(id?: string): ILightPlayer | undefined {

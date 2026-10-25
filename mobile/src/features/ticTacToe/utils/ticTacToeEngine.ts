@@ -34,6 +34,149 @@ export function getPlayerPositionGroup(pos: string): 'GK' | 'DEF' | 'MID' | 'FWD
   return 'FWD';
 }
 
+const CLUB_TO_LEAGUE_FALLBACK: Record<string, string> = {
+  'Real Madrid': 'la_liga',
+  'Barcelona': 'la_liga',
+  'Atlético': 'la_liga',
+  'Atlético Madrid': 'la_liga',
+  'Valencia': 'la_liga',
+  'Sevilla FC': 'la_liga',
+  'Villarreal': 'la_liga',
+  'Real Sociedad': 'la_liga',
+  'Real Betis': 'la_liga',
+  'Athletic Club': 'la_liga',
+  'Celta': 'la_liga',
+  'Espanyol': 'la_liga',
+  'Getafe': 'la_liga',
+  'Dep. A Coruña': 'la_liga',
+  'Málaga CF': 'la_liga',
+  'Real Zaragoza': 'la_liga',
+  'RCD Mallorca': 'la_liga',
+  'Real Valladolid': 'la_liga',
+  'Rayo Vallecano': 'la_liga',
+  'CA Osasuna': 'la_liga',
+  'Man Utd': 'premier_league',
+  'Manchester United': 'premier_league',
+  'Man City': 'premier_league',
+  'Manchester City': 'premier_league',
+  'Liverpool': 'premier_league',
+  'Arsenal': 'premier_league',
+  'Chelsea': 'premier_league',
+  'Tottenham': 'premier_league',
+  'Newcastle': 'premier_league',
+  'Aston Villa': 'premier_league',
+  'Everton': 'premier_league',
+  'West Ham': 'premier_league',
+  'Leicester': 'premier_league',
+  'Southampton': 'premier_league',
+  'Fulham': 'premier_league',
+  'Crystal Palace': 'premier_league',
+  'Brighton': 'premier_league',
+  'Wolves': 'premier_league',
+  'Leeds': 'premier_league',
+  'Blackburn': 'premier_league',
+  'Bolton': 'premier_league',
+  'Middlesbrough': 'premier_league',
+  'Stoke City': 'premier_league',
+  'Sunderland': 'premier_league',
+  'Portsmouth': 'premier_league',
+  'AC Milan': 'serie_a',
+  'Inter': 'serie_a',
+  'Juventus': 'serie_a',
+  'Roma': 'serie_a',
+  'Napoli': 'serie_a',
+  'Lazio': 'serie_a',
+  'Fiorentina': 'serie_a',
+  'Atalanta': 'serie_a',
+  'Bologna': 'serie_a',
+  'Torino': 'serie_a',
+  'Udinese': 'serie_a',
+  'Sampdoria': 'serie_a',
+  'Parma': 'serie_a',
+  'Genoa': 'serie_a',
+  'Cagliari': 'serie_a',
+  'Palermo': 'serie_a',
+  'Chievo Verona': 'serie_a',
+  'Brescia': 'serie_a',
+  'Hellas Verona': 'serie_a',
+  'Bayern Munich': 'bundesliga',
+  'Dortmund': 'bundesliga',
+  'Leverkusen': 'bundesliga',
+  'Leipzig': 'bundesliga',
+  'FC Schalke 04': 'bundesliga',
+  'Werder Bremen': 'bundesliga',
+  'Stuttgart': 'bundesliga',
+  'Wolfsburg': 'bundesliga',
+  'Hamburg': 'bundesliga',
+  'Frankfurt': 'bundesliga',
+  'Mönchengladbach': 'bundesliga',
+  'Hertha BSC': 'bundesliga',
+  '1.FC Köln': 'bundesliga',
+  'Hoffenheim': 'bundesliga',
+  'Freiburg': 'bundesliga',
+  'Mainz': 'bundesliga',
+  'PSG': 'ligue_1',
+  'Monaco': 'ligue_1',
+  'Marseille': 'ligue_1',
+  'Lyon': 'ligue_1',
+  'Lille': 'ligue_1',
+  'Nice': 'ligue_1',
+  'Lens': 'ligue_1',
+  'Rennes': 'ligue_1',
+  'G. Bordeaux': 'ligue_1',
+  'Saint-Étienne': 'ligue_1',
+  'FC Nantes': 'ligue_1',
+  'Montpellier': 'ligue_1',
+  'Toulouse': 'ligue_1',
+  'Galatasaray': 'super_lig',
+  'Fenerbahçe': 'super_lig',
+  'Beşiktaş': 'super_lig',
+  'Trabzonspor': 'super_lig',
+  'Basaksehir': 'super_lig',
+  'Başakşehir': 'super_lig',
+  'Bursaspor': 'super_lig',
+  'Sivasspor': 'super_lig',
+  'Antalyaspor': 'super_lig',
+  'Konyaspor': 'super_lig',
+  'Alanyaspor': 'super_lig',
+  'Kasimpasa': 'super_lig',
+  'Kasımpaşa': 'super_lig',
+  'Kayserispor': 'super_lig',
+  'Göztepe': 'super_lig',
+  'Samsunspor': 'super_lig',
+  'Eyüpspor': 'super_lig',
+  'C. Rizespor': 'super_lig',
+  'Çaykur Rizespor': 'super_lig',
+  'Gaziantep FK': 'super_lig',
+  'Gaziantepspor': 'super_lig',
+  'Ankaragücü': 'super_lig',
+  'Genclerbirligi': 'super_lig',
+  'Eskisehirspor': 'super_lig',
+  'Adana Demirspor': 'super_lig',
+  'Karagümrük': 'super_lig',
+};
+
+export function doesPlayerMatchLeague(player: ILightPlayer, targetLeague: string): boolean {
+  if (!player.isLegend && player.league === targetLeague) return true;
+  if (Array.isArray(player.leagues) && player.leagues.includes(targetLeague)) return true;
+
+  const allClubs = new Set<string>();
+  if (player.club) allClubs.add(player.club.trim());
+  if (Array.isArray(player.clubs)) {
+    for (const c of player.clubs) {
+      if (c) allClubs.add(c.trim());
+    }
+  }
+
+  for (const clubName of allClubs) {
+    if (CLUB_TO_LEAGUE_FALLBACK[clubName] === targetLeague) return true;
+    const clubMeta = searchEngine.getClubByNameStrict(clubName);
+    if (clubMeta && clubMeta.league === targetLeague) return true;
+  }
+
+  return false;
+}
+
 export function doesPlayerMatchCriterion(player: ILightPlayer, criterion: IGridCriterion): boolean {
   switch (criterion.type) {
     case 'club': {
@@ -47,7 +190,7 @@ export function doesPlayerMatchCriterion(player: ILightPlayer, criterion: IGridC
     case 'nationality':
       return (player.nationality || '').toLowerCase().trim() === criterion.value.toLowerCase().trim();
     case 'league':
-      return player.league === criterion.value;
+      return doesPlayerMatchLeague(player, criterion.value);
     case 'positionGroup':
       return getPlayerPositionGroup(player.position) === criterion.value;
     case 'ageGroup': {

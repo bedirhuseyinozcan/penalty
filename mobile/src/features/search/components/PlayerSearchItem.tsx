@@ -25,7 +25,7 @@ export const PlayerSearchItem = React.memo<IPlayerSearchItemProps>(({ player, on
           logoUrl={logoUrl}
           clubName={player.club}
           size={24}
-          fallbackEmoji="🛡️"
+          fallbackEmoji={player.isLegend ? '👑' : '🛡️'}
         />
       </View>
       <View style={styles.infoCol}>
@@ -33,7 +33,7 @@ export const PlayerSearchItem = React.memo<IPlayerSearchItemProps>(({ player, on
           {player.name}
         </Text>
         <Text style={styles.clubText} numberOfLines={1}>
-          {player.club} • {player.nationality}
+          {player.isLegend ? '👑 Efsane İkon' : player.club} • {player.nationality}
         </Text>
       </View>
       <View style={styles.posBadge}>

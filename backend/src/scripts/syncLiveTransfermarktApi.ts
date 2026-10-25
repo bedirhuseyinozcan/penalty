@@ -6,8 +6,8 @@ import { connectDatabase } from '../config/db';
 import { SUPPORTED_LEAGUES, SupportedLeague } from '../config/constants';
 import { exportSearchIndex } from './exportSearchIndex';
 
-const TM_API_BASE = 'https://tmapi-alpha.transfermarkt.technology';
-const CACHE_DIR = path.resolve(__dirname, '../../data/tm_live_cache');
+export const TM_API_BASE = 'https://tmapi-alpha.transfermarkt.technology';
+export const CACHE_DIR = path.resolve(__dirname, '../../data/tm_live_cache');
 
 const COMPETITION_LEAGUE_MAP: Record<string, SupportedLeague> = {
   TR1: SUPPORTED_LEAGUES.SUPER_LIG,
@@ -18,14 +18,15 @@ const COMPETITION_LEAGUE_MAP: Record<string, SupportedLeague> = {
   FR1: SUPPORTED_LEAGUES.LIGUE_1,
 };
 
-const COUNTRY_ID_FALLBACK: Record<number, string> = {
+export const COUNTRY_ID_FALLBACK: Record<number, string> = {
   174: 'Türkiye',
   189: 'England',
   157: 'Spain',
   75: 'Italy',
   40: 'Germany',
   50: 'France',
-  24: 'Brazil',
+  26: 'Brazil',
+  24: 'Bosnia-Herzegovina',
   9: 'Argentina',
   136: 'Portugal',
   122: 'Netherlands',
@@ -59,8 +60,8 @@ const COUNTRY_ID_FALLBACK: Record<number, string> = {
   172: 'Czech Republic',
   154: 'Slovakia',
   155: 'Slovenia',
-  22: 'Bosnia-Herzegovina',
-  83: 'Kosovo',
+  244: 'Kosovo',
+  83: 'Colombia',
   3: 'Albania',
   100: 'North Macedonia',
   112: 'Montenegro',
@@ -80,18 +81,18 @@ const COUNTRY_ID_FALLBACK: Record<number, string> = {
   12: 'Australia',
   71: 'Iran',
   173: 'Tunisia',
-  35: 'DR Congo',
-  28: 'Burkina Faso',
+  193: 'DR Congo',
+  28: 'Bulgaria',
   52: 'Gambia',
   192: 'Zambia',
-  193: 'Zimbabwe',
+  187: 'Zimbabwe',
   159: 'South Africa',
   74: 'Israel',
   73: 'Iceland',
   49: 'Finland',
 };
 
-interface IClubMeta {
+export interface IClubMeta {
   id: string;
   name: string;
   fullName: string;
@@ -101,7 +102,7 @@ interface IClubMeta {
   primaryCompetitionId?: string;
 }
 
-interface IClubPerfStat {
+export interface IClubPerfStat {
   clubKey: string;
   apps: number;
   goals: number;
@@ -118,7 +119,7 @@ function normalizeClubKey(name: string): string {
     .trim();
 }
 
-async function fetchJsonWithRetry(url: string, retries = 3): Promise<any> {
+export async function fetchJsonWithRetry(url: string, retries = 3): Promise<any> {
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
       const res = await fetch(url, {
@@ -139,12 +140,29 @@ async function fetchJsonWithRetry(url: string, retries = 3): Promise<any> {
   return null;
 }
 
-async function loadLocalBioAndPerfMaps(): Promise<{
+export async function loadLocalBioAndPerfMaps(): Promise<{
   playerNationalityByTmid: Map<string, string>;
   perfByTmid: Map<string, IClubPerfStat[]>;
 }> {
   const playerNationalityByTmid = new Map<string, string>();
   const perfByTmid = new Map<string, IClubPerfStat[]>();
+
+  const areaPath = path.resolve(__dirname, '../../data/kaggle/area_list.csv');
+  if (fs.existsSync(areaPath)) {
+    await new Promise<void>((resolve) => {
+      fs.createReadStream(areaPath)
+        .pipe(csv())
+        .on('data', (row: any) => {
+          const cid = parseInt(String(row.country_id || ''), 10);
+          const cname = String(row.country || '').trim();
+          if (cid > 0 && cname) {
+            COUNTRY_ID_FALLBACK[cid] = cname;
+          }
+        })
+        .on('end', () => resolve())
+        .on('error', () => resolve());
+    });
+  }
 
   const bioPath = path.resolve(__dirname, '../../data/kaggle/player_bio.csv');
   if (fs.existsSync(bioPath)) {
@@ -187,12 +205,13 @@ async function loadLocalBioAndPerfMaps(): Promise<{
   return { playerNationalityByTmid, perfByTmid };
 }
 
-function buildChronologicalCareerPath(
+export function buildChronologicalCareerPath(
   terminatedTransfers: any[],
   currentClubId: string,
   currentClubMeta: IClubMeta | undefined,
   clubMap: Map<string, IClubMeta>,
-  perfStats: IClubPerfStat[]
+  perfStats: IClubPerfStat[],
+  keepLastEndYear = false
 ): ICareerStep[] {
   const sorted = [...(terminatedTransfers || [])]
     .filter((t) => !t.details?.isPending && t.details?.date)
@@ -263,8 +282,6 @@ function buildChronologicalCareerPath(
       }
     }
   }
-
-  // Ensure current club is at the end
   if (currentClubMeta) {
     const last = steps[steps.length - 1];
     if (!last) {
@@ -289,11 +306,14 @@ function buildChronologicalCareerPath(
     }
   }
 
-  if (steps.length > 0) {
+  if (!keepLastEndYear && steps.length > 0) {
     delete steps[steps.length - 1].endYear;
+  } else if (keepLastEndYear && steps.length > 0) {
+    const lastStep = steps[steps.length - 1];
+    if (lastStep.endYear === undefined && lastStep.startYear <= 2024) {
+      lastStep.endYear = Math.min(2025, lastStep.startYear + 2);
+    }
   }
-
-  // Enrich with apps/goals where available and strip internal clubId
   return steps.map((s) => {
     const stepKey = normalizeClubKey(s.clubName);
     const stat = perfStats.find(
@@ -326,7 +346,6 @@ export async function syncLiveTransfermarktApi(): Promise<void> {
     Object.entries(COUNTRY_ID_FALLBACK).map(([k, v]) => [Number(k), v])
   );
 
-  // Step 1: Fetch live 2026-27 league tables for target competitions
   console.log('🔄 Step 1: Fetching live league tables (TR1, GB1, ES1, IT1, L1, FR1)...');
   const clubLeagueMap = new Map<string, SupportedLeague>();
   const targetClubIds: string[] = [];
@@ -342,7 +361,6 @@ export async function syncLiveTransfermarktApi(): Promise<void> {
     console.log(`  ✅ ${compId} (${league}): ${clubs.length} live clubs`);
   }
 
-  // Step 2: Fetch live squads for all 114 clubs concurrently
   console.log(`🔄 Step 2: Fetching live squads for ${targetClubIds.length} clubs...`);
   const playerClubAssignment = new Map<string, { clubId: string; league: SupportedLeague; shirtNumber?: number }>();
 
@@ -367,7 +385,6 @@ export async function syncLiveTransfermarktApi(): Promise<void> {
   }
   console.log(`✅ Found ${playerClubAssignment.size} active squad players across all 6 leagues.`);
 
-  // Step 3: Batch-fetch player profiles from /players?ids[]=
   console.log('🔄 Step 3: Batch-fetching live player profiles...');
   const allPlayerIds = Array.from(playerClubAssignment.keys());
   const playerProfiles = new Map<string, any>();
@@ -381,7 +398,6 @@ export async function syncLiveTransfermarktApi(): Promise<void> {
       const pid = String(p.id);
       playerProfiles.set(pid, p);
 
-      // Learn nationalityId -> country name from local bio map if available
       const natId = p.nationalityDetails?.nationalities?.nationalityId;
       const knownNat = playerNationalityByTmid.get(pid);
       if (natId && knownNat && !countryIdToName.has(Number(natId))) {
@@ -394,7 +410,6 @@ export async function syncLiveTransfermarktApi(): Promise<void> {
   }
   console.log(`✅ Loaded ${playerProfiles.size} live player profiles.`);
 
-  // Step 4: Fetch transfer histories for all active players (using disk cache + 40x concurrency)
   console.log('🔄 Step 4: Fetching player transfer histories...');
   const historyCacheFile = path.join(CACHE_DIR, 'transfer_histories_26_27.json');
   let cachedHistories: Record<string, any> = {};
@@ -435,7 +450,6 @@ export async function syncLiveTransfermarktApi(): Promise<void> {
   fs.writeFileSync(historyCacheFile, JSON.stringify(cachedHistories), 'utf8');
   console.log('✅ All player transfer histories ready and cached.');
 
-  // Step 5: Collect all unique clubIds (current clubs + historical clubs) and batch-fetch metadata
   console.log('🔄 Step 5: Resolving metadata & logos for all career clubs...');
   const allUniqueClubIds = new Set<string>(targetClubIds);
   for (const pid of allPlayerIds) {
@@ -494,8 +508,7 @@ export async function syncLiveTransfermarktApi(): Promise<void> {
     }
   }
 
-  // Mark old players inactive first so relegated/departed players don't pollute active pool
-  await PlayerModel.updateMany({}, { $set: { isActive: false } });
+  await PlayerModel.updateMany({ isLegend: { $ne: true } }, { $set: { isActive: false } });
 
   const bulkOps: any[] = [];
   for (const pid of allPlayerIds) {
@@ -559,6 +572,7 @@ export async function syncLiveTransfermarktApi(): Promise<void> {
             careerPath,
             originalImageUrl,
             isActive: true,
+            isLegend: false,
             ...(typeof shirtNumber === 'number' && shirtNumber > 0 ? { shirtNumber } : {}),
             ...(blurImages.length === 8 ? { blurImages } : {}),
           },
@@ -575,17 +589,16 @@ export async function syncLiveTransfermarktApi(): Promise<void> {
     console.log(`  💾 Upserted ${Math.min(i + writeChunkSize, bulkOps.length)} / ${bulkOps.length} players...`);
   }
 
-  // Step 7: Spotlight Verification
   console.log('\n🔍 Live 2026-27 Spotlight Verification:');
   const spotlightIds = [
-    'tmid_382528', // Kerem Aktürkoğlu
-    'tmid_292199', // Uğurcan Çakır
-    'tmid_401923', // Victor Osimhen
-    'tmid_68863',  // Mauro Icardi
-    'tmid_581678', // Jude Bellingham
-    'tmid_861410', // Arda Güler
-    'tmid_369316', // Ferdi Kadıoğlu
-    'tmid_418560', // Erling Haaland
+    'tmid_382528', 
+    'tmid_292199', 
+    'tmid_401923', 
+    'tmid_68863',  
+    'tmid_581678', 
+    'tmid_861410', 
+    'tmid_369316', 
+    'tmid_418560', 
   ];
 
   const spotlightDocs = await PlayerModel.find({ playerId: { $in: spotlightIds } }).lean();
@@ -600,7 +613,6 @@ export async function syncLiveTransfermarktApi(): Promise<void> {
     });
   }
 
-  // Step 8: Export Search Index
   console.log('\n📦 Exporting updated search-index.json to backend & mobile...');
   await exportSearchIndex();
 
