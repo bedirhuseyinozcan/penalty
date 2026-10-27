@@ -176,8 +176,14 @@ export const ClubLogoScreen: React.FC<IClubLogoScreenProps> = React.memo(
                     !isRevealed && {
                       transform: [{ scale: 1 + (maxAttempts - guesses.length) * 0.08 }],
                     },
+                    Platform.OS === 'web' && blurRadius > 0
+                      ? ({
+                          filter: `blur(${blurRadius}px)`,
+                          transition: 'filter 0.4s ease, transform 0.4s ease',
+                        } as any)
+                      : undefined,
                   ]}
-                  blurRadius={blurRadius}
+                  blurRadius={Platform.OS !== 'web' ? blurRadius : undefined}
                   resizeMode="contain"
                   onError={() => setLogoError(true)}
                 />

@@ -228,6 +228,7 @@ export const CareerPathScreen: React.FC<ICareerPathScreenProps> = React.memo(
           visible={isSearchModalVisible}
           onClose={closeSearch}
           onSelectPlayer={submitGuess}
+          includeLegends={true}
         />
 
         <WhoAreYaWinModal

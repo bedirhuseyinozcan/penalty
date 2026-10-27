@@ -68,15 +68,32 @@ export class LevelService {
         }
       } else {
         const topPoolSize = 250;
-        const stars = await PlayerModel.find({ isActive: true, ...leagueFilter })
-          .sort({ marketValueEur: -1 })
-          .limit(topPoolSize)
-          .lean();
+        if (gameMode === 'careerPath' && levelNumber % 3 === 0) {
+          const legendFilter =
+            leagueMode === 'super_lig'
+              ? { isLegend: true, 'currentClub.league': 'super_lig' }
+              : { isLegend: true };
+          const legends = await PlayerModel.find(legendFilter)
+            .sort({ playerId: 1 })
+            .limit(topPoolSize)
+            .lean();
+          if (legends.length > 0) {
+            const legendIdx = Math.floor(levelNumber / 3) - 1;
+            player = legends[legendIdx % legends.length];
+          }
+        }
 
-        if (stars.length > 0) {
-          const offset = gameMode === 'contextinho' ? 17 : gameMode === 'careerPath' ? 7 : 0;
-          const skipIndex = Math.max(0, (levelNumber - 1 + offset) % stars.length);
-          player = stars[skipIndex];
+        if (!player) {
+          const stars = await PlayerModel.find({ isActive: true, ...leagueFilter })
+            .sort({ marketValueEur: -1 })
+            .limit(topPoolSize)
+            .lean();
+
+          if (stars.length > 0) {
+            const offset = gameMode === 'contextinho' ? 17 : gameMode === 'careerPath' ? 7 : 0;
+            const skipIndex = Math.max(0, (levelNumber - 1 + offset) % stars.length);
+            player = stars[skipIndex];
+          }
         }
       }
     }
@@ -91,7 +108,9 @@ export class LevelService {
       leagueMode,
       targetPlayerId: player.playerId,
       playerName: player.name,
-      playerClub: player.currentClub?.name || '',
+      playerClub: player.isLegend
+        ? '👑 Efsane İkon'
+        : player.currentClub?.name || '',
       rewardCoins: level ? level.rewardCoins : gameMode === 'careerPath' || gameMode === 'contextinho' ? 35 : 30,
       rewardXp: level ? level.rewardXp : gameMode === 'careerPath' || gameMode === 'contextinho' ? 60 : 50,
       hints: level ? level.hints : [`${player.nationality} - ${player.position}`],
@@ -111,7 +130,9 @@ export class LevelService {
       response.hints = [`Kadrodaki Yıldız: ${player.name} (${player.position})`];
     } else if (gameMode === 'careerPath') {
       response.imageUrl = player.originalImageUrl;
-      response.careerPath = fixAndOrderCareerPath(player.careerPath, player.currentClub?.name, player.age);
+      response.careerPath = player.isLegend
+        ? player.careerPath
+        : fixAndOrderCareerPath(player.careerPath, player.currentClub?.name, player.age);
     }
 
     return response;
@@ -162,12 +183,25 @@ export class LevelService {
     const activePlayers = await PlayerModel.find({ isActive: true, ...leagueFilter })
       .sort({ marketValueEur: -1 })
       .limit(300)
-      .select('playerId name currentClub nationality position age careerPath blurImages originalImageUrl')
+      .select('playerId name currentClub nationality position age careerPath blurImages originalImageUrl isLegend')
       .lean();
 
     const explicitPlayers = await PlayerModel.find({ playerId: { $in: explicitPlayerIds } })
-      .select('playerId name currentClub nationality position age careerPath blurImages originalImageUrl')
+      .select('playerId name currentClub nationality position age careerPath blurImages originalImageUrl isLegend')
       .lean();
+
+    let legends: any[] = [];
+    if (gameMode === 'careerPath') {
+      const legendFilter =
+        leagueMode === 'super_lig'
+          ? { isLegend: true, 'currentClub.league': 'super_lig' }
+          : { isLegend: true };
+      legends = await PlayerModel.find(legendFilter)
+        .sort({ playerId: 1 })
+        .limit(300)
+        .select('playerId name currentClub nationality position age careerPath blurImages originalImageUrl isLegend')
+        .lean();
+    }
 
     const playerMap = new Map<string, any>();
     activePlayers.forEach((p) => playerMap.set(p.playerId, p));
@@ -197,6 +231,11 @@ export class LevelService {
         player = playerMap.get(explicitLevel.playerId);
       }
 
+      if (!player && gameMode === 'careerPath' && lvl % 3 === 0 && legends.length > 0) {
+        const legendIdx = Math.floor(lvl / 3) - 1;
+        player = legends[legendIdx % legends.length];
+      }
+
       if (!player && poolCount > 0) {
         const offset = gameMode === 'contextinho' ? 17 : gameMode === 'careerPath' ? 7 : 0;
         const skipIndex = Math.max(0, (lvl - 1 + offset) % poolCount);
@@ -211,7 +250,9 @@ export class LevelService {
         leagueMode,
         targetPlayerId: player.playerId,
         playerName: player.name,
-        playerClub: player.currentClub?.name || '',
+        playerClub: player.isLegend
+          ? '👑 Efsane İkon'
+          : player.currentClub?.name || '',
         rewardCoins: explicitLevel ? explicitLevel.rewardCoins : gameMode === 'careerPath' || gameMode === 'contextinho' ? 35 : 30,
         rewardXp: explicitLevel ? explicitLevel.rewardXp : gameMode === 'careerPath' || gameMode === 'contextinho' ? 60 : 50,
         hints: explicitLevel ? explicitLevel.hints : [`${player.nationality} - ${player.position}`],
@@ -222,15 +263,18 @@ export class LevelService {
         item.initialBlurImageUrl = player.blurImages?.[0] || player.originalImageUrl;
         item.imageUrl = player.originalImageUrl;
       } else if (gameMode === 'clubLogo') {
+        const cleanId = String(player.currentClub?.id || '36').replace(/^club_/, '');
         const logoUrl =
           player.currentClub?.logoUrl ||
-          `https://tmssl.akamaized.net/images/wappen/head/${player.currentClub?.id || '36'}.png`;
+          `https://tmssl.akamaized.net/images/wappen/head/${cleanId}.png`;
         item.imageUrl = logoUrl;
         item.initialBlurImageUrl = logoUrl;
         item.hints = [`Kadrodaki Yıldız: ${player.name} (${player.position})`];
       } else if (gameMode === 'careerPath') {
         item.imageUrl = player.originalImageUrl;
-        item.careerPath = fixAndOrderCareerPath(player.careerPath, player.currentClub?.name, player.age);
+        item.careerPath = player.isLegend
+          ? player.careerPath
+          : fixAndOrderCareerPath(player.careerPath, player.currentClub?.name, player.age);
       }
 
       result.push(item);
