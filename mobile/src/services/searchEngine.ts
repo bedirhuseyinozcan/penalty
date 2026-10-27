@@ -49,11 +49,17 @@ function normalizeClubName(str: string): string {
     .replace(/ş/g, 's')
     .replace(/ı/g, 'i')
     .replace(/ö/g, 'o')
-    .replace(/ç/g, 'c');
+    .replace(/ç/g, 'c')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+export interface IPlayerPoolOptions {
+  includeLegends?: boolean;
 }
 
 class SearchEngineService {
   private fuse: Fuse<ILightPlayer> | null = null;
+  private activeFuse: Fuse<ILightPlayer> | null = null;
   private clubFuse: Fuse<IClubSearchItem> | null = null;
   private players: ILightPlayer[] = [];
   private clubs: IClubSearchItem[] = [];
@@ -72,13 +78,7 @@ class SearchEngineService {
           if (
             Array.isArray(parsed) &&
             parsed.length >= bundledList.length &&
-            parsed.some((p: ILightPlayer) => p.isLegend && Array.isArray(p.leagues)) &&
-            parsed.some(
-              (p: ILightPlayer) =>
-                p.id === 'tmid_5855' &&
-                Array.isArray(p.trophies) &&
-                p.trophies.includes('world_cup')
-            )
+            parsed.some((p: ILightPlayer) => p.isLegend && Array.isArray(p.leagues))
           ) {
             rawList = parsed;
           } else {
@@ -134,7 +134,7 @@ class SearchEngineService {
     this.players = uniquePlayers;
     this.clubs = Array.from(clubMap.values());
 
-    this.fuse = new Fuse(this.players, {
+    const playerFuseOptions = {
       keys: [
         { name: 'name', weight: 0.7 },
         { name: 'club', weight: 0.2 },
@@ -143,7 +143,12 @@ class SearchEngineService {
       threshold: 0.35,
       ignoreLocation: true,
       minMatchCharLength: 2,
-    });
+    };
+    this.fuse = new Fuse(this.players, playerFuseOptions);
+    this.activeFuse = new Fuse(
+      this.players.filter((p) => !p.isLegend),
+      playerFuseOptions
+    );
 
     this.clubFuse = new Fuse(this.clubs, {
       keys: [{ name: 'name', weight: 0.85 }, { name: 'starPlayer', weight: 0.15 }],
@@ -181,29 +186,37 @@ class SearchEngineService {
     }
   }
 
-  public search(query: string, leagueMode?: 'global' | 'super_lig'): ILightPlayer[] {
-    if (!this.isInitialized || !this.fuse) {
+  private matchesLeagueMode(p: ILightPlayer, leagueMode: 'global' | 'super_lig'): boolean {
+    if (leagueMode === 'super_lig') {
+      return (
+        p.league === 'super_lig' ||
+        (Array.isArray(p.leagues) && p.leagues.includes('super_lig'))
+      );
+    }
+    return (
+      p.league !== 'super_lig' ||
+      Boolean(p.isLegend) ||
+      (Array.isArray(p.leagues) && p.leagues.some((lg) => lg !== 'super_lig'))
+    );
+  }
+
+  public search(
+    query: string,
+    leagueMode?: 'global' | 'super_lig',
+    options: IPlayerPoolOptions = {}
+  ): ILightPlayer[] {
+    if (!this.isInitialized || !this.fuse || !this.activeFuse) {
       this.initialize();
     }
 
     const trimmed = query.trim();
     if (!trimmed || trimmed.length < 2) return [];
 
-    const rawResults = this.fuse!.search(trimmed, { limit: 25 }).map((res) => res.item);
+    const engine = options.includeLegends ? this.fuse! : this.activeFuse!;
+    const rawResults = engine.search(trimmed, { limit: 40 }).map((res) => res.item);
 
     const filtered = leagueMode
-      ? leagueMode === 'super_lig'
-        ? rawResults.filter(
-            (p) =>
-              p.league === 'super_lig' ||
-              (Array.isArray(p.leagues) && p.leagues.includes('super_lig'))
-          )
-        : rawResults.filter(
-            (p) =>
-              p.league !== 'super_lig' ||
-              p.isLegend ||
-              (Array.isArray(p.leagues) && p.leagues.some((lg) => lg !== 'super_lig'))
-          )
+      ? rawResults.filter((p) => this.matchesLeagueMode(p, leagueMode))
       : rawResults;
 
     const seenInResults = new Set<string>();
@@ -285,21 +298,16 @@ class SearchEngineService {
     return undefined;
   }
 
-  public getPlayersByLeagueMode(leagueMode?: 'global' | 'super_lig'): ILightPlayer[] {
+  public getPlayersByLeagueMode(
+    leagueMode?: 'global' | 'super_lig',
+    options: IPlayerPoolOptions = {}
+  ): ILightPlayer[] {
     if (!this.isInitialized) this.initialize();
-    if (!leagueMode) return this.players;
-    return leagueMode === 'super_lig'
-      ? this.players.filter(
-          (p) =>
-            p.league === 'super_lig' ||
-            (Array.isArray(p.leagues) && p.leagues.includes('super_lig'))
-        )
-      : this.players.filter(
-          (p) =>
-            p.league !== 'super_lig' ||
-            p.isLegend ||
-            (Array.isArray(p.leagues) && p.leagues.some((lg) => lg !== 'super_lig'))
-        );
+    const base = options.includeLegends
+      ? this.players
+      : this.players.filter((p) => !p.isLegend);
+    if (!leagueMode) return base;
+    return base.filter((p) => this.matchesLeagueMode(p, leagueMode));
   }
 
   public getPlayerById(id?: string): ILightPlayer | undefined {

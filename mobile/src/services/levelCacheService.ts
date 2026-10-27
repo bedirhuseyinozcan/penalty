@@ -69,28 +69,18 @@ class LevelCacheService {
       gameMode === 'careerPath'
     ) {
       const allPlayers = searchEngine.getPlayersByLeagueMode(leagueMode);
-      if (allPlayers.length > 0) {   
+      if (allPlayers.length > 0) {
         const activePlayers = allPlayers.filter(
           (p) =>
-            !p.isLegend &&
             p.club &&
             (leagueMode === 'super_lig' ? p.league === 'super_lig' : p.league !== 'super_lig')
         );
-        const legendPlayers = allPlayers.filter(
-          (p) => p.isLegend && p.careerPath && p.careerPath.length >= 2
-        );
 
-        let p = allPlayers[0];
-        if (gameMode === 'careerPath' && legendPlayers.length > 0 && levelNumber % 3 === 0) {
-          const legendIdx = Math.floor(levelNumber / 3) - 1;
-          p = legendPlayers[legendIdx % legendPlayers.length];
-        } else {
-          const basePool = activePlayers.length > 0 ? activePlayers : allPlayers.filter((x) => !x.isLegend);
-          const offset =
-            gameMode === 'contextinho' ? 17 : gameMode === 'careerPath' ? 7 : 0;
-          const poolSize = Math.min(250, basePool.length);
-          p = basePool[(levelNumber - 1 + offset) % poolSize];
-        }
+        const basePool = activePlayers.length > 0 ? activePlayers : allPlayers;
+        const offset =
+          gameMode === 'contextinho' ? 17 : gameMode === 'careerPath' ? 7 : 0;
+        const poolSize = Math.min(250, basePool.length);
+        const p = basePool[(levelNumber - 1 + offset) % poolSize];
 
         const careerSteps =
           p.careerPath && p.careerPath.length > 0
@@ -116,7 +106,7 @@ class LevelCacheService {
           rewardXp: gameMode === 'whoAreYa' ? 50 : 60,
           targetPlayerId: p.id,
           playerName: p.name,
-          playerClub: p.isLegend ? '👑 Efsane İkon' : p.club,
+          playerClub: p.club,
           imageUrl: pImg,
           initialBlurImageUrl: pImg,
           blurImages: [],

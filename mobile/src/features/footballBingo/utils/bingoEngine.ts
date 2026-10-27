@@ -3,7 +3,8 @@ import { IBingoBoardSetup, IBingoTile } from '../types';
 import { getPlayerPositionGroup, doesPlayerMatchLeague } from '../../ticTacToe/utils/ticTacToeEngine';
 
 export const BINGO_DECK_SIZE = 42;
-export const BINGO_GRID_SIZE = 16; // 4x4
+export const BINGO_GRID_SIZE = 16; 
+export const BINGO_MAX_LEGENDS_IN_DECK = 10;
 
 function createSeededRandom(seedStr: string): () => number {
   let hash = 2166136261;
@@ -37,15 +38,18 @@ export function doesPlayerMatchBingoTile(player: ILightPlayer, tile: IBingoTile)
       return (player.nationality || '').toLowerCase().trim() === tile.value.toLowerCase().trim();
     case 'positionGroup':
       return getPlayerPositionGroup(player.position) === tile.value;
+    // Yaş ve forma numarası kriterleri yalnızca aktif oyunculara uygulanır (efsaneler emekli).
     case 'ageUnder23':
-      return (player.age ?? 25) <= 23;
+      return !player.isLegend && (player.age ?? 25) <= 23;
     case 'ageOver30':
-      return (player.age ?? 25) >= 30;
+      return !player.isLegend && (player.age ?? 25) >= 30;
     case 'shirt1to11': {
+      if (player.isLegend) return false;
       const num = player.shirtNumber ?? 0;
       return num >= 1 && num <= 11;
     }
     case 'shirt20Plus': {
+      if (player.isLegend) return false;
       const num = player.shirtNumber ?? 0;
       return num >= 20;
     }
@@ -63,8 +67,11 @@ export function generateBingoSetup(
   leagueMode: 'global' | 'super_lig'
 ): IBingoBoardSetup {
   const rng = createSeededRandom(seedKey);
-  const rawPool = searchEngine.getPlayersByLeagueMode(leagueMode);
-  const pool = rawPool.length >= 60 ? rawPool : searchEngine.getPlayersByLeagueMode();
+  const rawPool = searchEngine.getPlayersByLeagueMode(leagueMode, { includeLegends: true });
+  const pool =
+    rawPool.length >= 60
+      ? rawPool
+      : searchEngine.getPlayersByLeagueMode(undefined, { includeLegends: true });
 
   const shuffle = <T>(arr: T[]): T[] => {
     const copy = [...arr];
@@ -252,24 +259,48 @@ export function generateBingoSetup(
   const selectedIds = new Set<string>();
   const deck: ILightPlayer[] = [];
   const shuffledPool = shuffle(pool);
+  const shuffledActive = shuffledPool.filter((p) => !p.isLegend);
+  const shuffledLegends = shuffledPool.filter((p) => p.isLegend);
+  let legendCount = 0;
 
+  const addToDeck = (p: ILightPlayer) => {
+    selectedIds.add(p.id);
+    deck.push(p);
+    if (p.isLegend) legendCount++;
+  };
   for (const tile of tiles) {
-    let addedForTile = 0;
-    for (const p of shuffledPool) {
-      if (!selectedIds.has(p.id) && doesPlayerMatchBingoTile(p, tile)) {
-        selectedIds.add(p.id);
-        deck.push(p);
+    let addedForTile = deck.filter((p) => doesPlayerMatchBingoTile(p, tile)).length;
+
+    if (addedForTile < 2 && legendCount < BINGO_MAX_LEGENDS_IN_DECK) {
+      const legend = shuffledLegends.find(
+        (p) => !selectedIds.has(p.id) && doesPlayerMatchBingoTile(p, tile)
+      );
+      if (legend) {
+        addToDeck(legend);
         addedForTile++;
-        if (addedForTile >= 2) break;
+      }
+    }
+
+    for (const p of shuffledActive) {
+      if (addedForTile >= 2) break;
+      if (!selectedIds.has(p.id) && doesPlayerMatchBingoTile(p, tile)) {
+        addToDeck(p);
+        addedForTile++;
+      }
+    }
+
+    for (const p of shuffledLegends) {
+      if (addedForTile >= 2) break;
+      if (!selectedIds.has(p.id) && doesPlayerMatchBingoTile(p, tile)) {
+        addToDeck(p);
+        addedForTile++;
       }
     }
   }
-
-  for (const p of shuffledPool) {
+  for (const p of [...shuffledActive, ...shuffledLegends]) {
     if (deck.length >= BINGO_DECK_SIZE) break;
     if (!selectedIds.has(p.id)) {
-      selectedIds.add(p.id);
-      deck.push(p);
+      addToDeck(p);
     }
   }
 

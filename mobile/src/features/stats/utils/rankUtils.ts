@@ -8,13 +8,6 @@ export interface IRankInfo {
   xpNeededForNext: number;
 }
 
-export const RANKS = [
-  { tier: 1, title: 'Stajyer Gözlemci', badge: '🥉', minXp: 0, maxXp: 250 },
-  { tier: 2, title: "Altyapı Scout'u", badge: '🥈', minXp: 250, maxXp: 750 },
-  { tier: 3, title: "Süper Lig Baş Scout'u", badge: '🥇', minXp: 750, maxXp: 2000 },
-  { tier: 4, title: 'Avrupa Futbol Direktörü', badge: '👑', minXp: 2000, maxXp: 5000 },
-] as const;
-
 export const getRankByXp = (xp: number): IRankInfo => {
   const safeXp = Math.max(0, xp);
 

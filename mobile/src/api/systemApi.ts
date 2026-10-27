@@ -13,10 +13,8 @@ export const systemApi = {
     return res.data;
   },
 
-  getSearchIndex: async (leagueMode?: 'global' | 'super_lig') => {
-    const res = await apiClient.get('/players/search-index', {
-      params: { leagueMode },
-    });
+  getSearchIndex: async () => {
+    const res = await apiClient.get('/players/search-index');
     return res.data.data;
   },
 };

@@ -15,6 +15,7 @@ import {
 } from './syncLiveTransfermarktApi';
 
 export const DEFAULT_LEGEND_NAMES: string[] = [
+  
   'Cristiano Ronaldo',
   'Lionel Messi',
   'Zinédine Zidane',
@@ -295,7 +296,7 @@ export const DEFAULT_LEGEND_NAMES: string[] = [
   'Gianluca Pagliuca',
   'Angelo Peruzzi',
 
-
+  
   'Wayne Rooney',
   'Paul Scholes',
   'Ryan Giggs',
@@ -462,6 +463,7 @@ export const DEFAULT_LEGEND_NAMES: string[] = [
   'Yassine Bounou',
   'Franck Kessié',
 
+  
   'Franck Ribéry',
   'Philipp Lahm',
   'Bastian Schweinsteiger',
@@ -514,6 +516,7 @@ export const DEFAULT_LEGEND_NAMES: string[] = [
   'Andreas Brehme',
   'Matthias Sammer',
 
+  
   'Marco Verratti',
   'Javier Pastore',
   'Alex Rodrigo Dias da Costa',
@@ -584,6 +587,7 @@ export const DEFAULT_LEGEND_NAMES: string[] = [
   'Yannick Carrasco',
   'Axel Witsel',
 
+  
   'Alex de Souza',
   'Gheorghe Hagi',
   'Gheorghe Popescu',
@@ -1313,6 +1317,11 @@ export async function syncLegends(): Promise<void> {
     );
 
     if (careerPath.length === 0) continue;
+
+   
+    if (pid === '7717' && careerPath[careerPath.length - 1].endYear === undefined) {
+      careerPath[careerPath.length - 1].endYear = 2019;
+    }
 
     const clubNames = careerPath.map((s) => s.clubName);
     const playedInSuperLig = clubNames.some((c) => TURKISH_CLUBS.has(c));

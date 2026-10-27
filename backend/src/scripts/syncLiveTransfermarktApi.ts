@@ -238,6 +238,7 @@ export function buildChronologicalCareerPath(
   }
 
   const steps: Array<ICareerStep & { clubId: string }> = [];
+  let retiredOrBreakYear: number | null = null;
 
   for (const t of cleanedTransfers) {
     const year = parseInt(String(t.details.date).substring(0, 4), 10);
@@ -247,6 +248,14 @@ export function buildChronologicalCareerPath(
     const toId = String(t.transferDestination?.clubId || '');
     const fromClub = clubMap.get(fromId);
     const toClub = clubMap.get(toId);
+    if (
+      keepLastEndYear &&
+      retiredOrBreakYear !== null &&
+      fromClub?.isSpecial &&
+      (fromId === '123' || fromClub.name === 'Retired' || year - retiredOrBreakYear >= 2)
+    ) {
+      break;
+    }
 
     // If first transfer originates from a senior first team, add it as starting step
     if (steps.length === 0 && fromClub && fromClub.typeId === 1 && !fromClub.isSpecial) {
@@ -259,7 +268,7 @@ export function buildChronologicalCareerPath(
       });
     }
 
-    // Close previous open senior club step
+    
     if (steps.length > 0) {
       const prevStep = steps[steps.length - 1];
       if (prevStep.endYear === undefined) {
@@ -267,8 +276,10 @@ export function buildChronologicalCareerPath(
       }
     }
 
-    // Add destination if it is a senior first team (typeId === 1)
-    if (toClub && toClub.typeId === 1 && !toClub.isSpecial) {
+    if (toClub && toClub.isSpecial) {
+      retiredOrBreakYear = year;
+    } else if (toClub && toClub.typeId === 1 && !toClub.isSpecial) {
+      retiredOrBreakYear = null;
       const prevStep = steps[steps.length - 1];
       if (prevStep && prevStep.clubId === toClub.id) {
         delete prevStep.endYear;
@@ -282,6 +293,7 @@ export function buildChronologicalCareerPath(
       }
     }
   }
+
   if (currentClubMeta) {
     const last = steps[steps.length - 1];
     if (!last) {
@@ -306,14 +318,11 @@ export function buildChronologicalCareerPath(
     }
   }
 
-  if (!keepLastEndYear && steps.length > 0) {
+  if (steps.length > 0 && !keepLastEndYear) {
     delete steps[steps.length - 1].endYear;
-  } else if (keepLastEndYear && steps.length > 0) {
-    const lastStep = steps[steps.length - 1];
-    if (lastStep.endYear === undefined && lastStep.startYear <= 2024) {
-      lastStep.endYear = Math.min(2025, lastStep.startYear + 2);
-    }
   }
+
+  
   return steps.map((s) => {
     const stepKey = normalizeClubKey(s.clubName);
     const stat = perfStats.find(
@@ -498,7 +507,6 @@ export async function syncLiveTransfermarktApi(): Promise<void> {
   const clubMap = new Map<string, IClubMeta>(Object.entries(cachedClubs));
   console.log(`✅ Resolved ${clubMap.size} unique clubs with official names, types, and logos.`);
 
-  // Step 6: Preserve existing blurImages in MongoDB & upsert live 2026-27 players
   console.log('🔄 Step 6: Updating MongoDB with live 2026-27 players and chronological career paths...');
   const existingDocs = await PlayerModel.find({}).select('playerId blurImages').lean();
   const existingBlurMap = new Map<string, string[]>();
@@ -507,7 +515,6 @@ export async function syncLiveTransfermarktApi(): Promise<void> {
       existingBlurMap.set(doc.playerId, doc.blurImages);
     }
   }
-
   await PlayerModel.updateMany({ isLegend: { $ne: true } }, { $set: { isActive: false } });
 
   const bulkOps: any[] = [];
@@ -613,6 +620,7 @@ export async function syncLiveTransfermarktApi(): Promise<void> {
     });
   }
 
+  
   console.log('\n📦 Exporting updated search-index.json to backend & mobile...');
   await exportSearchIndex();
 

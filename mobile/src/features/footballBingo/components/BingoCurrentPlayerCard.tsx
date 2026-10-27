@@ -1,9 +1,29 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { ILightPlayer } from '../../../services/searchEngine';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { ILightPlayer, searchEngine } from '../../../services/searchEngine';
 import { Colors } from '../../../theme/colors';
 import { Spacing, BorderRadius } from '../../../theme/spacing';
 import { Typography } from '../../../theme/typography';
+
+const PlayerAvatar: React.FC<{ player: ILightPlayer }> = React.memo(({ player }) => {
+  const [failed, setFailed] = useState(false);
+  const uri = searchEngine.getPlayerPhoto(player);
+
+  return (
+    <View style={[styles.avatarCircle, player.isLegend && styles.legendAvatar]}>
+      {uri && !failed ? (
+        <Image
+          source={{ uri }}
+          style={styles.avatarImage}
+          onError={() => setFailed(true)}
+        />
+      ) : (
+        <Text style={styles.avatarEmoji}>{player.isLegend ? '👑' : '🏃‍♂️'}</Text>
+      )}
+    </View>
+  );
+});
+PlayerAvatar.displayName = 'PlayerAvatar';
 
 interface IBingoCurrentPlayerCardProps {
   player: ILightPlayer | null;
@@ -69,16 +89,19 @@ export const BingoCurrentPlayerCard: React.FC<IBingoCurrentPlayerCardProps> = Re
           </View>
         )}
         {player ? (
-          <View style={styles.playerCard}>
+          <View style={[styles.playerCard, player.isLegend && styles.legendCard]}>
             <View style={styles.playerMainRow}>
-              <View style={styles.avatarCircle}>
-                <Text style={styles.avatarEmoji}>🏃‍♂️</Text>
-              </View>
+              <PlayerAvatar key={player.id} player={player} />
 
               <View style={styles.playerInfoCol}>
                 <Text style={styles.playerName} numberOfLines={1}>
                   {player.name}
                 </Text>
+                {player.isLegend ? (
+                  <Text style={styles.legendBadge} numberOfLines={1}>
+                    👑 Efsane İkon
+                  </Text>
+                ) : null}
                 <Text style={styles.playerInstruction} numberOfLines={1}>
                   Uygun kutuya yerleştir veya pas geç
                 </Text>
@@ -189,10 +212,29 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
+  legendCard: {
+    borderColor: Colors.accent,
+    borderWidth: 1.5,
+  },
+  legendBadge: {
+    ...Typography.captionBold,
+    color: Colors.accent,
+    fontSize: 11,
+    marginTop: 1,
+  },
+  legendAvatar: {
+    borderColor: Colors.accent,
+    borderWidth: 1.5,
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+  },
   avatarCircle: {
     width: 38,
     height: 38,
     borderRadius: 19,
+    overflow: 'hidden',
     backgroundColor: Colors.surfaceLight,
     alignItems: 'center',
     justifyContent: 'center',

@@ -1,7 +1,5 @@
 import { ICosmeticItem } from './types';
 
-export const DEFAULT_COSMETIC_ID = 'avatar_default';
-
 export const COSMETIC_CATALOG: ICosmeticItem[] = [
   {
     id: 'bundle_fan_kanarya',

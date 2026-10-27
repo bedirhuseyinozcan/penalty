@@ -1,8 +1,8 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
-import { searchEngine, ILightPlayer } from '../../../services/searchEngine';
+import { searchEngine } from '../../../services/searchEngine';
 import { useSettingsStore } from '../../../stores/useSettingsStore';
 
-export const useOfflinePlayerSearch = () => {
+export const useOfflinePlayerSearch = (includeLegends = false) => {
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const leagueMode = useSettingsStore((s) => s.selectedLeagueMode);
@@ -24,8 +24,8 @@ export const useOfflinePlayerSearch = () => {
 
   const results = useMemo(() => {
     if (!debouncedQuery || debouncedQuery.trim().length < 2) return [];
-    return searchEngine.search(debouncedQuery, leagueMode);
-  }, [debouncedQuery, leagueMode]);
+    return searchEngine.search(debouncedQuery, leagueMode, { includeLegends });
+  }, [debouncedQuery, leagueMode, includeLegends]);
 
   const handleQueryChange = useCallback((text: string) => {
     setQuery(text);

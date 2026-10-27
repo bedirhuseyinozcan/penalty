@@ -106,9 +106,7 @@ export class DailyChallengeService {
       leagueMode,
       targetPlayerId: player.playerId,
       playerName: player.name,
-      playerClub: player.isLegend
-        ? '👑 Efsane İkon'
-        : player.currentClub?.name || '',
+      playerClub: player.currentClub?.name || '',
       difficulty,
       serverUtcTime: new Date().toISOString(),
     };
@@ -126,13 +124,7 @@ export class DailyChallengeService {
       response.initialBlurImageUrl = logoUrl;
     } else if (gameMode === 'careerPath') {
       response.imageUrl = player.originalImageUrl;
-      response.careerPath = player.isLegend
-        ? player.careerPath
-        : fixAndOrderCareerPath(
-            player.careerPath,
-            player.currentClub?.name,
-            player.age
-          );
+      response.careerPath = fixAndOrderCareerPath(player.careerPath, player.currentClub?.name, player.age);
     }
 
     return response;

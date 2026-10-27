@@ -176,6 +176,7 @@ export const TicTacToeScreen: React.FC<ITicTacToeScreenProps> = React.memo(
           visible={isSearchModalVisible}
           onClose={closeSearch}
           onSelectPlayer={submitCellGuess}
+          includeLegends
         />
 
         <WhoAreYaWinModal

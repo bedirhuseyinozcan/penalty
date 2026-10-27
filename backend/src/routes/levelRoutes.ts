@@ -2,7 +2,6 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { getLevel, verifyLevel, getLevelPack } from '../controllers/levelController';
 import { validateRequest } from '../middlewares/validateRequest';
-import { GAME_MODES } from '../config/constants';
 
 const router = Router();
 

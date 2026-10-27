@@ -9,19 +9,6 @@ export const SUPPORTED_LEAGUES = {
 
 export type SupportedLeague = (typeof SUPPORTED_LEAGUES)[keyof typeof SUPPORTED_LEAGUES];
 
-export const TOP_5_LEAGUES: SupportedLeague[] = [
-  SUPPORTED_LEAGUES.PREMIER_LEAGUE,
-  SUPPORTED_LEAGUES.LA_LIGA,
-  SUPPORTED_LEAGUES.SERIE_A,
-  SUPPORTED_LEAGUES.BUNDESLIGA,
-  SUPPORTED_LEAGUES.LIGUE_1,
-];
-
-export const ALL_LEAGUES: SupportedLeague[] = [
-  ...TOP_5_LEAGUES,
-  SUPPORTED_LEAGUES.SUPER_LIG,
-];
-
 export const GAME_MODES = {
   WHO_ARE_YA: 'whoAreYa',
   CAREER_PATH: 'careerPath',
@@ -39,5 +26,3 @@ export const LEAGUE_MODES = {
 } as const;
 
 export type LeagueMode = (typeof LEAGUE_MODES)[keyof typeof LEAGUE_MODES];
-
-export const BLUR_LEVELS_COUNT = 8;

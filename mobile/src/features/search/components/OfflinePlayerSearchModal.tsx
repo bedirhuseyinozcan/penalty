@@ -23,11 +23,13 @@ interface IOfflinePlayerSearchModalProps {
   visible: boolean;
   onClose: () => void;
   onSelectPlayer: (player: ILightPlayer) => void;
+  includeLegends?: boolean;
 }
 
 export const OfflinePlayerSearchModal: React.FC<IOfflinePlayerSearchModalProps> = React.memo(
-  ({ visible, onClose, onSelectPlayer }) => {
-    const { query, results, handleQueryChange, clearSearch } = useOfflinePlayerSearch();
+  ({ visible, onClose, onSelectPlayer, includeLegends = false }) => {
+    const { query, results, handleQueryChange, clearSearch } =
+      useOfflinePlayerSearch(includeLegends);
 
     const handleSelect = useCallback(
       (player: ILightPlayer) => {
@@ -72,7 +74,9 @@ export const OfflinePlayerSearchModal: React.FC<IOfflinePlayerSearchModalProps> 
             <View style={styles.dragHandle} />
 
             <View style={styles.header}>
-              <Text style={styles.title}>🔍 Oyuncu Ara</Text>
+              <Text style={styles.title}>
+                🔍 Oyuncu Ara{includeLegends ? ' • 👑 Efsaneler Dahil' : ''}
+              </Text>
               <TouchableOpacity onPress={handleClose} style={styles.closeBtn}>
                 <Text style={styles.closeText}>Kapat ✕</Text>
               </TouchableOpacity>

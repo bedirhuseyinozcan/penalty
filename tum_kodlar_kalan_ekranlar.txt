@@ -894,6 +894,7 @@ export const TicTacToeScreen: React.FC<ITicTacToeScreenProps> = React.memo(
           visible={isSearchModalVisible}
           onClose={closeSearch}
           onSelectPlayer={submitCellGuess}
+          includeLegends
         />
 
         <WhoAreYaWinModal
@@ -2036,7 +2037,7 @@ export const useGameStore = create<IGameStore>((set, get) => ({
 DOSYA: mobile\App.tsx
 ==============================
 
-import React, { useState, useEffect, Component, ErrorInfo, ReactNode } from 'react';
+import { useState, useEffect, Component, ErrorInfo, ReactNode } from 'react';
 import { View, StyleSheet, StatusBar, Text, TouchableOpacity, BackHandler } from 'react-native';
 import { HomeScreen, AppScreenType } from './src/screens/HomeScreen';
 import { WhoAreYaScreen } from './src/screens/WhoAreYaScreen';

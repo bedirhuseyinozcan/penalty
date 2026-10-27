@@ -1,7 +1,5 @@
 import { ILightPlayer } from '../../services/searchEngine';
 
-export type ComparisonStatus = 'correct' | 'wrong' | 'higher' | 'lower';
-
 export interface IGuessAttributeComparison {
   club: 'correct' | 'wrong';
   league: 'correct' | 'wrong';

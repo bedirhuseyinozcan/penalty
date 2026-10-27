@@ -202,9 +202,9 @@ export const useTicTacToeGame = ({
     const targetCell = emptyCells[0];
     const rowCrit = board.rows[targetCell.row];
     const colCrit = board.cols[targetCell.col];
-    const pool = searchEngine.getPlayersByLeagueMode(leagueMode);
+    const pool = searchEngine.getPlayersByLeagueMode(leagueMode, { includeLegends: true });
     const matches = getMatchingPlayersForCell(
-      pool.length > 0 ? pool : searchEngine.getPlayersByLeagueMode(),
+      pool.length > 0 ? pool : searchEngine.getPlayersByLeagueMode(undefined, { includeLegends: true }),
       rowCrit,
       colCrit,
       usedPlayerIds
