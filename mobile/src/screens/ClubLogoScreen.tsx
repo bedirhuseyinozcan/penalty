@@ -92,9 +92,12 @@ export const ClubLogoScreen: React.FC<IClubLogoScreenProps> = React.memo(
       isSearchModalVisible,
       attemptsLeft,
       maxAttempts,
+      canRevive,
       openSearch,
       closeSearch,
       submitClubGuess,
+      reviveGame,
+      finalizeLoss,
       resetGame,
     } = useClubLogoGame({
       targetClubName,
@@ -298,7 +301,20 @@ export const ClubLogoScreen: React.FC<IClubLogoScreenProps> = React.memo(
               goToNextLevel();
             }
           }}
-          onClose={() => setIsResultModalVisible(false)}
+          onRevive={
+            canRevive
+              ? () => {
+                  setIsResultModalVisible(false);
+                  reviveGame();
+                }
+              : undefined
+          }
+          onClose={() => {
+            setIsResultModalVisible(false);
+            if (gameStatus === 'lost') {
+              finalizeLoss();
+            }
+          }}
         />
       </SafeAreaView>
     );

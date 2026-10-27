@@ -100,9 +100,12 @@ export const ClubLogoScreen: React.FC<IClubLogoScreenProps> = React.memo(
       isSearchModalVisible,
       attemptsLeft,
       maxAttempts,
+      canRevive,
       openSearch,
       closeSearch,
       submitClubGuess,
+      reviveGame,
+      finalizeLoss,
       resetGame,
     } = useClubLogoGame({
       targetClubName,
@@ -184,8 +187,14 @@ export const ClubLogoScreen: React.FC<IClubLogoScreenProps> = React.memo(
                     !isRevealed && {
                       transform: [{ scale: 1 + (maxAttempts - guesses.length) * 0.08 }],
                     },
+                    Platform.OS === 'web' && blurRadius > 0
+                      ? ({
+                          filter: `blur(${blurRadius}px)`,
+                          transition: 'filter 0.4s ease, transform 0.4s ease',
+                        } as any)
+                      : undefined,
                   ]}
-                  blurRadius={blurRadius}
+                  blurRadius={Platform.OS !== 'web' ? blurRadius : undefined}
                   resizeMode="contain"
                   onError={() => setLogoError(true)}
                 />
@@ -300,7 +309,20 @@ export const ClubLogoScreen: React.FC<IClubLogoScreenProps> = React.memo(
               goToNextLevel();
             }
           }}
-          onClose={() => setIsResultModalVisible(false)}
+          onRevive={
+            canRevive
+              ? () => {
+                  setIsResultModalVisible(false);
+                  reviveGame();
+                }
+              : undefined
+          }
+          onClose={() => {
+            setIsResultModalVisible(false);
+            if (gameStatus === 'lost') {
+              finalizeLoss();
+            }
+          }}
         />
       </SafeAreaView>
     );

@@ -29,13 +29,18 @@ export const useCareerPathGame = ({
   onWin,
 }: IUseCareerPathGameProps) => {
   const [guesses, setGuesses] = useState<ICareerPathGuess[]>([]);
+  const [extraAttempts, setExtraAttempts] = useState(0);
+  const [hasRevived, setHasRevived] = useState(false);
   const [gameStatus, setGameStatus] = useState<'playing' | 'won' | 'lost'>('playing');
   const [isSearchModalVisible, setIsSearchModalVisible] = useState(false);
+
+  const effectiveMaxAttempts = maxAttempts + extraAttempts;
 
   const addCoins = useGameStore((s) => s.addCoins);
   const addXp = useGameStore((s) => s.addXp);
   const unlockNextLevel = useGameStore((s) => s.unlockNextLevel);
   const markDailyCompleted = useGameStore((s) => s.markDailyCompleted);
+  const clearDailyCompleted = useGameStore((s) => s.clearDailyCompleted);
   const recordGameResult = useGameStore((s) => s.recordGameResult);
 
   useEffect(() => {
@@ -48,6 +53,8 @@ export const useCareerPathGame = ({
       }
     }
     setGuesses([]);
+    setExtraAttempts(0);
+    setHasRevived(false);
     setGameStatus('playing');
   }, [targetPlayerId, isDaily, dailyKey]);
 
@@ -102,20 +109,22 @@ export const useCareerPathGame = ({
         }
 
         onWin?.();
-      } else if (updated.length >= maxAttempts) {
+      } else if (updated.length >= effectiveMaxAttempts) {
         hapticsService.error();
         setGameStatus('lost');
-        recordGameResult(false, maxAttempts);
 
-        if (isDaily && dailyKey) {
-          dailyStorage.saveSession(dailyKey, {
-            dailyKey,
-            status: 'lost',
-            guesses: updated,
-            attemptsUsed: updated.length,
-            completedAt: new Date().toISOString(),
-          });
-          markDailyCompleted(dailyKey, false);
+        if (hasRevived) {
+          recordGameResult(false, effectiveMaxAttempts);
+          if (isDaily && dailyKey) {
+            dailyStorage.saveSession(dailyKey, {
+              dailyKey,
+              status: 'lost',
+              guesses: updated,
+              attemptsUsed: updated.length,
+              completedAt: new Date().toISOString(),
+            });
+            markDailyCompleted(dailyKey, false);
+          }
         }
       } else {
         hapticsService.warning();
@@ -126,19 +135,47 @@ export const useCareerPathGame = ({
       guesses,
       targetPlayerId,
       targetPlayerName,
-      maxAttempts,
+      effectiveMaxAttempts,
+      hasRevived,
       addCoins,
       addXp,
       isDaily,
       isReplay,
       dailyKey,
       markDailyCompleted,
+      recordGameResult,
       unlockNextLevel,
       gameModeKey,
       leagueModeKey,
       onWin,
     ]
   );
+
+  const reviveGame = useCallback(() => {
+    setHasRevived(true);
+    setExtraAttempts((prev) => prev + 2);
+    setGameStatus('playing');
+    if (isDaily && dailyKey) {
+      dailyStorage.deleteSession(dailyKey);
+      clearDailyCompleted(dailyKey);
+    }
+  }, [isDaily, dailyKey, clearDailyCompleted]);
+
+  const finalizeLoss = useCallback(() => {
+    if (gameStatus === 'lost') {
+      recordGameResult(false, effectiveMaxAttempts);
+      if (isDaily && dailyKey) {
+        dailyStorage.saveSession(dailyKey, {
+          dailyKey,
+          status: 'lost',
+          guesses,
+          attemptsUsed: guesses.length,
+          completedAt: new Date().toISOString(),
+        });
+        markDailyCompleted(dailyKey, false);
+      }
+    }
+  }, [gameStatus, effectiveMaxAttempts, isDaily, dailyKey, guesses, recordGameResult, markDailyCompleted]);
 
   const openSearch = useCallback(() => {
     if (gameStatus === 'playing') setIsSearchModalVisible(true);
@@ -150,18 +187,23 @@ export const useCareerPathGame = ({
 
   const resetGame = useCallback(() => {
     setGuesses([]);
+    setExtraAttempts(0);
+    setHasRevived(false);
     setGameStatus('playing');
   }, []);
 
   return {
     guesses,
     gameStatus,
-    attemptsLeft: maxAttempts - guesses.length,
-    maxAttempts,
+    attemptsLeft: Math.max(0, effectiveMaxAttempts - guesses.length),
+    maxAttempts: effectiveMaxAttempts,
+    canRevive: !hasRevived,
     isSearchModalVisible,
     openSearch,
     closeSearch,
     submitGuess,
+    reviveGame,
+    finalizeLoss,
     resetGame,
   };
 };

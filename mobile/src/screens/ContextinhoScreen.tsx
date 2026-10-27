@@ -89,10 +89,13 @@ export const ContextinhoScreen: React.FC<IContextinhoScreenProps> = React.memo(
       isSearchModalVisible,
       attemptsLeft,
       maxAttempts,
+      canRevive,
       openSearch,
       closeSearch,
       submitGuess,
       giveClosePlayerClue,
+      reviveGame,
+      finalizeLoss,
       resetGame,
     } = useContextinhoGame({
       targetPlayerId,
@@ -287,7 +290,20 @@ export const ContextinhoScreen: React.FC<IContextinhoScreenProps> = React.memo(
               goToNextLevel();
             }
           }}
-          onClose={() => setIsResultModalVisible(false)}
+          onRevive={
+            canRevive
+              ? () => {
+                  setIsResultModalVisible(false);
+                  reviveGame();
+                }
+              : undefined
+          }
+          onClose={() => {
+            setIsResultModalVisible(false);
+            if (gameStatus === 'lost') {
+              finalizeLoss();
+            }
+          }}
         />
       </SafeAreaView>
     );

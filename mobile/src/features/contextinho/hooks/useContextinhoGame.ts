@@ -29,13 +29,18 @@ export const useContextinhoGame = ({
 }: IUseContextinhoGameProps) => {
   const [guesses, setGuesses] = useState<IContextinhoRankedEntry[]>([]);
   const [lastGuess, setLastGuess] = useState<IContextinhoRankedEntry | null>(null);
+  const [extraAttempts, setExtraAttempts] = useState(0);
+  const [hasRevived, setHasRevived] = useState(false);
   const [gameStatus, setGameStatus] = useState<'playing' | 'won' | 'lost'>('playing');
   const [isSearchModalVisible, setIsSearchModalVisible] = useState(false);
+
+  const effectiveMaxAttempts = MAX_ATTEMPTS + extraAttempts;
 
   const addCoins = useGameStore((s) => s.addCoins);
   const addXp = useGameStore((s) => s.addXp);
   const unlockNextLevel = useGameStore((s) => s.unlockNextLevel);
   const markDailyCompleted = useGameStore((s) => s.markDailyCompleted);
+  const clearDailyCompleted = useGameStore((s) => s.clearDailyCompleted);
   const recordGameResult = useGameStore((s) => s.recordGameResult);
 
   const rankMap = useMemo(
@@ -55,6 +60,8 @@ export const useContextinhoGame = ({
     }
     setGuesses([]);
     setLastGuess(null);
+    setExtraAttempts(0);
+    setHasRevived(false);
     setGameStatus('playing');
   }, [targetPlayerId, isDaily, dailyKey]);
 
@@ -108,10 +115,7 @@ export const useContextinhoGame = ({
       setLastGuess(finalEntry);
       closeSearch();
 
-      let nextStatus: 'playing' | 'won' | 'lost' = 'playing';
-
       if (isCorrect) {
-        nextStatus = 'won';
         setGameStatus('won');
         hapticsService.success();
         recordGameResult(true, nextGuesses.length);
@@ -120,34 +124,39 @@ export const useContextinhoGame = ({
           const { streakBonusCoins } = markDailyCompleted(dailyKey, true);
           addCoins(35 + streakBonusCoins);
           addXp(80);
+          dailyStorage.saveSession(dailyKey, {
+            dailyKey,
+            guesses: nextGuesses,
+            status: 'won',
+            attemptsUsed: nextGuesses.length,
+            completedAt: new Date().toISOString(),
+          });
         } else if (!isReplay) {
           addCoins(25);
           addXp(50);
           unlockNextLevel('contextinho', leagueModeKey);
         }
-      } else if (nextGuesses.length >= MAX_ATTEMPTS) {
-        nextStatus = 'lost';
+      } else if (nextGuesses.length >= effectiveMaxAttempts) {
         setGameStatus('lost');
         hapticsService.error();
-        recordGameResult(false, nextGuesses.length);
 
-        if (isDaily && dailyKey) {
-          markDailyCompleted(dailyKey, false);
+        if (hasRevived) {
+          recordGameResult(false, nextGuesses.length);
+          if (isDaily && dailyKey) {
+            markDailyCompleted(dailyKey, false);
+            dailyStorage.saveSession(dailyKey, {
+              dailyKey,
+              guesses: nextGuesses,
+              status: 'lost',
+              attemptsUsed: nextGuesses.length,
+              completedAt: new Date().toISOString(),
+            });
+          }
         }
       } else if (finalEntry.tier === 'hot') {
         hapticsService.medium();
       } else {
         hapticsService.light();
-      }
-
-      if (isDaily && dailyKey && nextStatus !== 'playing') {
-        dailyStorage.saveSession(dailyKey, {
-          dailyKey,
-          guesses: nextGuesses,
-          status: nextStatus,
-          attemptsUsed: nextGuesses.length,
-          completedAt: new Date().toISOString(),
-        });
       }
     },
     [
@@ -156,6 +165,8 @@ export const useContextinhoGame = ({
       rankMap,
       targetPlayerId,
       targetPlayerName,
+      effectiveMaxAttempts,
+      hasRevived,
       closeSearch,
       isDaily,
       isReplay,
@@ -168,6 +179,32 @@ export const useContextinhoGame = ({
       recordGameResult,
     ]
   );
+
+  const reviveGame = useCallback(() => {
+    setHasRevived(true);
+    setExtraAttempts((prev) => prev + 2);
+    setGameStatus('playing');
+    if (isDaily && dailyKey) {
+      dailyStorage.deleteSession(dailyKey);
+      clearDailyCompleted(dailyKey);
+    }
+  }, [isDaily, dailyKey, clearDailyCompleted]);
+
+  const finalizeLoss = useCallback(() => {
+    if (gameStatus === 'lost') {
+      recordGameResult(false, guesses.length);
+      if (isDaily && dailyKey) {
+        dailyStorage.saveSession(dailyKey, {
+          dailyKey,
+          guesses,
+          status: 'lost',
+          attemptsUsed: guesses.length,
+          completedAt: new Date().toISOString(),
+        });
+        markDailyCompleted(dailyKey, false);
+      }
+    }
+  }, [gameStatus, isDaily, dailyKey, guesses, recordGameResult, markDailyCompleted]);
 
   const giveClosePlayerClue = useCallback((): string => {
     const entries = Array.from(rankMap.values()).sort((a, b) => a.rank - b.rank);
@@ -187,6 +224,8 @@ export const useContextinhoGame = ({
   const resetGame = useCallback(() => {
     setGuesses([]);
     setLastGuess(null);
+    setExtraAttempts(0);
+    setHasRevived(false);
     setGameStatus('playing');
   }, []);
 
@@ -195,12 +234,15 @@ export const useContextinhoGame = ({
     lastGuess,
     gameStatus,
     isSearchModalVisible,
-    attemptsLeft: Math.max(0, MAX_ATTEMPTS - guesses.length),
-    maxAttempts: MAX_ATTEMPTS,
+    attemptsLeft: Math.max(0, effectiveMaxAttempts - guesses.length),
+    maxAttempts: effectiveMaxAttempts,
+    canRevive: !hasRevived,
     openSearch,
     closeSearch,
     submitGuess,
     giveClosePlayerClue,
+    reviveGame,
+    finalizeLoss,
     resetGame,
   };
 };

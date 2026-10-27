@@ -28,13 +28,18 @@ export const useClubLogoGame = ({
   leagueModeKey = 'super_lig',
 }: IUseClubLogoGameProps) => {
   const [guesses, setGuesses] = useState<IClubGuessResult[]>([]);
+  const [extraAttempts, setExtraAttempts] = useState(0);
+  const [hasRevived, setHasRevived] = useState(false);
   const [gameStatus, setGameStatus] = useState<'playing' | 'won' | 'lost'>('playing');
   const [isSearchModalVisible, setIsSearchModalVisible] = useState(false);
+
+  const effectiveMaxAttempts = MAX_ATTEMPTS + extraAttempts;
 
   const addCoins = useGameStore((s) => s.addCoins);
   const addXp = useGameStore((s) => s.addXp);
   const unlockNextLevel = useGameStore((s) => s.unlockNextLevel);
   const markDailyCompleted = useGameStore((s) => s.markDailyCompleted);
+  const clearDailyCompleted = useGameStore((s) => s.clearDailyCompleted);
   const recordGameResult = useGameStore((s) => s.recordGameResult);
 
   const targetClubInfo = useMemo(
@@ -52,6 +57,8 @@ export const useClubLogoGame = ({
       }
     }
     setGuesses([]);
+    setExtraAttempts(0);
+    setHasRevived(false);
     setGameStatus('playing');
   }, [targetClubName, isDaily, dailyKey]);
 
@@ -94,10 +101,7 @@ export const useClubLogoGame = ({
       setGuesses(nextGuesses);
       closeSearch();
 
-      let nextStatus: 'playing' | 'won' | 'lost' = 'playing';
-
       if (isCorrect) {
-        nextStatus = 'won';
         setGameStatus('won');
         hapticsService.success();
         recordGameResult(true, nextGuesses.length);
@@ -106,32 +110,37 @@ export const useClubLogoGame = ({
           const { streakBonusCoins } = markDailyCompleted(dailyKey, true);
           addCoins(30 + streakBonusCoins);
           addXp(80);
+          dailyStorage.saveSession(dailyKey, {
+            dailyKey,
+            guesses: nextGuesses,
+            status: 'won',
+            attemptsUsed: nextGuesses.length,
+            completedAt: new Date().toISOString(),
+          });
         } else if (!isReplay) {
           addCoins(20);
           addXp(50);
           unlockNextLevel('clubLogo', leagueModeKey);
         }
-      } else if (nextGuesses.length >= MAX_ATTEMPTS) {
-        nextStatus = 'lost';
+      } else if (nextGuesses.length >= effectiveMaxAttempts) {
         setGameStatus('lost');
         hapticsService.error();
-        recordGameResult(false, nextGuesses.length);
 
-        if (isDaily && dailyKey) {
-          markDailyCompleted(dailyKey, false);
+        if (hasRevived) {
+          recordGameResult(false, nextGuesses.length);
+          if (isDaily && dailyKey) {
+            markDailyCompleted(dailyKey, false);
+            dailyStorage.saveSession(dailyKey, {
+              dailyKey,
+              guesses: nextGuesses,
+              status: 'lost',
+              attemptsUsed: nextGuesses.length,
+              completedAt: new Date().toISOString(),
+            });
+          }
         }
       } else {
         hapticsService.medium();
-      }
-
-      if (isDaily && dailyKey && nextStatus !== 'playing') {
-        dailyStorage.saveSession(dailyKey, {
-          dailyKey,
-          guesses: nextGuesses,
-          status: nextStatus,
-          attemptsUsed: nextGuesses.length,
-          completedAt: new Date().toISOString(),
-        });
       }
     },
     [
@@ -139,6 +148,8 @@ export const useClubLogoGame = ({
       guesses,
       targetClubName,
       targetClubInfo,
+      effectiveMaxAttempts,
+      hasRevived,
       closeSearch,
       isDaily,
       isReplay,
@@ -152,8 +163,36 @@ export const useClubLogoGame = ({
     ]
   );
 
+  const reviveGame = useCallback(() => {
+    setHasRevived(true);
+    setExtraAttempts((prev) => prev + 2);
+    setGameStatus('playing');
+    if (isDaily && dailyKey) {
+      dailyStorage.deleteSession(dailyKey);
+      clearDailyCompleted(dailyKey);
+    }
+  }, [isDaily, dailyKey, clearDailyCompleted]);
+
+  const finalizeLoss = useCallback(() => {
+    if (gameStatus === 'lost') {
+      recordGameResult(false, guesses.length);
+      if (isDaily && dailyKey) {
+        dailyStorage.saveSession(dailyKey, {
+          dailyKey,
+          guesses,
+          status: 'lost',
+          attemptsUsed: guesses.length,
+          completedAt: new Date().toISOString(),
+        });
+        markDailyCompleted(dailyKey, false);
+      }
+    }
+  }, [gameStatus, isDaily, dailyKey, guesses, recordGameResult, markDailyCompleted]);
+
   const resetGame = useCallback(() => {
     setGuesses([]);
+    setExtraAttempts(0);
+    setHasRevived(false);
     setGameStatus('playing');
   }, []);
 
@@ -161,11 +200,14 @@ export const useClubLogoGame = ({
     guesses,
     gameStatus,
     isSearchModalVisible,
-    attemptsLeft: Math.max(0, MAX_ATTEMPTS - guesses.length),
-    maxAttempts: MAX_ATTEMPTS,
+    attemptsLeft: Math.max(0, effectiveMaxAttempts - guesses.length),
+    maxAttempts: effectiveMaxAttempts,
+    canRevive: !hasRevived,
     openSearch,
     closeSearch,
     submitClubGuess,
+    reviveGame,
+    finalizeLoss,
     resetGame,
   };
 };

@@ -100,10 +100,13 @@ export const CareerPathScreen: React.FC<ICareerPathScreenProps> = React.memo(
       gameStatus,
       attemptsLeft,
       maxAttempts,
+      canRevive,
       isSearchModalVisible,
       openSearch,
       closeSearch,
       submitGuess,
+      reviveGame,
+      finalizeLoss,
       resetGame,
     } = useCareerPathGame({
       targetPlayerId,
@@ -253,7 +256,20 @@ export const CareerPathScreen: React.FC<ICareerPathScreenProps> = React.memo(
               goToNextLevel();
             }
           }}
-          onClose={() => setIsResultModalVisible(false)}
+          onRevive={
+            canRevive
+              ? () => {
+                  setIsResultModalVisible(false);
+                  reviveGame();
+                }
+              : undefined
+          }
+          onClose={() => {
+            setIsResultModalVisible(false);
+            if (gameStatus === 'lost') {
+              finalizeLoss();
+            }
+          }}
         />
       </SafeAreaView>
     );
