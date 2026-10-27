@@ -18,6 +18,7 @@ import { HintWithAdButton } from '../features/monetization/components/HintWithAd
 import { WhoAreYaWinModal } from '../features/whoAreYa/components/WhoAreYaWinModal';
 import { useChallengeDataLoader } from '../hooks/useChallengeDataLoader';
 import { getAuthoritativeUtcDate } from '../services/authoritativeTime';
+import { shareService } from '../services/shareService';
 import { Colors } from '../theme/colors';
 import { Spacing } from '../theme/spacing';
 import { Typography } from '../theme/typography';
@@ -172,6 +173,7 @@ export const FootballBingoScreen: React.FC<IFootballBingoScreenProps> = React.me
           rewardCoins={isCurrentReplay ? 0 : isDaily ? 40 : 25}
           attemptsUsed={totalDeckSize - playersLeftInDeck}
           maxAttempts={totalDeckSize}
+          customShareGrid={shareService.generateBingoGrid(tiles)}
           leagueLabel={selectedLeagueMode === 'super_lig' ? 'Süper Lig' : 'Global 5 Lig'}
           isDaily={isDaily}
           onRevive={

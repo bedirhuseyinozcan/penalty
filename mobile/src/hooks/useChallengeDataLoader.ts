@@ -5,6 +5,7 @@ import { levelCacheService } from '../services/levelCacheService';
 import { getAuthoritativeUtcDate } from '../services/authoritativeTime';
 import { useSettingsStore } from '../stores/useSettingsStore';
 import { useGameStore } from '../stores/useGameStore';
+import { useInterstitialAd } from '../features/monetization/hooks/useInterstitialAd';
 
 export interface IUnifiedChallengeData {
   targetPlayerId: string;
@@ -40,6 +41,7 @@ export const useChallengeDataLoader = ({
   const selectedLeagueMode = useSettingsStore((s) => s.selectedLeagueMode);
   const getUnlockedLevel = useGameStore((s) => s.getUnlockedLevel);
   const isDailyCompleted = useGameStore((s) => s.isDailyCompleted);
+  const { showInterstitialIfDue } = useInterstitialAd();
 
   const [isLoading, setIsLoading] = useState(true);
   const [challengeData, setChallengeData] = useState<IUnifiedChallengeData | null>(null);
@@ -152,9 +154,11 @@ export const useChallengeDataLoader = ({
   }, [loadData]);
 
   const goToNextLevel = useCallback(() => {
-    setCurrentLevel((prev) => prev + 1);
-    setIsCurrentReplay(false);
-  }, []);
+    showInterstitialIfDue(currentLevel, () => {
+      setCurrentLevel((prev) => prev + 1);
+      setIsCurrentReplay(false);
+    });
+  }, [currentLevel, showInterstitialIfDue]);
 
   return {
     isLoading,

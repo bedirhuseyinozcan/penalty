@@ -1,6 +1,7 @@
 import { Platform } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useSettingsStore } from '../stores/useSettingsStore';
+import { soundService } from './soundService';
 
 class HapticsService {
   private isEnabled(): boolean {
@@ -13,6 +14,7 @@ class HapticsService {
   }
 
   public async selection(): Promise<void> {
+    soundService.playTap();
     if (!this.isEnabled()) return;
     try {
       await Haptics.selectionAsync();
@@ -20,6 +22,7 @@ class HapticsService {
   }
 
   public async light(): Promise<void> {
+    soundService.playTap();
     if (!this.isEnabled()) return;
     try {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -27,6 +30,7 @@ class HapticsService {
   }
 
   public async medium(): Promise<void> {
+    soundService.playTap();
     if (!this.isEnabled()) return;
     try {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -34,6 +38,7 @@ class HapticsService {
   }
 
   public async heavy(): Promise<void> {
+    soundService.playTap();
     if (!this.isEnabled()) return;
     try {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
@@ -41,6 +46,7 @@ class HapticsService {
   }
 
   public async success(): Promise<void> {
+    soundService.playSuccess();
     if (!this.isEnabled()) return;
     try {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -48,6 +54,7 @@ class HapticsService {
   }
 
   public async warning(): Promise<void> {
+    soundService.playWarning();
     if (!this.isEnabled()) return;
     try {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
@@ -55,6 +62,7 @@ class HapticsService {
   }
 
   public async error(): Promise<void> {
+    soundService.playError();
     if (!this.isEnabled()) return;
     try {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);

@@ -35,6 +35,30 @@ class ShareService {
       .join('\n');
   }
 
+  public generateTicTacToeGrid(cells: Array<{ isFilled: boolean }>): string[] {
+    if (!cells || cells.length < 9) return [];
+    const rows: string[] = [];
+    for (let r = 0; r < 3; r++) {
+      const rowStr = [0, 1, 2]
+        .map((c) => (cells[r * 3 + c]?.isFilled ? '🟩' : '⬜'))
+        .join('');
+      rows.push(rowStr);
+    }
+    return rows;
+  }
+
+  public generateBingoGrid(tiles: Array<{ isMatched: boolean }>): string[] {
+    if (!tiles || tiles.length < 16) return [];
+    const rows: string[] = [];
+    for (let r = 0; r < 4; r++) {
+      const rowStr = [0, 1, 2, 3]
+        .map((c) => (tiles[r * 4 + c]?.isMatched ? '🟩' : '⬜'))
+        .join('');
+      rows.push(rowStr);
+    }
+    return rows;
+  }
+
   public async shareWhoAreYa(params: IShareWhoAreYaParams): Promise<boolean> {
     const { isWon, attemptsUsed, maxAttempts, currentStreak, guesses, leagueLabel } = params;
 

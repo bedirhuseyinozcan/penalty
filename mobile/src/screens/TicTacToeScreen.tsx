@@ -18,6 +18,7 @@ import { HintWithAdButton } from '../features/monetization/components/HintWithAd
 import { WhoAreYaWinModal } from '../features/whoAreYa/components/WhoAreYaWinModal';
 import { useChallengeDataLoader } from '../hooks/useChallengeDataLoader';
 import { getAuthoritativeUtcDate } from '../services/authoritativeTime';
+import { shareService } from '../services/shareService';
 import { Colors } from '../theme/colors';
 import { Spacing, BorderRadius } from '../theme/spacing';
 import { Typography } from '../theme/typography';
@@ -150,6 +151,7 @@ export const TicTacToeScreen: React.FC<ITicTacToeScreenProps> = React.memo(
             cells={cells}
             selectedCellIndex={selectedCellIndex}
             onSelectCell={handleSelectCell}
+            lastFeedback={lastFeedback}
             disabled={gameStatus !== 'playing'}
           />
 
@@ -187,6 +189,7 @@ export const TicTacToeScreen: React.FC<ITicTacToeScreenProps> = React.memo(
           rewardCoins={isCurrentReplay ? 0 : isDaily ? 35 : 25}
           attemptsUsed={maxAttempts - attemptsLeft}
           maxAttempts={maxAttempts}
+          customShareGrid={shareService.generateTicTacToeGrid(cells)}
           leagueLabel={selectedLeagueMode === 'super_lig' ? 'Süper Lig' : 'Global 5 Lig'}
           isDaily={isDaily}
           onRevive={

@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Image, Animated } from 'react-native';
 import { ILightPlayer, searchEngine } from '../../../services/searchEngine';
+import { useFeedbackAnimation } from '../../../hooks/useFeedbackAnimation';
 import { Colors } from '../../../theme/colors';
 import { Spacing, BorderRadius } from '../../../theme/spacing';
 import { Typography } from '../../../theme/typography';
@@ -50,6 +51,17 @@ export const BingoCurrentPlayerCard: React.FC<IBingoCurrentPlayerCardProps> = Re
     onSkip,
     disabled = false,
   }) => {
+    const { animatedStyle, triggerShake, triggerPulse } = useFeedbackAnimation();
+
+    useEffect(() => {
+      if (!feedbackBanner) return;
+      if (feedbackBanner.type === 'penalty') {
+        triggerShake();
+      } else if (feedbackBanner.type === 'success') {
+        triggerPulse();
+      }
+    }, [feedbackBanner, triggerShake, triggerPulse]);
+
     return (
       <View style={styles.cardWrapper}>
         <View style={styles.topStatsRow}>
@@ -89,7 +101,7 @@ export const BingoCurrentPlayerCard: React.FC<IBingoCurrentPlayerCardProps> = Re
           </View>
         )}
         {player ? (
-          <View style={[styles.playerCard, player.isLegend && styles.legendCard]}>
+          <Animated.View style={[styles.playerCard, player.isLegend && styles.legendCard, animatedStyle]}>
             <View style={styles.playerMainRow}>
               <PlayerAvatar key={player.id} player={player} />
 
@@ -118,7 +130,7 @@ export const BingoCurrentPlayerCard: React.FC<IBingoCurrentPlayerCardProps> = Re
                 <Text style={styles.skipSub}>⏭️ -1</Text>
               </TouchableOpacity>
             </View>
-          </View>
+          </Animated.View>
         ) : (
           <View style={styles.deckEmptyBox}>
             <Text style={styles.deckEmptyText}>Destedeki tüm oyuncular tamamlandı!</Text>

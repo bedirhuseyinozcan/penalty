@@ -8,6 +8,7 @@ import {
   Image,
   Animated,
   Alert,
+  Platform,
 } from 'react-native';
 import { Colors } from '../../../theme/colors';
 import { Spacing, BorderRadius } from '../../../theme/spacing';
@@ -17,7 +18,10 @@ import { shareService } from '../../../services/shareService';
 import { useGameStore } from '../../../stores/useGameStore';
 import { useRewardedAd } from '../../monetization/hooks/useRewardedAd';
 import { hapticsService } from '../../../services/hapticsService';
+import { soundService } from '../../../services/soundService';
 import { searchEngine } from '../../../services/searchEngine';
+
+const USE_NATIVE_DRIVER = Platform.OS !== 'web';
 
 interface IWhoAreYaWinModalProps {
   visible: boolean;
@@ -29,6 +33,7 @@ interface IWhoAreYaWinModalProps {
   attemptsUsed: number;
   maxAttempts: number;
   guesses?: IWhoAreYaGuess[];
+  customShareGrid?: string[];
   leagueLabel?: string;
   isDaily?: boolean;
   onNextLevel?: () => void;
@@ -46,6 +51,7 @@ interface IModalDisplayData {
   attemptsUsed: number;
   maxAttempts: number;
   guesses: IWhoAreYaGuess[];
+  customShareGrid?: string[];
   leagueLabel?: string;
   isDaily: boolean;
 }
@@ -61,6 +67,7 @@ export const WhoAreYaWinModal: React.FC<IWhoAreYaWinModalProps> = React.memo(
     attemptsUsed,
     maxAttempts,
     guesses = [],
+    customShareGrid,
     leagueLabel,
     isDaily = false,
     onNextLevel,
@@ -86,6 +93,9 @@ export const WhoAreYaWinModal: React.FC<IWhoAreYaWinModalProps> = React.memo(
 
     useEffect(() => {
       if (visible) {
+        if (status === 'won') {
+          soundService.playWinFanfare();
+        }
         setFrozenData({
           status,
           playerName,
@@ -95,6 +105,7 @@ export const WhoAreYaWinModal: React.FC<IWhoAreYaWinModalProps> = React.memo(
           attemptsUsed,
           maxAttempts,
           guesses,
+          customShareGrid,
           leagueLabel,
           isDaily,
         });
@@ -107,12 +118,12 @@ export const WhoAreYaWinModal: React.FC<IWhoAreYaWinModalProps> = React.memo(
             toValue: 1,
             friction: 7,
             tension: 55,
-            useNativeDriver: true,
+            useNativeDriver: USE_NATIVE_DRIVER,
           }),
           Animated.timing(opacityAnim, {
             toValue: 1,
             duration: 220,
-            useNativeDriver: true,
+            useNativeDriver: USE_NATIVE_DRIVER,
           }),
         ]).start();
       } else {
@@ -133,6 +144,7 @@ export const WhoAreYaWinModal: React.FC<IWhoAreYaWinModalProps> = React.memo(
       attemptsUsed,
       maxAttempts,
       guesses,
+      customShareGrid,
       leagueLabel,
       isDaily,
     };
@@ -159,6 +171,7 @@ export const WhoAreYaWinModal: React.FC<IWhoAreYaWinModalProps> = React.memo(
     const displayRewardCoins = activeData.rewardCoins;
     const displayIsDaily = activeData.isDaily;
     const displayGuesses = activeData.guesses;
+    const displayCustomShareGrid = activeData.customShareGrid;
     const displayLeagueLabel = activeData.leagueLabel;
 
     const handleShare = useCallback(async () => {
@@ -180,12 +193,22 @@ export const WhoAreYaWinModal: React.FC<IWhoAreYaWinModalProps> = React.memo(
           attemptsUsed: displayAttemptsUsed,
           maxAttempts: displayMaxAttempts,
           currentStreak,
+          customGrid: displayCustomShareGrid,
         });
       }
       if (success) {
         setHasShared(true);
       }
-    }, [isWon, displayAttemptsUsed, displayMaxAttempts, currentStreak, displayGuesses, displayLeagueLabel, displayName]);
+    }, [
+      isWon,
+      displayAttemptsUsed,
+      displayMaxAttempts,
+      currentStreak,
+      displayGuesses,
+      displayCustomShareGrid,
+      displayLeagueLabel,
+      displayName,
+    ]);
 
     const handleReviveWithCoins = useCallback(() => {
       if (!onRevive) return;

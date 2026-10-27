@@ -9,8 +9,10 @@ import {
   StyleSheet,
   ActivityIndicator,
   Platform,
+  Animated,
 } from 'react-native';
 import { useClubLogoGame } from '../features/clubLogo/hooks/useClubLogoGame';
+import { useFeedbackAnimation } from '../hooks/useFeedbackAnimation';
 import { OfflineClubSearchModal } from '../features/clubLogo/components/OfflineClubSearchModal';
 import { WhoAreYaWinModal } from '../features/whoAreYa/components/WhoAreYaWinModal';
 import { HintWithAdButton } from '../features/monetization/components/HintWithAdButton';
@@ -111,6 +113,17 @@ export const ClubLogoScreen: React.FC<IClubLogoScreenProps> = React.memo(
       setLogoError(false);
     }, [logoUrl]);
 
+    const { animatedStyle, triggerShake, triggerPulse } = useFeedbackAnimation();
+
+    useEffect(() => {
+      if (guesses.length === 0) return;
+      if (guesses[0]?.isCorrect) {
+        triggerPulse();
+      } else {
+        triggerShake();
+      }
+    }, [guesses, triggerShake, triggerPulse]);
+
     useEffect(() => {
       if (gameStatus !== 'playing') {
         setIsResultModalVisible(true);
@@ -156,7 +169,7 @@ export const ClubLogoScreen: React.FC<IClubLogoScreenProps> = React.memo(
             />
           )}
 
-          <View style={styles.heroCard}>
+          <Animated.View style={[styles.heroCard, animatedStyle]}>
             <View style={styles.clarityBadge}>
               <Text style={styles.clarityText}>🔍 Netlik: %{clarityPercent}</Text>
             </View>
@@ -200,7 +213,7 @@ export const ClubLogoScreen: React.FC<IClubLogoScreenProps> = React.memo(
                 ? `🛡️ ${targetClubName}`
                 : 'Her yanlış tahminde kulüp arması biraz daha netleşir!'}
             </Text>
-          </View>
+          </Animated.View>
 
           <View style={styles.hintContainer}>
             <HintWithAdButton

@@ -1,8 +1,9 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, Text, StyleSheet, Animated } from 'react-native';
 import { IGridCriterion, ITicTacToeCellState } from '../types';
 import { TicTacToeCell } from './TicTacToeCell';
 import { ClubLogo } from '../../../components/common/ClubLogo';
+import { useFeedbackAnimation } from '../../../hooks/useFeedbackAnimation';
 import { Colors } from '../../../theme/colors';
 import { Spacing, BorderRadius } from '../../../theme/spacing';
 import { Typography } from '../../../theme/typography';
@@ -13,13 +14,25 @@ interface ITicTacToeBoardProps {
   cells: ITicTacToeCellState[];
   selectedCellIndex: number | null;
   onSelectCell: (index: number) => void;
+  lastFeedback?: string | null;
   disabled?: boolean;
 }
 
 export const TicTacToeBoard: React.FC<ITicTacToeBoardProps> = React.memo(
-  ({ rows, cols, cells, selectedCellIndex, onSelectCell, disabled = false }) => {
+  ({ rows, cols, cells, selectedCellIndex, onSelectCell, lastFeedback, disabled = false }) => {
+    const { animatedStyle, triggerShake, triggerPulse } = useFeedbackAnimation();
+
+    useEffect(() => {
+      if (!lastFeedback) return;
+      if (lastFeedback.startsWith('❌') || lastFeedback.startsWith('⚠️')) {
+        triggerShake();
+      } else if (lastFeedback.startsWith('✅') || lastFeedback.startsWith('💡')) {
+        triggerPulse();
+      }
+    }, [lastFeedback, triggerShake, triggerPulse]);
+
     return (
-      <View style={styles.boardWrapper}>
+      <Animated.View style={[styles.boardWrapper, animatedStyle]}>
         {/* Top Header Row (Corner empty + 3 Column headers) */}
         <View style={styles.gridRow}>
           <View style={styles.cornerHeader}>
@@ -84,7 +97,7 @@ export const TicTacToeBoard: React.FC<ITicTacToeBoardProps> = React.memo(
             })}
           </View>
         ))}
-      </View>
+      </Animated.View>
     );
   }
 );
