@@ -301,10 +301,23 @@ export function generateTicTacToeBoard(
     ];
 
     let allValid = true;
+    const minMatchesRequired = attempt < 70 ? 3 : 2;
+
     for (let r = 0; r < 3; r++) {
       for (let c = 0; c < 3; c++) {
         const matches = getMatchingPlayersForCell(safePool, testRows[r], testCols[c]);
-        if (matches.length === 0) {
+        if (matches.length < minMatchesRequired) {
+          allValid = false;
+          break;
+        }
+        const hasRecognizable = matches.some(
+          (p) =>
+            p.isLegend ||
+            (p.trophies && p.trophies.length > 0) ||
+            (p.age && p.age >= 21 && p.club)
+        );
+
+        if (!hasRecognizable) {
           allValid = false;
           break;
         }
@@ -320,31 +333,49 @@ export function generateTicTacToeBoard(
   }
 
   if (!selectedCols || !selectedRows) {
-    const fallbackClubs = topClubs.slice(0, 3);
+    const globalFallbackPresets: [string, string, string][] = [
+      ['Real Madrid', 'Barcelona', 'Bayern München'],
+      ['Manchester City', 'Liverpool', 'Arsenal'],
+      ['Paris Saint-Germain', 'Juventus', 'Chelsea'],
+    ];
+
+    const superLigFallbackPresets: [string, string, string][] = [
+      ['Galatasaray', 'Fenerbahçe', 'Beşiktaş'],
+      ['Galatasaray', 'Trabzonspor', 'Başakşehir'],
+      ['Fenerbahçe', 'Beşiktaş', 'Trabzonspor'],
+    ];
+
+    const presets = leagueMode === 'super_lig' ? superLigFallbackPresets : globalFallbackPresets;
+    const presetIndex = Math.floor(rng() * presets.length);
+    const chosenClubs = presets[presetIndex];
+
     selectedCols = [
       {
-        id: `col_club_${fallbackClubs[0] || 'Galatasaray'}`,
+        id: `col_club_${chosenClubs[0]}`,
         type: 'club',
-        value: fallbackClubs[0] || 'Galatasaray',
-        label: fallbackClubs[0] || 'Galatasaray',
+        value: chosenClubs[0],
+        label: searchEngine.getClubByName(chosenClubs[0])?.name || chosenClubs[0],
         subLabel: 'Kulüp',
         badgeText: '🛡️',
+        logoUrl: searchEngine.getClubByName(chosenClubs[0])?.logoUrl,
       },
       {
-        id: `col_club_${fallbackClubs[1] || 'Fenerbahçe'}`,
+        id: `col_club_${chosenClubs[1]}`,
         type: 'club',
-        value: fallbackClubs[1] || 'Fenerbahçe',
-        label: fallbackClubs[1] || 'Fenerbahçe',
+        value: chosenClubs[1],
+        label: searchEngine.getClubByName(chosenClubs[1])?.name || chosenClubs[1],
         subLabel: 'Kulüp',
         badgeText: '🛡️',
+        logoUrl: searchEngine.getClubByName(chosenClubs[1])?.logoUrl,
       },
       {
-        id: `col_club_${fallbackClubs[2] || 'Beşiktaş'}`,
+        id: `col_club_${chosenClubs[2]}`,
         type: 'club',
-        value: fallbackClubs[2] || 'Beşiktaş',
-        label: fallbackClubs[2] || 'Beşiktaş',
+        value: chosenClubs[2],
+        label: searchEngine.getClubByName(chosenClubs[2])?.name || chosenClubs[2],
         subLabel: 'Kulüp',
         badgeText: '🛡️',
+        logoUrl: searchEngine.getClubByName(chosenClubs[2])?.logoUrl,
       },
     ];
     selectedRows = [

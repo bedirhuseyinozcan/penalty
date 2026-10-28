@@ -27,10 +27,18 @@ export const useTicTacToeGame = ({
   isReplay = false,
   dailyKey = '',
 }: IUseTicTacToeGameProps) => {
-  const board = useMemo(
-    () => generateTicTacToeBoard(seedKey, leagueMode),
-    [seedKey, leagueMode]
-  );
+  const board = useMemo(() => {
+    if (isDaily && dailyKey) {
+      const frozen = dailyStorage.getFrozenSetup<import('../types').ITicTacToeBoardData>(dailyKey);
+      if (frozen && frozen.rows && frozen.cols && frozen.cells) {
+        return frozen;
+      }
+      const generated = generateTicTacToeBoard(seedKey, leagueMode);
+      dailyStorage.saveFrozenSetup(dailyKey, generated);
+      return generated;
+    }
+    return generateTicTacToeBoard(seedKey, leagueMode);
+  }, [seedKey, leagueMode, isDaily, dailyKey]);
 
   const [cells, setCells] = useState<ITicTacToeCellState[]>(board.cells);
   const [selectedCellIndex, setSelectedCellIndex] = useState<number | null>(null);
@@ -88,18 +96,113 @@ export const useTicTacToeGame = ({
     [gameStatus, cells]
   );
 
+  const openGeneralSearch = useCallback(() => {
+    if (gameStatus !== 'playing') return;
+    hapticsService.selection();
+    setSelectedCellIndex(null);
+    setIsSearchModalVisible(true);
+  }, [gameStatus]);
+
   const closeSearch = useCallback(() => {
     setIsSearchModalVisible(false);
   }, []);
 
   const submitCellGuess = useCallback(
     (player: ILightPlayer) => {
-      if (gameStatus !== 'playing' || selectedCellIndex === null) return;
+      if (gameStatus !== 'playing') return;
 
       if (usedPlayerIds.has(player.id)) {
         hapticsService.warning();
         setLastFeedback(`⚠️ ${player.name} zaten başka bir kutuda kullanıldı!`);
         closeSearch();
+        return;
+      }
+
+      if (selectedCellIndex === null) {
+        const emptyCells = cells.filter((c) => !c.isFilled);
+        const matchingIndices = emptyCells
+          .filter((c) => {
+            const rowCrit = board.rows[c.row];
+            const colCrit = board.cols[c.col];
+            return (
+              doesPlayerMatchCriterion(player, rowCrit) &&
+              doesPlayerMatchCriterion(player, colCrit)
+            );
+          })
+          .map((c) => c.cellIndex);
+
+        const nextAttempts = attemptsUsed + 1;
+        setAttemptsUsed(nextAttempts);
+        closeSearch();
+
+        if (matchingIndices.length > 0) {
+          hapticsService.success();
+          const nextCells = cells.map((c) => {
+            if (matchingIndices.includes(c.cellIndex)) {
+              const rarityLabel =
+                c.possibleCount <= 6 ? '🦄 Nadir' : c.possibleCount <= 14 ? '⭐ Seçkin' : '🔥 Popüler';
+              return { ...c, isFilled: true, guessedPlayer: player, rarityLabel };
+            }
+            return c;
+          });
+          setCells(nextCells);
+
+          if (matchingIndices.length >= 2) {
+            setLastFeedback(
+              `🔥 SÜPER KOMBO! ${player.name} aynı anda ${matchingIndices.length} hücreyi birden doldurdu!`
+            );
+          } else {
+            const matchedCell = cells[matchingIndices[0]];
+            const rLabel = board.rows[matchedCell.row].label;
+            const cLabel = board.cols[matchedCell.col].label;
+            setLastFeedback(`✅ Harika! ${player.name} (${rLabel} × ${cLabel}) kutusuna yerleşti!`);
+          }
+
+          const allFilled = nextCells.every((c) => c.isFilled);
+          if (allFilled) {
+            setGameStatus('won');
+            recordGameResult(true, nextAttempts);
+
+            if (!isReplay) {
+              if (isDaily && dailyKey) {
+                const { streakBonusCoins } = markDailyCompleted(dailyKey, true);
+                addCoins(45 + streakBonusCoins);
+                addXp(100);
+                dailyStorage.saveSession(dailyKey, {
+                  dailyKey,
+                  status: 'won',
+                  guesses: nextCells,
+                  attemptsUsed: nextAttempts,
+                  completedAt: new Date().toISOString(),
+                });
+              } else {
+                addCoins(35);
+                addXp(70);
+                unlockNextLevel('ticTacToe', leagueMode);
+              }
+            }
+          }
+        } else {
+          hapticsService.error();
+          setLastFeedback(`❌ ${player.name} tahtadaki hiçbir açık kutu kriterine uymuyor.`);
+
+          if (nextAttempts >= effectiveMaxAttempts) {
+            setGameStatus('lost');
+            if (hasRevived) {
+              recordGameResult(false, nextAttempts);
+              if (isDaily && dailyKey) {
+                dailyStorage.saveSession(dailyKey, {
+                  dailyKey,
+                  status: 'lost',
+                  guesses: cells,
+                  attemptsUsed: nextAttempts,
+                  completedAt: new Date().toISOString(),
+                });
+                markDailyCompleted(dailyKey, false);
+              }
+            }
+          }
+        }
         return;
       }
 
@@ -117,13 +220,16 @@ export const useTicTacToeGame = ({
 
       if (isMatch) {
         hapticsService.success();
+        const rarityLabel =
+          targetCell.possibleCount <= 6 ? '🦄 Nadir' : targetCell.possibleCount <= 14 ? '⭐ Seçkin' : '🔥 Popüler';
+
         const nextCells = cells.map((c, idx) =>
           idx === selectedCellIndex
-            ? { ...c, isFilled: true, guessedPlayer: player }
+            ? { ...c, isFilled: true, guessedPlayer: player, rarityLabel }
             : c
         );
         setCells(nextCells);
-        setLastFeedback(`✅ Doğru! ${player.name} (${rowCrit.label} × ${colCrit.label})`);
+        setLastFeedback(`✅ Doğru! ${player.name} (${rowCrit.label} × ${colCrit.label}) • [${rarityLabel}]`);
 
         const allFilled = nextCells.every((c) => c.isFilled);
         if (allFilled) {
@@ -269,6 +375,7 @@ export const useTicTacToeGame = ({
     isSearchModalVisible,
     lastFeedback,
     handleSelectCell,
+    openGeneralSearch,
     closeSearch,
     submitCellGuess,
     revealRandomCellWithHint,

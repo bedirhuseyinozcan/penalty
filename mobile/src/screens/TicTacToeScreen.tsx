@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   ScrollView,
   Platform,
+  TouchableOpacity,
 } from 'react-native';
 import { GameNavbar } from '../components/common/GameNavbar';
 import { DailyHeaderCard } from '../features/daily/components/DailyHeaderCard';
@@ -72,6 +73,7 @@ export const TicTacToeScreen: React.FC<ITicTacToeScreenProps> = React.memo(
       isSearchModalVisible,
       lastFeedback,
       handleSelectCell,
+      openGeneralSearch,
       closeSearch,
       submitCellGuess,
       revealRandomCellWithHint,
@@ -136,8 +138,18 @@ export const TicTacToeScreen: React.FC<ITicTacToeScreenProps> = React.memo(
                 Doldurulan: <Text style={styles.progressHighlight}>{filledCount}/9</Text>
               </Text>
             </View>
-            <Text style={styles.rulesHint}>Hücreye bas, kriterlere uyan futbolcuyu ara!</Text>
+            <TouchableOpacity
+              style={styles.jokerSearchBtn}
+              activeOpacity={0.8}
+              onPress={openGeneralSearch}
+              disabled={gameStatus !== 'playing'}
+            >
+              <Text style={styles.jokerSearchText}>⚡ Serbest Oyuncu Ara</Text>
+            </TouchableOpacity>
           </View>
+          <Text style={styles.rulesHintSub}>
+            Kutu seçebilir veya yukarıdan bir futbolcu aratarak birden fazla kutuyu birden doldurabilirsin!
+          </Text>
 
           {lastFeedback && (
             <View style={styles.feedbackBanner}>
@@ -273,6 +285,27 @@ const styles = StyleSheet.create({
     ...Typography.caption,
     color: Colors.textMuted,
     fontSize: 10,
+  },
+  rulesHintSub: {
+    ...Typography.caption,
+    color: Colors.textMuted,
+    fontSize: 11,
+    paddingHorizontal: Spacing.md,
+    marginBottom: Spacing.xs,
+  },
+  jokerSearchBtn: {
+    backgroundColor: 'rgba(59, 130, 246, 0.18)',
+    borderWidth: 1,
+    borderColor: 'rgba(59, 130, 246, 0.5)',
+    paddingVertical: 5,
+    paddingHorizontal: Spacing.sm,
+    borderRadius: BorderRadius.md,
+  },
+  jokerSearchText: {
+    ...Typography.caption,
+    color: '#60A5FA',
+    fontWeight: '700',
+    fontSize: 11,
   },
   feedbackBanner: {
     backgroundColor: Colors.surfaceLight,

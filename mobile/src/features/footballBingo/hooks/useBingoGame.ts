@@ -25,10 +25,18 @@ export const useBingoGame = ({
   isReplay = false,
   dailyKey = '',
 }: IUseBingoGameProps) => {
-  const setup = useMemo(
-    () => generateBingoSetup(seedKey, leagueMode),
-    [seedKey, leagueMode]
-  );
+  const setup = useMemo(() => {
+    if (isDaily && dailyKey) {
+      const frozen = dailyStorage.getFrozenSetup<ReturnType<typeof generateBingoSetup>>(dailyKey);
+      if (frozen && frozen.tiles && frozen.deck) {
+        return frozen;
+      }
+      const generated = generateBingoSetup(seedKey, leagueMode);
+      dailyStorage.saveFrozenSetup(dailyKey, generated);
+      return generated;
+    }
+    return generateBingoSetup(seedKey, leagueMode);
+  }, [seedKey, leagueMode, isDaily, dailyKey]);
 
   const [tiles, setTiles] = useState<IBingoTile[]>(setup.tiles);
   const [currentIndex, setCurrentIndex] = useState<number>(0);

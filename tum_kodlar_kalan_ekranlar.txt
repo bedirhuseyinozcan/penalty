@@ -17,8 +17,10 @@ import {
   StyleSheet,
   ActivityIndicator,
   Platform,
+  Animated,
 } from 'react-native';
 import { useClubLogoGame } from '../features/clubLogo/hooks/useClubLogoGame';
+import { useFeedbackAnimation } from '../hooks/useFeedbackAnimation';
 import { OfflineClubSearchModal } from '../features/clubLogo/components/OfflineClubSearchModal';
 import { WhoAreYaWinModal } from '../features/whoAreYa/components/WhoAreYaWinModal';
 import { HintWithAdButton } from '../features/monetization/components/HintWithAdButton';
@@ -119,6 +121,17 @@ export const ClubLogoScreen: React.FC<IClubLogoScreenProps> = React.memo(
       setLogoError(false);
     }, [logoUrl]);
 
+    const { animatedStyle, triggerShake, triggerPulse } = useFeedbackAnimation();
+
+    useEffect(() => {
+      if (guesses.length === 0) return;
+      if (guesses[0]?.isCorrect) {
+        triggerPulse();
+      } else {
+        triggerShake();
+      }
+    }, [guesses, triggerShake, triggerPulse]);
+
     useEffect(() => {
       if (gameStatus !== 'playing') {
         setIsResultModalVisible(true);
@@ -164,7 +177,7 @@ export const ClubLogoScreen: React.FC<IClubLogoScreenProps> = React.memo(
             />
           )}
 
-          <View style={styles.heroCard}>
+          <Animated.View style={[styles.heroCard, animatedStyle]}>
             <View style={styles.clarityBadge}>
               <Text style={styles.clarityText}>🔍 Netlik: %{clarityPercent}</Text>
             </View>
@@ -208,7 +221,7 @@ export const ClubLogoScreen: React.FC<IClubLogoScreenProps> = React.memo(
                 ? `🛡️ ${targetClubName}`
                 : 'Her yanlış tahminde kulüp arması biraz daha netleşir!'}
             </Text>
-          </View>
+          </Animated.View>
 
           <View style={styles.hintContainer}>
             <HintWithAdButton
@@ -518,6 +531,7 @@ import { HintWithAdButton } from '../features/monetization/components/HintWithAd
 import { WhoAreYaWinModal } from '../features/whoAreYa/components/WhoAreYaWinModal';
 import { useChallengeDataLoader } from '../hooks/useChallengeDataLoader';
 import { getAuthoritativeUtcDate } from '../services/authoritativeTime';
+import { shareService } from '../services/shareService';
 import { Colors } from '../theme/colors';
 import { Spacing } from '../theme/spacing';
 import { Typography } from '../theme/typography';
@@ -672,6 +686,7 @@ export const FootballBingoScreen: React.FC<IFootballBingoScreenProps> = React.me
           rewardCoins={isCurrentReplay ? 0 : isDaily ? 40 : 25}
           attemptsUsed={totalDeckSize - playersLeftInDeck}
           maxAttempts={totalDeckSize}
+          customShareGrid={shareService.generateBingoGrid(tiles)}
           leagueLabel={selectedLeagueMode === 'super_lig' ? 'Süper Lig' : 'Global 5 Lig'}
           isDaily={isDaily}
           onRevive={
@@ -747,6 +762,7 @@ import {
   ActivityIndicator,
   ScrollView,
   Platform,
+  TouchableOpacity,
 } from 'react-native';
 import { GameNavbar } from '../components/common/GameNavbar';
 import { DailyHeaderCard } from '../features/daily/components/DailyHeaderCard';
@@ -758,6 +774,7 @@ import { HintWithAdButton } from '../features/monetization/components/HintWithAd
 import { WhoAreYaWinModal } from '../features/whoAreYa/components/WhoAreYaWinModal';
 import { useChallengeDataLoader } from '../hooks/useChallengeDataLoader';
 import { getAuthoritativeUtcDate } from '../services/authoritativeTime';
+import { shareService } from '../services/shareService';
 import { Colors } from '../theme/colors';
 import { Spacing, BorderRadius } from '../theme/spacing';
 import { Typography } from '../theme/typography';
@@ -811,6 +828,7 @@ export const TicTacToeScreen: React.FC<ITicTacToeScreenProps> = React.memo(
       isSearchModalVisible,
       lastFeedback,
       handleSelectCell,
+      openGeneralSearch,
       closeSearch,
       submitCellGuess,
       revealRandomCellWithHint,
@@ -875,8 +893,18 @@ export const TicTacToeScreen: React.FC<ITicTacToeScreenProps> = React.memo(
                 Doldurulan: <Text style={styles.progressHighlight}>{filledCount}/9</Text>
               </Text>
             </View>
-            <Text style={styles.rulesHint}>Hücreye bas, kriterlere uyan futbolcuyu ara!</Text>
+            <TouchableOpacity
+              style={styles.jokerSearchBtn}
+              activeOpacity={0.8}
+              onPress={openGeneralSearch}
+              disabled={gameStatus !== 'playing'}
+            >
+              <Text style={styles.jokerSearchText}>⚡ Serbest Oyuncu Ara</Text>
+            </TouchableOpacity>
           </View>
+          <Text style={styles.rulesHintSub}>
+            Kutu seçebilir veya yukarıdan bir futbolcu aratarak birden fazla kutuyu birden doldurabilirsin!
+          </Text>
 
           {lastFeedback && (
             <View style={styles.feedbackBanner}>
@@ -890,6 +918,7 @@ export const TicTacToeScreen: React.FC<ITicTacToeScreenProps> = React.memo(
             cells={cells}
             selectedCellIndex={selectedCellIndex}
             onSelectCell={handleSelectCell}
+            lastFeedback={lastFeedback}
             disabled={gameStatus !== 'playing'}
           />
 
@@ -927,6 +956,7 @@ export const TicTacToeScreen: React.FC<ITicTacToeScreenProps> = React.memo(
           rewardCoins={isCurrentReplay ? 0 : isDaily ? 35 : 25}
           attemptsUsed={maxAttempts - attemptsLeft}
           maxAttempts={maxAttempts}
+          customShareGrid={shareService.generateTicTacToeGrid(cells)}
           leagueLabel={selectedLeagueMode === 'super_lig' ? 'Süper Lig' : 'Global 5 Lig'}
           isDaily={isDaily}
           onRevive={
@@ -1010,6 +1040,27 @@ const styles = StyleSheet.create({
     ...Typography.caption,
     color: Colors.textMuted,
     fontSize: 10,
+  },
+  rulesHintSub: {
+    ...Typography.caption,
+    color: Colors.textMuted,
+    fontSize: 11,
+    paddingHorizontal: Spacing.md,
+    marginBottom: Spacing.xs,
+  },
+  jokerSearchBtn: {
+    backgroundColor: 'rgba(59, 130, 246, 0.18)',
+    borderWidth: 1,
+    borderColor: 'rgba(59, 130, 246, 0.5)',
+    paddingVertical: 5,
+    paddingHorizontal: Spacing.sm,
+    borderRadius: BorderRadius.md,
+  },
+  jokerSearchText: {
+    ...Typography.caption,
+    color: '#60A5FA',
+    fontWeight: '700',
+    fontSize: 11,
   },
   feedbackBanner: {
     backgroundColor: Colors.surfaceLight,

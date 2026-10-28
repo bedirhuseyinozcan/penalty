@@ -13,6 +13,7 @@ import {
   loadLocalBioAndPerfMaps,
   buildChronologicalCareerPath,
 } from './syncLiveTransfermarktApi';
+import { TURKISH_CLUBS } from '../data/clubs/clubToLeagueMap';
 
 export const DEFAULT_LEGEND_NAMES: string[] = [
   
@@ -1251,34 +1252,6 @@ export async function syncLegends(): Promise<void> {
   fs.writeFileSync(clubCacheFile, JSON.stringify(cachedClubs), 'utf8');
   const clubMap = new Map<string, IClubMeta>(Object.entries(cachedClubs));
 
-  const TURKISH_CLUBS = new Set([
-    'Galatasaray',
-    'Fenerbahçe',
-    'Beşiktaş',
-    'Trabzonspor',
-    'Başakşehir',
-    'Basaksehir',
-    'Bursaspor',
-    'Sivasspor',
-    'Antalyaspor',
-    'Konyaspor',
-    'Alanyaspor',
-    'Kasımpaşa',
-    'Kasimpasa',
-    'Kayserispor',
-    'Gaziantepspor',
-    'Gaziantep FK',
-    'Gençlerbirliği',
-    'Ankaragücü',
-    'Çaykur Rizespor',
-    'C. Rizespor',
-    'Göztepe',
-    'Adana Demirspor',
-    'Karagümrük',
-    'Eskisehirspor',
-    'Manisaspor',
-  ]);
-
   let savedCount = 0;
   const bulkOps: any[] = [];
 
@@ -1319,8 +1292,16 @@ export async function syncLegends(): Promise<void> {
     if (careerPath.length === 0) continue;
 
    
-    if (pid === '7717' && careerPath[careerPath.length - 1].endYear === undefined) {
-      careerPath[careerPath.length - 1].endYear = 2019;
+    const lastStep = careerPath[careerPath.length - 1];
+    if (lastStep && lastStep.endYear === undefined) {
+      if (pid === '7717') {
+        lastStep.endYear = 2019; 
+      } else if (age >= 38) {
+        lastStep.endYear = Math.min(new Date().getFullYear(), lastStep.startYear + 3);
+        console.warn(
+          `⚠️ [Sanitize] Emekli efsane son adım bitiş yılı otomatik kapatıldı: [${pid}] ${name} -> ${lastStep.endYear}`
+        );
+      }
     }
 
     const clubNames = careerPath.map((s) => s.clubName);

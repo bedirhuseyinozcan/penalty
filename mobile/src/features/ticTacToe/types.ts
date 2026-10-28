@@ -25,6 +25,7 @@ export interface ITicTacToeCellState {
   isFilled: boolean;
   guessedPlayer: ILightPlayer | null;
   possibleCount: number;
+  rarityLabel?: string;
 }
 
 export interface ITicTacToeBoardData {

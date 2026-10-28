@@ -19,6 +19,7 @@ import { HintWithAdButton } from '../features/monetization/components/HintWithAd
 import { DailyHeaderCard } from '../features/daily/components/DailyHeaderCard';
 import { DailyCompletedBanner } from '../features/daily/components/DailyCompletedBanner';
 import { GameNavbar } from '../components/common/GameNavbar';
+import { PlayerAvatar } from '../components/common/PlayerAvatar';
 import { useChallengeDataLoader } from '../hooks/useChallengeDataLoader';
 import { searchEngine } from '../services/searchEngine';
 import { Colors } from '../theme/colors';
@@ -95,6 +96,8 @@ export const CareerPathScreen: React.FC<ICareerPathScreenProps> = React.memo(
       return `İpucu Açıldı: Güncel Kulüp — ${challengeData?.playerClub || 'Bilinmiyor'}`;
     }, [targetPlayerInfo, challengeData]);
 
+    const isLegendLevel = !isDaily && currentLevel % 3 === 0;
+
     const {
       guesses,
       gameStatus,
@@ -115,6 +118,7 @@ export const CareerPathScreen: React.FC<ICareerPathScreenProps> = React.memo(
       isReplay: isCurrentReplay,
       dailyKey,
       leagueModeKey: selectedLeagueMode,
+      isLegendLevel,
     });
 
     useEffect(() => {
@@ -161,17 +165,13 @@ export const CareerPathScreen: React.FC<ICareerPathScreenProps> = React.memo(
               activeOpacity={0.85}
               onPress={() => setIsResultModalVisible(true)}
             >
-              {resolvedPlayerImage ? (
-                <Image
-                  source={{ uri: resolvedPlayerImage }}
-                  style={styles.revealedAvatar}
-                  resizeMode="cover"
-                />
-              ) : (
-                <View style={[styles.revealedAvatar, styles.revealedAvatarFallback]}>
-                  <Text style={styles.revealedEmoji}>👤</Text>
-                </View>
-              )}
+              <PlayerAvatar
+                imageUrl={resolvedPlayerImage}
+                name={challengeData?.playerName || targetPlayerInfo?.name}
+                size={64}
+                isLegend={Boolean(isLegendLevel || targetPlayerInfo?.isLegend)}
+                style={{ marginRight: Spacing.sm + 2 }}
+              />
               <View style={styles.revealedCol}>
                 <Text style={styles.revealedBadge}>
                   {gameStatus === 'won' ? '🎉 DOĞRU TAHMİN' : '💔 CEVAP'}
@@ -184,6 +184,12 @@ export const CareerPathScreen: React.FC<ICareerPathScreenProps> = React.memo(
                 </Text>
               </View>
             </TouchableOpacity>
+          )}
+
+          {isLegendLevel && (
+            <View style={styles.legendBadgeContainer}>
+              <Text style={styles.legendBadgeText}>👑 EFSANE ETABI • +50 BONUS COIN</Text>
+            </View>
           )}
 
           <View style={styles.timelineHeader}>
@@ -240,7 +246,7 @@ export const CareerPathScreen: React.FC<ICareerPathScreenProps> = React.memo(
           playerName={challengeData?.playerName || targetPlayerInfo?.name || 'Yıldız Futbolcu'}
           playerClub={challengeData?.playerClub || targetPlayerInfo?.club || 'Süper Lig'}
           finalImageUrl={resolvedPlayerImage}
-          rewardCoins={isCurrentReplay ? 0 : isDaily ? 30 : 20}
+          rewardCoins={isCurrentReplay ? 0 : isDaily ? 30 : isLegendLevel ? 70 : 20}
           attemptsUsed={guesses.length}
           maxAttempts={maxAttempts}
           leagueLabel={selectedLeagueMode === 'super_lig' ? 'Süper Lig' : 'Global 5 Lig'}
@@ -354,6 +360,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     paddingTop: Spacing.sm,
     marginBottom: Spacing.xs,
+  },
+  legendBadgeContainer: {
+    marginHorizontal: Spacing.md,
+    marginTop: Spacing.sm,
+    backgroundColor: 'rgba(234, 179, 8, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(234, 179, 8, 0.45)',
+    paddingVertical: 6,
+    paddingHorizontal: Spacing.md,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  legendBadgeText: {
+    color: '#FACC15',
+    fontWeight: '800',
+    fontSize: 12,
+    letterSpacing: 0.5,
   },
   timelineTitle: {
     ...Typography.h2,

@@ -14,6 +14,7 @@ interface IUseCareerPathGameProps {
   isDaily?: boolean;
   isReplay?: boolean;
   dailyKey?: string;
+  isLegendLevel?: boolean;
   onWin?: () => void;
 }
 
@@ -26,6 +27,7 @@ export const useCareerPathGame = ({
   isDaily = false,
   isReplay = false,
   dailyKey,
+  isLegendLevel = false,
   onWin,
 }: IUseCareerPathGameProps) => {
   const [guesses, setGuesses] = useState<ICareerPathGuess[]>([]);
@@ -102,8 +104,10 @@ export const useCareerPathGame = ({
               completedAt: new Date().toISOString(),
             });
           } else {
-            addCoins(20);
-            addXp(50);
+            const coinReward = isLegendLevel ? 70 : 20;
+            const xpReward = isLegendLevel ? 100 : 50;  
+            addCoins(coinReward);
+            addXp(xpReward);
             unlockNextLevel(gameModeKey, leagueModeKey);
           }
         }

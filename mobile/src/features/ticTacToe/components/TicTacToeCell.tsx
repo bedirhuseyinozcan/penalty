@@ -45,6 +45,11 @@ export const TicTacToeCell: React.FC<ITicTacToeCellProps> = React.memo(
             <Text style={styles.playerClub} numberOfLines={1}>
               {guessedPlayer.club}
             </Text>
+            {cell.rarityLabel && (
+              <View style={styles.rarityBadge}>
+                <Text style={styles.rarityText}>{cell.rarityLabel}</Text>
+              </View>
+            )}
           </View>
         ) : (
           <View style={styles.emptyContent}>
@@ -95,6 +100,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 4,
     marginBottom: 2,
+  },
+  rarityBadge: {
+    backgroundColor: 'rgba(234, 179, 8, 0.18)',
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    borderRadius: 4,
+    marginTop: 2,
+    borderWidth: 0.5,
+    borderColor: 'rgba(234, 179, 8, 0.45)',
+  },
+  rarityText: {
+    fontSize: 9,
+    fontWeight: '700',
+    color: '#FACC15',
   },
   checkIcon: {
     fontSize: 14,

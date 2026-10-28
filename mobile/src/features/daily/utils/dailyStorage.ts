@@ -37,4 +37,26 @@ export const dailyStorage = {
       console.warn('Failed to delete daily session:', e);
     }
   },
+
+  saveFrozenSetup: <T>(setupKey: string, data: T): void => {
+    try {
+      const key = `${StorageKeys.DAILY_SESSION_PREFIX}setup_${setupKey}`;
+      appStorage.set(key, JSON.stringify(data));
+    } catch (e) {
+      console.warn('Failed to save frozen setup:', e);
+    }
+  },
+
+  getFrozenSetup: <T>(setupKey: string): T | null => {
+    try {
+      const key = `${StorageKeys.DAILY_SESSION_PREFIX}setup_${setupKey}`;
+      const raw = appStorage.getString(key);
+      if (raw) {
+        return JSON.parse(raw);
+      }
+    } catch (e) {
+      console.warn('Failed to parse frozen setup:', e);
+    }
+    return null;
+  },
 };
