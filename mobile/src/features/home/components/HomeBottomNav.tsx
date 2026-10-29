@@ -5,30 +5,51 @@ import { Colors } from '../../../theme/colors';
 import { Spacing, BorderRadius } from '../../../theme/spacing';
 import { Typography } from '../../../theme/typography';
 
+export type HomeNavTab = 'play' | 'shop' | 'stats' | 'settings';
+
 interface IHomeBottomNavProps {
   primaryColor: string;
+  activeTab?: HomeNavTab;
+  onPressPlay?: () => void;
   onOpenShop: () => void;
   onOpenStats: () => void;
   onOpenSettings: () => void;
 }
 
 export const HomeBottomNav: React.FC<IHomeBottomNavProps> = React.memo(
-  ({ primaryColor, onOpenShop, onOpenStats, onOpenSettings }) => {
+  ({
+    primaryColor,
+    activeTab = 'play',
+    onPressPlay,
+    onOpenShop,
+    onOpenStats,
+    onOpenSettings,
+  }) => {
     return (
       <View style={styles.navBar}>
         <TouchableOpacity
           style={styles.navItem}
           activeOpacity={0.8}
-          onPress={() => hapticsService.selection()}
+          onPress={() => {
+            hapticsService.selection();
+            onPressPlay?.();
+          }}
         >
-          <View
-            style={[
-              styles.activeIndicator,
-              { backgroundColor: primaryColor },
-            ]}
-          />
+          {activeTab === 'play' && (
+            <View
+              style={[
+                styles.activeIndicator,
+                { backgroundColor: primaryColor },
+              ]}
+            />
+          )}
           <Text style={styles.navEmoji}>⚽</Text>
-          <Text style={[styles.navLabel, { color: primaryColor, fontWeight: '800' }]}>
+          <Text
+            style={[
+              styles.navLabel,
+              activeTab === 'play' && { color: primaryColor, fontWeight: '800' },
+            ]}
+          >
             Oyna
           </Text>
         </TouchableOpacity>
@@ -41,8 +62,23 @@ export const HomeBottomNav: React.FC<IHomeBottomNavProps> = React.memo(
             onOpenShop();
           }}
         >
+          {activeTab === 'shop' && (
+            <View
+              style={[
+                styles.activeIndicator,
+                { backgroundColor: primaryColor },
+              ]}
+            />
+          )}
           <Text style={styles.navEmoji}>🛍️</Text>
-          <Text style={styles.navLabel}>Dükkan</Text>
+          <Text
+            style={[
+              styles.navLabel,
+              activeTab === 'shop' && { color: primaryColor, fontWeight: '800' },
+            ]}
+          >
+            Dükkan
+          </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -53,8 +89,23 @@ export const HomeBottomNav: React.FC<IHomeBottomNavProps> = React.memo(
             onOpenStats();
           }}
         >
+          {activeTab === 'stats' && (
+            <View
+              style={[
+                styles.activeIndicator,
+                { backgroundColor: primaryColor },
+              ]}
+            />
+          )}
           <Text style={styles.navEmoji}>📊</Text>
-          <Text style={styles.navLabel}>Kariyerim</Text>
+          <Text
+            style={[
+              styles.navLabel,
+              activeTab === 'stats' && { color: primaryColor, fontWeight: '800' },
+            ]}
+          >
+            Kariyerim
+          </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -65,8 +116,23 @@ export const HomeBottomNav: React.FC<IHomeBottomNavProps> = React.memo(
             onOpenSettings();
           }}
         >
+          {activeTab === 'settings' && (
+            <View
+              style={[
+                styles.activeIndicator,
+                { backgroundColor: primaryColor },
+              ]}
+            />
+          )}
           <Text style={styles.navEmoji}>⚙️</Text>
-          <Text style={styles.navLabel}>Ayarlar</Text>
+          <Text
+            style={[
+              styles.navLabel,
+              activeTab === 'settings' && { color: primaryColor, fontWeight: '800' },
+            ]}
+          >
+            Ayarlar
+          </Text>
         </TouchableOpacity>
       </View>
     );
@@ -77,20 +143,25 @@ HomeBottomNav.displayName = 'HomeBottomNav';
 
 const styles = StyleSheet.create({
   navBar: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
     flexDirection: 'row',
     backgroundColor: Colors.surface,
     borderTopWidth: 1,
     borderTopColor: Colors.border,
     paddingTop: Spacing.xs + 2,
-    paddingBottom: Platform.OS === 'android' ? 14 : Spacing.sm,
+    paddingBottom: Platform.OS === 'android' ? 24 : Spacing.md,
     paddingHorizontal: Spacing.sm,
     justifyContent: 'space-around',
     alignItems: 'center',
-    elevation: 16,
+    elevation: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    zIndex: 50,
   },
   navItem: {
     flex: 1,

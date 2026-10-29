@@ -49,8 +49,16 @@ export const SettingsModal: React.FC<ISettingsModalProps> = React.memo(
         animationType="fade"
         onRequestClose={onClose}
       >
-        <View style={styles.overlay}>
-          <View style={styles.card}>
+        <TouchableOpacity
+          style={styles.overlay}
+          activeOpacity={1}
+          onPress={onClose}
+        >
+          <TouchableOpacity
+            activeOpacity={1}
+            style={styles.card}
+            onPress={(e) => e.stopPropagation?.()}
+          >
             <View style={styles.headerRow}>
               <Text style={styles.headerTitle}>⚙️ Ayarlar & Oyun Rehberi</Text>
               <TouchableOpacity
@@ -160,8 +168,8 @@ export const SettingsModal: React.FC<ISettingsModalProps> = React.memo(
             >
               <Text style={styles.doneBtnText}>Tamam</Text>
             </TouchableOpacity>
-          </View>
-        </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
       </Modal>
     );
   }

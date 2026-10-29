@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ScrollView,
   StyleSheet,
+  Platform,
 } from 'react-native';
 import { useGameStore } from '../../../stores/useGameStore';
 import { hapticsService } from '../../../services/hapticsService';
@@ -130,8 +131,16 @@ export const ScoutShopModal: React.FC<IScoutShopModalProps> = React.memo(({ visi
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <View style={styles.overlay}>
-        <View style={styles.modalContainer}>
+      <TouchableOpacity
+        style={styles.overlay}
+        activeOpacity={1}
+        onPress={onClose}
+      >
+        <TouchableOpacity
+          activeOpacity={1}
+          style={styles.modalContainer}
+          onPress={(e) => e.stopPropagation?.()}
+        >
           {/* Header */}
           <View style={styles.header}>
             <View>
@@ -459,8 +468,8 @@ export const ScoutShopModal: React.FC<IScoutShopModalProps> = React.memo(({ visi
               </View>
             </View>
           ) : null}
-        </View>
-      </View>
+        </TouchableOpacity>
+      </TouchableOpacity>
     </Modal>
   );
 });
@@ -482,6 +491,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.1)',
     paddingHorizontal: Spacing.md,
     paddingTop: Spacing.md,
+    paddingBottom: Platform.OS === 'android' ? 24 : Spacing.md,
   },
   header: {
     flexDirection: 'row',

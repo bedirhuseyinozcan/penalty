@@ -54,6 +54,37 @@ export const HomeScreen: React.FC<IHomeScreenProps> = React.memo(({ onNavigate }
   const [isShopModalVisible, setIsShopModalVisible] = useState(false);
   const [isSettingsModalVisible, setIsSettingsModalVisible] = useState(false);
 
+  const activeTab = useMemo<'play' | 'shop' | 'stats' | 'settings'>(() => {
+    if (isShopModalVisible) return 'shop';
+    if (isStatsModalVisible) return 'stats';
+    if (isSettingsModalVisible) return 'settings';
+    return 'play';
+  }, [isShopModalVisible, isStatsModalVisible, isSettingsModalVisible]);
+
+  const handlePressPlay = useCallback(() => {
+    setIsShopModalVisible(false);
+    setIsStatsModalVisible(false);
+    setIsSettingsModalVisible(false);
+  }, []);
+
+  const handleOpenShop = useCallback(() => {
+    setIsStatsModalVisible(false);
+    setIsSettingsModalVisible(false);
+    setIsShopModalVisible(true);
+  }, []);
+
+  const handleOpenStats = useCallback(() => {
+    setIsShopModalVisible(false);
+    setIsSettingsModalVisible(false);
+    setIsStatsModalVisible(true);
+  }, []);
+
+  const handleOpenSettings = useCallback(() => {
+    setIsShopModalVisible(false);
+    setIsStatsModalVisible(false);
+    setIsSettingsModalVisible(true);
+  }, []);
+
   const equippedCosmeticId = useGameStore((s) => s.equippedCosmeticId);
   const equippedCosmetic = useMemo(
     () => getCosmeticById(equippedCosmeticId),
@@ -316,9 +347,11 @@ export const HomeScreen: React.FC<IHomeScreenProps> = React.memo(({ onNavigate }
 
       <HomeBottomNav
         primaryColor={theme.primaryColor}
-        onOpenShop={() => setIsShopModalVisible(true)}
-        onOpenStats={() => setIsStatsModalVisible(true)}
-        onOpenSettings={() => setIsSettingsModalVisible(true)}
+        activeTab={activeTab}
+        onPressPlay={handlePressPlay}
+        onOpenShop={handleOpenShop}
+        onOpenStats={handleOpenStats}
+        onOpenSettings={handleOpenSettings}
       />
 
       <PlayerStatsModal
@@ -359,7 +392,7 @@ const styles = StyleSheet.create({
   },
   container: {
     padding: Spacing.md,
-    paddingBottom: Spacing.xxl,
+    paddingBottom: 110,
   },
   header: {
     flexDirection: 'row',

@@ -42,8 +42,16 @@ export const PlayerStatsModal: React.FC<IPlayerStatsModalProps> = React.memo(
 
     return (
       <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-        <View style={styles.overlay}>
-          <View style={styles.card}>
+        <TouchableOpacity
+          style={styles.overlay}
+          activeOpacity={1}
+          onPress={onClose}
+        >
+          <TouchableOpacity
+            activeOpacity={1}
+            style={styles.card}
+            onPress={(e) => e.stopPropagation?.()}
+          >
             <View style={styles.headerRow}>
               <Text style={styles.headerTitle}>📊 Oyuncu İstatistikleri</Text>
               <TouchableOpacity onPress={onClose} style={styles.closeBtn} activeOpacity={0.7}>
@@ -222,8 +230,8 @@ export const PlayerStatsModal: React.FC<IPlayerStatsModalProps> = React.memo(
             <TouchableOpacity style={styles.actionBtn} onPress={onClose} activeOpacity={0.8}>
               <Text style={styles.actionBtnText}>Kapat</Text>
             </TouchableOpacity>
-          </View>
-        </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
 
         <ScoutShopModal
           visible={isShopModalVisible}
