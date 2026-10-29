@@ -17,6 +17,10 @@
       "package": "com.penalty.hub",
       "usesCleartextTraffic": true
     },
+    "androidNavigationBar": {
+      "backgroundColor": "#0D1117",
+      "barStyle": "light-content"
+    },
     "web": {
       "favicon": "./src/assets/favicon.png"
     },

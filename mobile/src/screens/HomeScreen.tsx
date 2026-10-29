@@ -124,7 +124,7 @@ export const HomeScreen: React.FC<IHomeScreenProps> = React.memo(({ onNavigate }
         pointerEvents="none"
       />
 
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.container}>
         <View style={styles.header}>
           <View style={styles.brandCol}>
             <Text style={[styles.brandTitle, { color: theme.primaryColor }]}>PENALTY</Text>
@@ -390,9 +390,12 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 100,
     borderBottomRightRadius: 100,
   },
+  scrollView: {
+    flex: 1,
+  },
   container: {
     padding: Spacing.md,
-    paddingBottom: 110,
+    paddingBottom: Spacing.xl,
   },
   header: {
     flexDirection: 'row',
