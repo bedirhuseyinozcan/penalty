@@ -15,6 +15,7 @@ import { useClubLogoGame } from '../features/clubLogo/hooks/useClubLogoGame';
 import { useFeedbackAnimation } from '../hooks/useFeedbackAnimation';
 import { OfflineClubSearchModal } from '../features/clubLogo/components/OfflineClubSearchModal';
 import { WhoAreYaWinModal } from '../features/whoAreYa/components/WhoAreYaWinModal';
+import { useInterstitialAd } from '../features/monetization/hooks/useInterstitialAd';
 import { HintWithAdButton } from '../features/monetization/components/HintWithAdButton';
 import { DailyHeaderCard } from '../features/daily/components/DailyHeaderCard';
 import { DailyCompletedBanner } from '../features/daily/components/DailyCompletedBanner';
@@ -60,6 +61,7 @@ export const ClubLogoScreen: React.FC<IClubLogoScreenProps> = React.memo(
       isReplay,
     });
 
+    const { showInterstitialIfDue } = useInterstitialAd();
     const [hintUnlocked, setHintUnlocked] = useState(false);
     const [isResultModalVisible, setIsResultModalVisible] = useState(false);
     const [logoError, setLogoError] = useState(false);
@@ -310,8 +312,10 @@ export const ClubLogoScreen: React.FC<IClubLogoScreenProps> = React.memo(
             if (isDaily) {
               onBack();
             } else {
-              resetGame();
-              goToNextLevel();
+              showInterstitialIfDue(currentLevel, () => {
+                resetGame();
+                goToNextLevel();
+              });
             }
           }}
           onRevive={

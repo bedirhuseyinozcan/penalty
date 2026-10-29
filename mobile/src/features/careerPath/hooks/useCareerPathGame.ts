@@ -141,6 +141,7 @@ export const useCareerPathGame = ({
       targetPlayerName,
       effectiveMaxAttempts,
       hasRevived,
+      isLegendLevel,
       addCoins,
       addXp,
       isDaily,

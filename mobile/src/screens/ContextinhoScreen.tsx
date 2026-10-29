@@ -13,6 +13,7 @@ import { useContextinhoGame } from '../features/contextinho/hooks/useContextinho
 import { IContextinhoRankedEntry, TemperatureTier } from '../features/contextinho/utils/contextinhoEngine';
 import { OfflinePlayerSearchModal } from '../features/search/components/OfflinePlayerSearchModal';
 import { WhoAreYaWinModal } from '../features/whoAreYa/components/WhoAreYaWinModal';
+import { useInterstitialAd } from '../features/monetization/hooks/useInterstitialAd';
 import { HintWithAdButton } from '../features/monetization/components/HintWithAdButton';
 import { DailyHeaderCard } from '../features/daily/components/DailyHeaderCard';
 import { DailyCompletedBanner } from '../features/daily/components/DailyCompletedBanner';
@@ -72,6 +73,7 @@ export const ContextinhoScreen: React.FC<IContextinhoScreenProps> = React.memo(
       isReplay,
     });
 
+    const { showInterstitialIfDue } = useInterstitialAd();
     const [hintUnlocked, setHintUnlocked] = useState(false);
     const [hintText, setHintText] = useState('');
     const [isResultModalVisible, setIsResultModalVisible] = useState(false);
@@ -286,8 +288,10 @@ export const ContextinhoScreen: React.FC<IContextinhoScreenProps> = React.memo(
             if (isDaily) {
               onBack();
             } else {
-              resetGame();
-              goToNextLevel();
+              showInterstitialIfDue(currentLevel, () => {
+                resetGame();
+                goToNextLevel();
+              });
             }
           }}
           onRevive={

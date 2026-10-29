@@ -72,12 +72,7 @@ function App() {
       try {
         await appStorage.hydrateFromDisk();
         useGameStore.getState().hydrateFromStorage();
-        useSettingsStore.setState({
-          selectedLeagueMode:
-            appStorage.getString(StorageKeys.SELECTED_LEAGUE_MODE) === 'global'
-              ? 'global'
-              : 'super_lig',
-        });
+        useSettingsStore.getState().hydrateSettings();
       } catch (e) {
         console.warn('Storage hydration warning:', e);
       }

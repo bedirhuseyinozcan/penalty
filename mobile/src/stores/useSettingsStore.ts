@@ -12,6 +12,7 @@ interface ISettingsStore {
   toggleLeagueMode: () => void;
   toggleSound: () => void;
   toggleHaptics: () => void;
+  hydrateSettings: () => void;
 }
 
 const loadInitialLeagueMode = (): LeagueMode => {
@@ -50,6 +51,14 @@ export const useSettingsStore = create<ISettingsStore>((set) => ({
       const next = !state.hapticsEnabled;
       appStorage.set(StorageKeys.HAPTICS_ENABLED, next);
       return { hapticsEnabled: next };
+    });
+  },
+
+  hydrateSettings: () => {
+    set({
+      selectedLeagueMode: loadInitialLeagueMode(),
+      soundEnabled: appStorage.getBoolean(StorageKeys.SOUND_ENABLED) ?? true,
+      hapticsEnabled: appStorage.getBoolean(StorageKeys.HAPTICS_ENABLED) ?? true,
     });
   },
 }));

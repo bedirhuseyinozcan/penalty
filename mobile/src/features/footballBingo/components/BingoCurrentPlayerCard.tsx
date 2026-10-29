@@ -1,30 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image, Animated } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
 import { ILightPlayer, searchEngine } from '../../../services/searchEngine';
 import { useFeedbackAnimation } from '../../../hooks/useFeedbackAnimation';
+import { PlayerAvatar } from '../../../components/common/PlayerAvatar';
 import { Colors } from '../../../theme/colors';
 import { Spacing, BorderRadius } from '../../../theme/spacing';
 import { Typography } from '../../../theme/typography';
-
-const PlayerAvatar: React.FC<{ player: ILightPlayer }> = React.memo(({ player }) => {
-  const [failed, setFailed] = useState(false);
-  const uri = searchEngine.getPlayerPhoto(player);
-
-  return (
-    <View style={[styles.avatarCircle, player.isLegend && styles.legendAvatar]}>
-      {uri && !failed ? (
-        <Image
-          source={{ uri }}
-          style={styles.avatarImage}
-          onError={() => setFailed(true)}
-        />
-      ) : (
-        <Text style={styles.avatarEmoji}>{player.isLegend ? '👑' : '🏃‍♂️'}</Text>
-      )}
-    </View>
-  );
-});
-PlayerAvatar.displayName = 'PlayerAvatar';
 
 interface IBingoCurrentPlayerCardProps {
   player: ILightPlayer | null;
@@ -103,7 +84,13 @@ export const BingoCurrentPlayerCard: React.FC<IBingoCurrentPlayerCardProps> = Re
         {player ? (
           <Animated.View style={[styles.playerCard, player.isLegend && styles.legendCard, animatedStyle]}>
             <View style={styles.playerMainRow}>
-              <PlayerAvatar key={player.id} player={player} />
+              <PlayerAvatar
+                key={player.id}
+                imageUrl={searchEngine.getPlayerPhoto(player)}
+                name={player.name}
+                isLegend={player.isLegend}
+                size={48}
+              />
 
               <View style={styles.playerInfoCol}>
                 <Text style={styles.playerName} numberOfLines={1}>

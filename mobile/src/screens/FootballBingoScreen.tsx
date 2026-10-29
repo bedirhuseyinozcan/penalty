@@ -15,6 +15,7 @@ import { BingoCurrentPlayerCard } from '../features/footballBingo/components/Bin
 import { BingoGrid } from '../features/footballBingo/components/BingoGrid';
 import { useBingoGame } from '../features/footballBingo/hooks/useBingoGame';
 import { HintWithAdButton } from '../features/monetization/components/HintWithAdButton';
+import { useInterstitialAd } from '../features/monetization/hooks/useInterstitialAd';
 import { WhoAreYaWinModal } from '../features/whoAreYa/components/WhoAreYaWinModal';
 import { useChallengeDataLoader } from '../hooks/useChallengeDataLoader';
 import { getAuthoritativeUtcDate } from '../services/authoritativeTime';
@@ -48,6 +49,7 @@ export const FootballBingoScreen: React.FC<IFootballBingoScreenProps> = React.me
       isReplay,
     });
 
+    const { showInterstitialIfDue } = useInterstitialAd();
     const [isResultModalVisible, setIsResultModalVisible] = useState(false);
     const [hintUnlocked, setHintUnlocked] = useState(false);
     const [hintText, setHintText] = useState('');
@@ -192,8 +194,10 @@ export const FootballBingoScreen: React.FC<IFootballBingoScreenProps> = React.me
             if (isDaily) {
               onBack();
             } else {
-              resetGame();
-              goToNextLevel();
+              showInterstitialIfDue(currentLevel, () => {
+                resetGame();
+                goToNextLevel();
+              });
             }
           }}
           onClose={() => {

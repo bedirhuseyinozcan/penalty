@@ -16,6 +16,7 @@ import { TicTacToeBoard } from '../features/ticTacToe/components/TicTacToeBoard'
 import { useTicTacToeGame } from '../features/ticTacToe/hooks/useTicTacToeGame';
 import { OfflinePlayerSearchModal } from '../features/search/components/OfflinePlayerSearchModal';
 import { HintWithAdButton } from '../features/monetization/components/HintWithAdButton';
+import { useInterstitialAd } from '../features/monetization/hooks/useInterstitialAd';
 import { WhoAreYaWinModal } from '../features/whoAreYa/components/WhoAreYaWinModal';
 import { useChallengeDataLoader } from '../hooks/useChallengeDataLoader';
 import { getAuthoritativeUtcDate } from '../services/authoritativeTime';
@@ -49,6 +50,7 @@ export const TicTacToeScreen: React.FC<ITicTacToeScreenProps> = React.memo(
       isReplay,
     });
 
+    const { showInterstitialIfDue } = useInterstitialAd();
     const [isResultModalVisible, setIsResultModalVisible] = useState(false);
     const [hintUnlocked, setHintUnlocked] = useState(false);
     const [hintText, setHintText] = useState('');
@@ -220,8 +222,10 @@ export const TicTacToeScreen: React.FC<ITicTacToeScreenProps> = React.memo(
             if (isDaily) {
               onBack();
             } else {
-              resetGame();
-              goToNextLevel();
+              showInterstitialIfDue(currentLevel, () => {
+                resetGame();
+                goToNextLevel();
+              });
             }
           }}
           onClose={() => {

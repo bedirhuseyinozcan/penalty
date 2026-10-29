@@ -18,6 +18,8 @@ import { PlayerStatsModal } from '../features/stats/components/PlayerStatsModal'
 import { ScoutShopModal } from '../features/shop/components/ScoutShopModal';
 import { getCosmeticById } from '../features/shop/catalog';
 import { HomeGameCard } from '../features/home/components/HomeGameCard';
+import { HomeBottomNav } from '../features/home/components/HomeBottomNav';
+import { SettingsModal } from '../features/settings/components/SettingsModal';
 import { Colors } from '../theme/colors';
 import { Spacing, BorderRadius } from '../theme/spacing';
 import { Typography } from '../theme/typography';
@@ -50,6 +52,7 @@ export const HomeScreen: React.FC<IHomeScreenProps> = React.memo(({ onNavigate }
 
   const [isStatsModalVisible, setIsStatsModalVisible] = useState(false);
   const [isShopModalVisible, setIsShopModalVisible] = useState(false);
+  const [isSettingsModalVisible, setIsSettingsModalVisible] = useState(false);
 
   const equippedCosmeticId = useGameStore((s) => s.equippedCosmeticId);
   const equippedCosmetic = useMemo(
@@ -110,28 +113,6 @@ export const HomeScreen: React.FC<IHomeScreenProps> = React.memo(({ onNavigate }
             <View style={styles.currencyBadge}>
               <Text style={styles.currencyText}>🪙 {coins}</Text>
             </View>
-
-            <TouchableOpacity
-              style={[
-                styles.currencyBadge,
-                styles.shopBtn,
-                { borderColor: theme.primaryColor },
-              ]}
-              activeOpacity={0.8}
-              onPress={() => setIsShopModalVisible(true)}
-              hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
-            >
-              <Text style={[styles.shopBtnText, { color: theme.primaryColor }]}>🛍️ Dükkan</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.currencyBadge, styles.statsBtn]}
-              activeOpacity={0.8}
-              onPress={() => setIsStatsModalVisible(true)}
-              hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
-            >
-              <Text style={styles.statsIconText}>📊</Text>
-            </TouchableOpacity>
           </View>
         </View>
 
@@ -333,6 +314,13 @@ export const HomeScreen: React.FC<IHomeScreenProps> = React.memo(({ onNavigate }
         />
       </ScrollView>
 
+      <HomeBottomNav
+        primaryColor={theme.primaryColor}
+        onOpenShop={() => setIsShopModalVisible(true)}
+        onOpenStats={() => setIsStatsModalVisible(true)}
+        onOpenSettings={() => setIsSettingsModalVisible(true)}
+      />
+
       <PlayerStatsModal
         visible={isStatsModalVisible}
         onClose={() => setIsStatsModalVisible(false)}
@@ -341,6 +329,11 @@ export const HomeScreen: React.FC<IHomeScreenProps> = React.memo(({ onNavigate }
       <ScoutShopModal
         visible={isShopModalVisible}
         onClose={() => setIsShopModalVisible(false)}
+      />
+
+      <SettingsModal
+        visible={isSettingsModalVisible}
+        onClose={() => setIsSettingsModalVisible(false)}
       />
     </SafeAreaView>
   );

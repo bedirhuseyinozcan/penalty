@@ -13,6 +13,7 @@ import { BlurredImageHero } from '../features/whoAreYa/components/BlurredImageHe
 import { GuessHistoryList } from '../features/whoAreYa/components/GuessHistoryList';
 import { OfflinePlayerSearchModal } from '../features/search/components/OfflinePlayerSearchModal';
 import { WhoAreYaWinModal } from '../features/whoAreYa/components/WhoAreYaWinModal';
+import { useInterstitialAd } from '../features/monetization/hooks/useInterstitialAd';
 import { HintWithAdButton } from '../features/monetization/components/HintWithAdButton';
 import { DailyHeaderCard } from '../features/daily/components/DailyHeaderCard';
 import { DailyCompletedBanner } from '../features/daily/components/DailyCompletedBanner';
@@ -49,6 +50,7 @@ export const WhoAreYaScreen: React.FC<IWhoAreYaScreenProps> = React.memo(
       isReplay,
     });
 
+    const { showInterstitialIfDue } = useInterstitialAd();
     const [hintUnlocked, setHintUnlocked] = useState(false);
     const [isResultModalVisible, setIsResultModalVisible] = useState(false);
 
@@ -204,8 +206,10 @@ export const WhoAreYaScreen: React.FC<IWhoAreYaScreenProps> = React.memo(
             if (isDaily) {
               onBack();
             } else {
-              resetGame();
-              goToNextLevel();
+              showInterstitialIfDue(currentLevel, () => {
+                resetGame();
+                goToNextLevel();
+              });
             }
           }}
           onClose={() => {

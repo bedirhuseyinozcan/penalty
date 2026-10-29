@@ -15,6 +15,7 @@ import { CareerTimeline } from '../features/careerPath/components/CareerTimeline
 import { CareerGuessHistory } from '../features/careerPath/components/CareerGuessHistory';
 import { OfflinePlayerSearchModal } from '../features/search/components/OfflinePlayerSearchModal';
 import { WhoAreYaWinModal } from '../features/whoAreYa/components/WhoAreYaWinModal';
+import { useInterstitialAd } from '../features/monetization/hooks/useInterstitialAd';
 import { HintWithAdButton } from '../features/monetization/components/HintWithAdButton';
 import { DailyHeaderCard } from '../features/daily/components/DailyHeaderCard';
 import { DailyCompletedBanner } from '../features/daily/components/DailyCompletedBanner';
@@ -52,6 +53,7 @@ export const CareerPathScreen: React.FC<ICareerPathScreenProps> = React.memo(
       isReplay,
     });
 
+    const { showInterstitialIfDue } = useInterstitialAd();
     const [hintUnlocked, setHintUnlocked] = useState(false);
     const [isResultModalVisible, setIsResultModalVisible] = useState(false);
 
@@ -258,8 +260,10 @@ export const CareerPathScreen: React.FC<ICareerPathScreenProps> = React.memo(
             if (isDaily) {
               onBack();
             } else {
-              resetGame();
-              goToNextLevel();
+              showInterstitialIfDue(currentLevel, () => {
+                resetGame();
+                goToNextLevel();
+              });
             }
           }}
           onRevive={
