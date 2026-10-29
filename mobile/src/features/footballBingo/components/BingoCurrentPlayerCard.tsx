@@ -90,6 +90,7 @@ export const BingoCurrentPlayerCard: React.FC<IBingoCurrentPlayerCardProps> = Re
                 name={player.name}
                 isLegend={player.isLegend}
                 size={48}
+                style={{ marginRight: Spacing.sm }}
               />
 
               <View style={styles.playerInfoCol}>
@@ -220,27 +221,6 @@ const styles = StyleSheet.create({
     color: Colors.accent,
     fontSize: 11,
     marginTop: 1,
-  },
-  legendAvatar: {
-    borderColor: Colors.accent,
-    borderWidth: 1.5,
-  },
-  avatarImage: {
-    width: '100%',
-    height: '100%',
-  },
-  avatarCircle: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    overflow: 'hidden',
-    backgroundColor: Colors.surfaceLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: Spacing.sm,
-  },
-  avatarEmoji: {
-    fontSize: 18,
   },
   playerInfoCol: {
     flex: 1,

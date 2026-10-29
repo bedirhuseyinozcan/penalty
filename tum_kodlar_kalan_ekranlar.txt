@@ -23,6 +23,7 @@ import { useClubLogoGame } from '../features/clubLogo/hooks/useClubLogoGame';
 import { useFeedbackAnimation } from '../hooks/useFeedbackAnimation';
 import { OfflineClubSearchModal } from '../features/clubLogo/components/OfflineClubSearchModal';
 import { WhoAreYaWinModal } from '../features/whoAreYa/components/WhoAreYaWinModal';
+import { useInterstitialAd } from '../features/monetization/hooks/useInterstitialAd';
 import { HintWithAdButton } from '../features/monetization/components/HintWithAdButton';
 import { DailyHeaderCard } from '../features/daily/components/DailyHeaderCard';
 import { DailyCompletedBanner } from '../features/daily/components/DailyCompletedBanner';
@@ -68,6 +69,7 @@ export const ClubLogoScreen: React.FC<IClubLogoScreenProps> = React.memo(
       isReplay,
     });
 
+    const { showInterstitialIfDue } = useInterstitialAd();
     const [hintUnlocked, setHintUnlocked] = useState(false);
     const [isResultModalVisible, setIsResultModalVisible] = useState(false);
     const [logoError, setLogoError] = useState(false);
@@ -318,8 +320,10 @@ export const ClubLogoScreen: React.FC<IClubLogoScreenProps> = React.memo(
             if (isDaily) {
               onBack();
             } else {
-              resetGame();
-              goToNextLevel();
+              showInterstitialIfDue(currentLevel, () => {
+                resetGame();
+                goToNextLevel();
+              });
             }
           }}
           onRevive={
@@ -528,6 +532,7 @@ import { BingoCurrentPlayerCard } from '../features/footballBingo/components/Bin
 import { BingoGrid } from '../features/footballBingo/components/BingoGrid';
 import { useBingoGame } from '../features/footballBingo/hooks/useBingoGame';
 import { HintWithAdButton } from '../features/monetization/components/HintWithAdButton';
+import { useInterstitialAd } from '../features/monetization/hooks/useInterstitialAd';
 import { WhoAreYaWinModal } from '../features/whoAreYa/components/WhoAreYaWinModal';
 import { useChallengeDataLoader } from '../hooks/useChallengeDataLoader';
 import { getAuthoritativeUtcDate } from '../services/authoritativeTime';
@@ -561,6 +566,7 @@ export const FootballBingoScreen: React.FC<IFootballBingoScreenProps> = React.me
       isReplay,
     });
 
+    const { showInterstitialIfDue } = useInterstitialAd();
     const [isResultModalVisible, setIsResultModalVisible] = useState(false);
     const [hintUnlocked, setHintUnlocked] = useState(false);
     const [hintText, setHintText] = useState('');
@@ -705,8 +711,10 @@ export const FootballBingoScreen: React.FC<IFootballBingoScreenProps> = React.me
             if (isDaily) {
               onBack();
             } else {
-              resetGame();
-              goToNextLevel();
+              showInterstitialIfDue(currentLevel, () => {
+                resetGame();
+                goToNextLevel();
+              });
             }
           }}
           onClose={() => {
@@ -771,6 +779,7 @@ import { TicTacToeBoard } from '../features/ticTacToe/components/TicTacToeBoard'
 import { useTicTacToeGame } from '../features/ticTacToe/hooks/useTicTacToeGame';
 import { OfflinePlayerSearchModal } from '../features/search/components/OfflinePlayerSearchModal';
 import { HintWithAdButton } from '../features/monetization/components/HintWithAdButton';
+import { useInterstitialAd } from '../features/monetization/hooks/useInterstitialAd';
 import { WhoAreYaWinModal } from '../features/whoAreYa/components/WhoAreYaWinModal';
 import { useChallengeDataLoader } from '../hooks/useChallengeDataLoader';
 import { getAuthoritativeUtcDate } from '../services/authoritativeTime';
@@ -804,6 +813,7 @@ export const TicTacToeScreen: React.FC<ITicTacToeScreenProps> = React.memo(
       isReplay,
     });
 
+    const { showInterstitialIfDue } = useInterstitialAd();
     const [isResultModalVisible, setIsResultModalVisible] = useState(false);
     const [hintUnlocked, setHintUnlocked] = useState(false);
     const [hintText, setHintText] = useState('');
@@ -975,8 +985,10 @@ export const TicTacToeScreen: React.FC<ITicTacToeScreenProps> = React.memo(
             if (isDaily) {
               onBack();
             } else {
-              resetGame();
-              goToNextLevel();
+              showInterstitialIfDue(currentLevel, () => {
+                resetGame();
+                goToNextLevel();
+              });
             }
           }}
           onClose={() => {
@@ -1109,6 +1121,8 @@ import { PlayerStatsModal } from '../features/stats/components/PlayerStatsModal'
 import { ScoutShopModal } from '../features/shop/components/ScoutShopModal';
 import { getCosmeticById } from '../features/shop/catalog';
 import { HomeGameCard } from '../features/home/components/HomeGameCard';
+import { HomeBottomNav } from '../features/home/components/HomeBottomNav';
+import { SettingsModal } from '../features/settings/components/SettingsModal';
 import { Colors } from '../theme/colors';
 import { Spacing, BorderRadius } from '../theme/spacing';
 import { Typography } from '../theme/typography';
@@ -1141,6 +1155,7 @@ export const HomeScreen: React.FC<IHomeScreenProps> = React.memo(({ onNavigate }
 
   const [isStatsModalVisible, setIsStatsModalVisible] = useState(false);
   const [isShopModalVisible, setIsShopModalVisible] = useState(false);
+  const [isSettingsModalVisible, setIsSettingsModalVisible] = useState(false);
 
   const equippedCosmeticId = useGameStore((s) => s.equippedCosmeticId);
   const equippedCosmetic = useMemo(
@@ -1201,28 +1216,6 @@ export const HomeScreen: React.FC<IHomeScreenProps> = React.memo(({ onNavigate }
             <View style={styles.currencyBadge}>
               <Text style={styles.currencyText}>🪙 {coins}</Text>
             </View>
-
-            <TouchableOpacity
-              style={[
-                styles.currencyBadge,
-                styles.shopBtn,
-                { borderColor: theme.primaryColor },
-              ]}
-              activeOpacity={0.8}
-              onPress={() => setIsShopModalVisible(true)}
-              hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
-            >
-              <Text style={[styles.shopBtnText, { color: theme.primaryColor }]}>🛍️ Dükkan</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.currencyBadge, styles.statsBtn]}
-              activeOpacity={0.8}
-              onPress={() => setIsStatsModalVisible(true)}
-              hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
-            >
-              <Text style={styles.statsIconText}>📊</Text>
-            </TouchableOpacity>
           </View>
         </View>
 
@@ -1424,6 +1417,13 @@ export const HomeScreen: React.FC<IHomeScreenProps> = React.memo(({ onNavigate }
         />
       </ScrollView>
 
+      <HomeBottomNav
+        primaryColor={theme.primaryColor}
+        onOpenShop={() => setIsShopModalVisible(true)}
+        onOpenStats={() => setIsStatsModalVisible(true)}
+        onOpenSettings={() => setIsSettingsModalVisible(true)}
+      />
+
       <PlayerStatsModal
         visible={isStatsModalVisible}
         onClose={() => setIsStatsModalVisible(false)}
@@ -1432,6 +1432,11 @@ export const HomeScreen: React.FC<IHomeScreenProps> = React.memo(({ onNavigate }
       <ScoutShopModal
         visible={isShopModalVisible}
         onClose={() => setIsShopModalVisible(false)}
+      />
+
+      <SettingsModal
+        visible={isSettingsModalVisible}
+        onClose={() => setIsSettingsModalVisible(false)}
       />
     </SafeAreaView>
   );
@@ -2184,12 +2189,7 @@ function App() {
       try {
         await appStorage.hydrateFromDisk();
         useGameStore.getState().hydrateFromStorage();
-        useSettingsStore.setState({
-          selectedLeagueMode:
-            appStorage.getString(StorageKeys.SELECTED_LEAGUE_MODE) === 'global'
-              ? 'global'
-              : 'super_lig',
-        });
+        useSettingsStore.getState().hydrateSettings();
       } catch (e) {
         console.warn('Storage hydration warning:', e);
       }

@@ -147,9 +147,12 @@ export const ScoutShopModal: React.FC<IScoutShopModalProps> = React.memo(({ visi
               <TouchableOpacity
                 style={styles.addCoinsHeaderBtn}
                 activeOpacity={0.8}
-                onPress={handleClaimFreeCoins}
+                disabled={isAdLoading}
+                onPress={__DEV__ ? handleClaimFreeCoins : handleWatchAdForCoins}
               >
-                <Text style={styles.addCoinsHeaderText}>+ Altın</Text>
+                <Text style={styles.addCoinsHeaderText}>
+                  {__DEV__ ? '+500 ⚙️' : '+ 🎬 Altın'}
+                </Text>
               </TouchableOpacity>
 
               <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
@@ -435,13 +438,15 @@ export const ScoutShopModal: React.FC<IScoutShopModalProps> = React.memo(({ visi
                     <Text style={styles.dialogAdBtnText}>🎬 Reklam İzle (+100 Altın Kazan)</Text>
                   </TouchableOpacity>
 
-                  <TouchableOpacity
-                    style={styles.dialogFreeBtn}
-                    activeOpacity={0.8}
-                    onPress={handleClaimFreeCoins}
-                  >
-                    <Text style={styles.dialogFreeBtnText}>🎁 +500 Test Altını Al</Text>
-                  </TouchableOpacity>
+                  {__DEV__ && (
+                    <TouchableOpacity
+                      style={styles.dialogFreeBtn}
+                      activeOpacity={0.8}
+                      onPress={handleClaimFreeCoins}
+                    >
+                      <Text style={styles.dialogFreeBtnText}>⚙️ [DEV] +500 Test Altını Al</Text>
+                    </TouchableOpacity>
+                  )}
 
                   <TouchableOpacity
                     style={styles.dialogCancelBtnFull}
